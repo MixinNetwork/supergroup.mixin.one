@@ -1,0 +1,37 @@
+package config
+
+const (
+	Name             = "Mixin Group Bot"
+	Environment      = "test"
+	BuildVersion     = "BUILD_VERSION"
+	HTTPListenPort   = 7001
+	HTTPResourceHost = "https://chinese-group.mixin.test"
+)
+
+const (
+	ClientId        = "5fcd897e-e7b2-40d5-93cd-487e2d955556"
+	ClientSecret    = "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
+	SessionAssetPIN = "133123"
+	PinToken        = "fKfozH23iFLAhAeSsFeRkkhwGJo4RiJhg4mSX3rEPxpqCf01lNsESGGQ75oQZG+diTSyqd3dyI7vMrIdhhyyecbz61cxDoYAiLXpYW4AH+r94CfT73159l1z/15KCiXEfFTXD4akO0QK0J+QWlZVrz0YmVUSewZj9imv/+NdurQ="
+	SessionId       = "8f42db23-d8df-4063-aeda-c322279da2c2"
+	SessionKey      = `-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQCS2vbuIWPSEygHzkCDORmq9n4kN1lv5Qur9UD8ske3Yx0ZK+Bu
+0ojJXPysOWcQwReBhsYQzsBSUfVTb+nhHueAlHvYcxgpTT048/0UrLHycuX9xTI1
+uJSc6uZ8ha6okgknALBUT15Ns9R5raVu+TBFBlJpY+k4mWAazCboWrlqBwIDAQAB
+AoGAMI28vpbDjh1PSuViZwBmACRnKEo0g85SwZPg3KuFEpjucfgTyBBLsWfREpAY
+B24P+3831S7GX3FBj0idJxU0rMm6mlS88EbcUHlArlVsOKocFPTDlfpH0nvCvBQQ
+L66mTPpnLy5bQn4vsHTXyYYsrTqyUhVr0sz5ANFU134QVAECQQDTZrWQi6p4U1Ve
+TKeytcyYV36JsMMzRx/O3ygi7aTMCmO18VBCeeIdUN/JDxe3FP/e1io7ciK9A3cy
+3GttR8WHAkEAsdZIGNuMEQUF+HIw4sxMJydv3Qd82Spd1EaQRtIsMXwxEMIFi1/x
+vPTxgQ7Gb0KAeKI7wizKzf9gaqyiaqJXgQJAVmMJXQkF32fGYeOXP9s0wSg36FJY
+YjL1V5cvkp5kEpFIT8hN0Ox3rx0mZcYKHeGx8cC4v1QTyAOLiTgzmhOTLwJBAJEh
+ev0uTwSkwNac+mBcsdlSSexr6+ues6xFWgEyDHbmD3TJopS33CSFEYJteGvcLdRF
+MdepjmjG/PyRnoq/qgECQQCmoIh+xR6vJZ8VRWgjSzmJUPrZFz8uWk6BoePFGrGV
+FIHlQELVfFxLB2Xo9zDXvDVRK5N5O1bCNMfXUuQsmstm
+-----END RSA PRIVATE KEY-----`
+)
+
+const (
+	GoogleCloudProject = ""
+	GoogleCloudSpanner = ""
+)

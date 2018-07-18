@@ -1,0 +1,132 @@
+@import '../constant.scss';
+
+.user.layout {
+  .container {
+    max-width: 48rem;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 2rem .6rem;
+
+    .members {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .actions {
+      text-align: center;
+    }
+
+    .action {
+      margin-bottom: 2rem;
+      &.subscribe, &.unsubscribe {
+        display: none;
+      }
+    }
+
+    a.btn {
+      color: white;
+      display: inline-block;
+      background-color: #46b8da;
+      box-sizing: border-box;
+      padding: .5rem 1rem;
+      width: 100%;
+      &:hover {
+        background-color: #3cb1d4;
+      }
+    }
+
+    .payment {
+      text-align: center;
+      .help {
+        margin-bottom: 2rem;
+      }
+    }
+  }
+
+  .container.subscribers {
+    padding: 0 .6rem;
+    line-height: 2rem;
+    li {
+      border-bottom: 1px solid #eee;
+      box-sizing: border-box;
+      padding: .6rem;
+    }
+    img {
+      border-radius: 1rem;
+      width: 2rem;
+      height: 2rem;
+      float: left;
+      margin-right: 1.2rem;
+    }
+    .date {
+      float: right;
+    }
+    .action.more {
+      display: none;
+      text-align: center;
+      line-height: 1.2rem;
+      margin-top: 0.6rem;
+    }
+  }
+
+  .submitting.overlay {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    top: 0;
+    left: 0;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.modal-container {
+  background: rgba(0, 0, 0, 0.3);
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  img {
+    border-radius: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+  }
+  .modal-body {
+    box-sizing: border-box;
+    background: white;
+    text-align: center;
+    margin: 6rem auto 0;
+    padding: 1rem;
+    width: 80%;
+  }
+  .header {
+    text-align: right;
+    font-size: 1.6rem;
+    cursor: pointer;
+    margin-bottom: .6rem;
+  }
+  a.btn {
+    margin-top: 1rem;
+    color: white;
+    display: inline-block;
+    background-color: #46b8da;
+    box-sizing: border-box;
+    padding: .5rem 1rem;
+    width: 100%;
+    &:hover {
+      background-color: #3cb1d4;
+    }
+  }
+}

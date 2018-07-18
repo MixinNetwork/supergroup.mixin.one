@@ -1,0 +1,6 @@
+config
+deploy.sh
+nginx.conf
+web/dist
+web/node_modules
+supergroup.mixin.one
