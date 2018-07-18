@@ -18,8 +18,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const keepAlivePeriod = 3 * time.Second
-const writeWait = 10 * time.Second
+const (
+	keepAlivePeriod = 3 * time.Second
+	writeWait       = 10 * time.Second
+	pongWait        = 60 * time.Second
+	pingPeriod      = (pongWait * 9) / 10
+)
 
 type BlazeMessage struct {
 	Id     string                 `json:"id"`
@@ -141,6 +145,8 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		mc.WriteDone <- true
 		mc.ReadDone <- true
 	}()
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		messageType, wsReader, err := conn.NextReader()
 		if err != nil {
@@ -157,7 +163,11 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 }
 
 func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) error {
-	defer conn.Close()
+	pingTicker := time.NewTicker(pingPeriod)
+	defer func() {
+		pingTicker.Stop()
+		conn.Close()
+	}()
 	for {
 		select {
 		case data := <-mc.WriteBuffer:
@@ -167,6 +177,12 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 			}
 		case <-mc.WriteDone:
 			return nil
+		case <-pingTicker.C:
+			conn.SetWriteDeadline(time.Now().Add(writeWait))
+			err := conn.WriteMessage(websocket.PingMessage, []byte{})
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
