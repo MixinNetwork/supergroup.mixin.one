@@ -5,7 +5,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 ## Prepare
 
 1. Create dir `config`, copy `config.gocfg` (under the root) into it and rename it to `config.go`
-2. Replace configurations in `config.go`
+2. Replace configurations in `config.go`, we use spanner as our database, go to [Google Spanner](https://cloud.google.com/spanner/docs/quickstart-console)
 3. `cd web` and exec `npm install`
 4. Replace domain, api address and clientId in `webpack.config.js`
 

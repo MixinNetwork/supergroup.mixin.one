@@ -32,6 +32,6 @@ FIHlQELVfFxLB2Xo9zDXvDVRK5N5O1bCNMfXUuQsmstm
 )
 
 const (
-	GoogleCloudProject = ""
-	GoogleCloudSpanner = ""
+	GoogleCloudProject = "$GCLOUD_PROJECT"
+	GoogleCloudSpanner = "projects/$GCLOUD_PROJECT/instances/test-instance/databases/example-db"
 )
