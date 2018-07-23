@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MixinNetwork/bot-api-go-client/uuid"
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +13,7 @@ func TestUserCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	user, err := createUser(ctx, "accessToken", uuid.NewV4().String(), "1000", "name", "http://localhost")
+	user, err := createUser(ctx, "accessToken", bot.NewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	assert.Equal("name", user.FullName)
@@ -77,7 +77,7 @@ func TestUserCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int64(1), count)
 
-	li, err := createUser(ctx, "accessToken", uuid.NewV4().String(), "1001", "name", "http://localhost")
+	li, err := createUser(ctx, "accessToken", bot.NewV4().String(), "1001", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	err = li.Payment(ctx)
