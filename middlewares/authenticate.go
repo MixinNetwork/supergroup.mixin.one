@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/models"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/models"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 )
 
 var whitelist = [][2]string{

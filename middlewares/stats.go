@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 )
 
 func Stats(handler http.Handler, service string, logRequestBody bool, buildVersion string) http.Handler {

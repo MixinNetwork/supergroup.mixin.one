@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	bot "github.com/MixinMessenger/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/gorilla/websocket"
 )
 

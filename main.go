@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/config"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
-	"github.com/MixinMessenger/supergroup.mixin.one/services"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/services"
 )
 
 func main() {

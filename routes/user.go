@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/middlewares"
-	"github.com/MixinMessenger/supergroup.mixin.one/models"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
+	"github.com/MixinNetwork/supergroup.mixin.one/models"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 	"github.com/dimfeld/httptreemux"
 )
 

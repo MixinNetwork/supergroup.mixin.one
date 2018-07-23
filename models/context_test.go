@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"cloud.google.com/go/spanner"
-	"github.com/MixinMessenger/supergroup.mixin.one/config"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
 const (
 	testEnvironment = "test"
-	testDatabase    = "projects/mixin-183904/instances/group-assistant/databases/test"
+	testDatabase    = "projects/mixin-183904/instances/production/databases/supergroup_test"
 )
 
 func TestClear(t *testing.T) {

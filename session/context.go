@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/unrolled/render"
 )

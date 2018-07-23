@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/config"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 	"github.com/dimfeld/httptreemux"
 )
 

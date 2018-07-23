@@ -3,7 +3,7 @@ package views
 import (
 	"net/http"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
 type ResponseView struct {
