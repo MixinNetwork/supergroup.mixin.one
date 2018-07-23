@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-	bot "github.com/MixinMessenger/bot-api-go-client"
-	"github.com/MixinMessenger/supergroup.mixin.one/config"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	jwt "github.com/dgrijalva/jwt-go"
 	"google.golang.org/api/iterator"
 )

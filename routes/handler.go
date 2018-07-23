@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 	"github.com/bugsnag/bugsnag-go/errors"
 	"github.com/dimfeld/httptreemux"
 )

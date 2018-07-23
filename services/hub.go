@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/spanner"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
 type Hub struct {

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/spanner"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/api/iterator"
 )

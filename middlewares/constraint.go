@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
-	"github.com/MixinMessenger/supergroup.mixin.one/views"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/views"
 )
 
 func parseRemoteAddr(remoteAddress string) (string, error) {

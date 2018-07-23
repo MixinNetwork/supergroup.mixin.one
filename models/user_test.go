@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MixinMessenger/bot-api-go-client/uuid"
+	"github.com/MixinNetwork/bot-api-go-client/uuid"
 	"github.com/stretchr/testify/assert"
 )
 

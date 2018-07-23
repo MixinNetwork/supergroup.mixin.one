@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	bot "github.com/MixinMessenger/bot-api-go-client"
-	"github.com/MixinMessenger/supergroup.mixin.one/config"
-	"github.com/MixinMessenger/supergroup.mixin.one/models"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/models"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gorilla/websocket"
 )
 

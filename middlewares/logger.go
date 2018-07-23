@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	bot "github.com/MixinMessenger/bot-api-go-client"
-	"github.com/MixinMessenger/supergroup.mixin.one/durable"
-	"github.com/MixinMessenger/supergroup.mixin.one/session"
+	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
 func Log(handler http.Handler, client *durable.LoggerClient, service string) http.Handler {
