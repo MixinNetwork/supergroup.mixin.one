@@ -24,7 +24,7 @@ const distributed_messages_DDL = `
 CREATE TABLE distributed_messages (
 	message_id            STRING(36) NOT NULL,
 	conversation_id       STRING(36) NOT NULL,
-	recipient_id	      STRING(36) NOT NULL,
+	recipient_id          STRING(36) NOT NULL,
 	user_id	              STRING(36) NOT NULL,
 	category              STRING(512) NOT NULL,
 	data                  BYTES(MAX) NOT NULL,
@@ -55,7 +55,7 @@ type DistributedMessage struct {
 func createDistributeMessage(ctx context.Context, userId, recipientId, category string, data []byte) *spanner.Mutation {
 	t := time.Now()
 	dm := &DistributedMessage{
-		MessageId:      bot.NewV4().String(),
+		MessageId:      bot.UuidNewV4().String(),
 		ConversationId: UniqueConversationId(config.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,

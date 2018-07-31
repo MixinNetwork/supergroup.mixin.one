@@ -1,0 +1,14 @@
+<li>
+  <div class="user avatar">
+    {{#if firstLetter}}
+    <p>{{firstLetter}}</p>
+    {{else}}
+    <img src="{{avatar_url}}" alt="user avatar"/>
+    {{/if}}
+  </div>
+  <div class="user info">
+    <h5>{{full_name}}</h5>
+    <time>{{created_at}}</time>
+  </div>
+  <div class="packet amount">{{amount}} {{symbol}}</div>
+</li>
