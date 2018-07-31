@@ -3,6 +3,7 @@ package views
 import (
 	"net/http"
 
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
@@ -20,7 +21,16 @@ func RenderDataResponse(w http.ResponseWriter, r *http.Request, view interface{}
 func RenderErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	sessionError, ok := err.(session.Error)
 	if !ok {
-		sessionError = session.ServerError(r.Context(), err)
+		botError, ok := err.(bot.Error)
+		if ok {
+			sessionError = session.Error{
+				Status:      botError.Status,
+				Code:        botError.Code,
+				Description: botError.Description,
+			}
+		} else {
+			sessionError = session.ServerError(r.Context(), err)
+		}
 	}
 	if sessionError.Code == 10001 {
 		sessionError.Code = 500

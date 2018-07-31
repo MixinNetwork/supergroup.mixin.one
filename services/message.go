@@ -316,7 +316,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
 		"title":       "中文群红包",
 		"description": description,
-		"action":      "https://supergroup.mixin.zone/#/packets/" + packet.PacketId,
+		"action":      "https://chinese-group.mixin.zone/#/packets/" + packet.PacketId,
 	})
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
