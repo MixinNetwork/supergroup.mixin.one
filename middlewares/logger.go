@@ -11,7 +11,7 @@ import (
 
 func Log(handler http.Handler, client *durable.LoggerClient, service string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := strings.ToUpper(bot.NewV4().String())
+		id := strings.ToUpper(bot.UuidNewV4().String())
 		r.Header["X-Request-Id"] = []string{id}
 		logger := durable.BuildLogger()
 		ctx := session.WithLogger(r.Context(), logger)

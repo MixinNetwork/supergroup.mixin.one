@@ -109,7 +109,7 @@ func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*
 }
 
 func createUser(ctx context.Context, accessToken, userId, identityNumber, fullName, avatarURL string) (*User, error) {
-	id, err := bot.FromString(userId)
+	id, err := bot.UuidFromString(userId)
 	if err != nil {
 		return nil, session.ForbiddenError(ctx)
 	}
@@ -129,7 +129,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		user = &User{
 			UserId:         userId,
 			IdentityNumber: num,
-			TraceId:        bot.NewV4().String(),
+			TraceId:        bot.UuidNewV4().String(),
 			FullName:       fullName,
 			State:          PaymentStatePending,
 		}
@@ -191,7 +191,7 @@ func (user *User) Payment(ctx context.Context) error {
 	}
 	t := time.Now()
 	message := &Message{
-		MessageId: bot.NewV4().String(),
+		MessageId: bot.UuidNewV4().String(),
 		UserId:    config.ClientId,
 		Category:  "PLAIN_TEXT",
 		Data:      []byte(fmt.Sprintf("%s 加入了群组", user.FullName)),

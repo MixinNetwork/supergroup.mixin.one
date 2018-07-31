@@ -1,0 +1,10 @@
+<div class="snapshots list">
+  <ul>
+    {{#each snapshots}}
+    <li>
+      <span class="{{category}}">{{unit}}{{amount}} {{symbol}}<span>
+      <span class="time">{{created_at}}</span>
+    </li>
+    {{/each}}
+  </ul>
+</div>

@@ -1,0 +1,26 @@
+<div class="packet header">
+  <div class="user avatar">
+    {{#if firstLetter}}
+    <p>{{firstLetter}}</p>
+    {{else}}
+    <img src="{{user.avatar_url}}" alt="user avatar"/>
+    {{/if}}
+  </div>
+  <h1 class="user name">{{user.full_name}}</h1>
+  <h2 class="greeting"><i class="icon-bubble"></i> {{greeting}}</h2>
+</div>
+
+<div class="packet lottery">
+  {{#if lottery}}
+  <h3>{{lottery.amount}} <span>{{asset.symbol}}</span></h3>
+  <p>红包会发送到你的钱包</p>
+  {{else}}
+  <h3 class="expire statement">红包已完成，如有剩余将退回发送者钱包</h3>
+  {{/if}}
+</div>
+
+<div class="packet history">
+  <h4>已经打开 {{opened_count}}/{{total_count}} 红包, {{opened_amount}}/{{amount}} {{asset.symbol}}</h4>
+  <ul>
+  </ul>
+</div>

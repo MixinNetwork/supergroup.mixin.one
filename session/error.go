@@ -65,6 +65,11 @@ func BadDataError(ctx context.Context) Error {
 	return createError(ctx, http.StatusAccepted, 10002, description, nil)
 }
 
+func InsufficientAccountBalanceError(ctx context.Context) Error {
+	description := "Insufficient balance."
+	return createError(ctx, http.StatusAccepted, 20117, description, nil)
+}
+
 func BlazeServerError(ctx context.Context, err error) Error {
 	description := "Blaze server error."
 	return createError(ctx, http.StatusInternalServerError, 7000, description, err)

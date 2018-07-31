@@ -2,12 +2,14 @@ import $ from 'jquery';
 import Noty from 'noty';
 import Account from './account.js';
 import Website from './website.js';
+import Packet from './packet.js';
 
 function API(router, root) {
   this.router = router;
   this.root = root;
   this.account = new Account(this);
   this.website = new Website(this);
+  this.packet = new Packet(this);
   this.Error404 = require('../404.html');
   this.ErrorGeneral = require('../error.html');
 }
@@ -53,7 +55,7 @@ API.prototype = {
           this.account.clear();
           var obj = new URL(window.location);
           var returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
-          window.location.replace('https://mixin.one/oauth/authorize?client_id='+CLIENT_ID+'&scope=PROFILE:READ&response_type=code&return_to=' + returnTo);
+          window.location.replace('https://mixin.one/oauth/authorize?client_id='+CLIENT_ID+'&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=' + returnTo);
           break;
         case 404:
           $('#layout-container').html(this.Error404());

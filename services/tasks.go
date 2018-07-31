@@ -10,6 +10,7 @@ import (
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gorilla/websocket"
@@ -117,6 +118,9 @@ func loopPendingDistributeMessages(ctx context.Context, conn *websocket.Conn, mc
 func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []*models.DistributedMessage) error {
 	var body []map[string]interface{}
 	for _, message := range messages {
+		if message.UserId == config.ClientId {
+			message.UserId = ""
+		}
 		body = append(body, map[string]interface{}{
 			"conversation_id":   message.ConversationId,
 			"recipient_id":      message.RecipientId,
@@ -138,7 +142,7 @@ func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []
 func sendTextMessage(ctx context.Context, mc *MessageContext, conversationId, label string) error {
 	params := map[string]interface{}{
 		"conversation_id": conversationId,
-		"message_id":      bot.NewV4().String(),
+		"message_id":      bot.UuidNewV4().String(),
 		"category":        "PLAIN_TEXT",
 		"data":            base64.StdEncoding.EncodeToString([]byte(label)),
 	}
@@ -160,7 +164,7 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 	}
 	params := map[string]interface{}{
 		"conversation_id": conversationId,
-		"message_id":      bot.NewV4().String(),
+		"message_id":      bot.UuidNewV4().String(),
 		"category":        "APP_BUTTON_GROUP",
 		"data":            base64.StdEncoding.EncodeToString(btns),
 	}

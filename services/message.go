@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
@@ -69,6 +70,8 @@ type MessageContext struct {
 func (service *MessageService) Run(ctx context.Context) error {
 	go loopPendingMessage(ctx)
 	go cleanUpDistributedMessages(ctx)
+	go handlePendingParticipants(ctx)
+	go handleExpiredPackets(ctx)
 
 	for {
 		err := service.loop(ctx)
@@ -110,7 +113,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		case <-mc.ReadDone:
 			return nil
 		case msg := <-mc.ReadBuffer:
-			if msg.Category == "SYSTEM_ACCOUNT_SNAPSHOT" {
+			if msg.Category == "SYSTEM_ACCOUNT_SNAPSHOT" && msg.UserId != config.ClientId {
 				data, err := base64.StdEncoding.DecodeString(msg.Data)
 				if err != nil {
 					return session.BlazeServerError(ctx, err)
@@ -189,7 +192,7 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 
 func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string, params map[string]interface{}) error {
 	var resp = make(chan BlazeMessage, 1)
-	var id = bot.NewV4().String()
+	var id = bot.UuidNewV4().String()
 	mc.Transactions.set(id, func(t BlazeMessage) error {
 		select {
 		case resp <- t:
@@ -282,7 +285,7 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 }
 
 func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferView, userId string) error {
-	_, err := bot.FromString(transfer.TraceId)
+	id, err := bot.UuidFromString(transfer.TraceId)
 	if err != nil {
 		return nil
 	}
@@ -292,8 +295,89 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	}
 	if user.TraceId == transfer.TraceId && transfer.Amount == models.XINAmount && transfer.AssetId == models.XINAssetId {
 		return user.Payment(ctx)
+	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
+		return err
+	} else if packet.State == models.PacketStatePaid {
+		return sendAppCard(ctx, mc, packet)
 	}
 	return nil
+}
+
+func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet) error {
+	description := fmt.Sprintf("来自 %s 的红包", packet.User.FullName)
+	if strings.TrimSpace(packet.User.FullName) == "" {
+		description = "来自无名氏的红包"
+	}
+	if count := utf8.RuneCountInString(description); count > 100 {
+		name := string([]rune(packet.User.FullName)[:16])
+		description = fmt.Sprintf("来自 %s 的红包", name)
+	}
+	card, err := json.Marshal(map[string]string{
+		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
+		"title":       "中文群红包",
+		"description": description,
+		"action":      "https://supergroup.mixin.zone/#/packets/" + packet.PacketId,
+	})
+	if err != nil {
+		return session.BlazeServerError(ctx, err)
+	}
+	t := time.Now()
+	_, err = models.CreateMessage(ctx, packet.PacketId, config.ClientId, "APP_CARD", []byte(card), t, t)
+	if err != nil {
+		return session.BlazeServerError(ctx, err)
+	}
+	return nil
+}
+
+func handleExpiredPackets(ctx context.Context) {
+	var limit = 100
+	for {
+		packetIds, err := models.ListExpiredPackets(ctx, limit)
+		if err != nil {
+			session.Logger(ctx).Error(err)
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+
+		for _, id := range packetIds {
+			packet, err := models.SendPacketRefundTransfer(ctx, id)
+			if err != nil {
+				session.Logger(ctx).Error(id, err)
+				break
+			}
+			session.Logger(ctx).Infof("REFUND %v", packet)
+		}
+
+		if len(packetIds) < limit {
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+	}
+}
+
+func handlePendingParticipants(ctx context.Context) {
+	var limit = 100
+	for {
+		participants, err := models.ListPendingParticipants(ctx, limit)
+		if err != nil {
+			session.Logger(ctx).Error(err)
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+
+		for _, p := range participants {
+			err = models.SendParticipantTransfer(ctx, p.PacketId, p.UserId, p.Amount)
+			if err != nil {
+				session.Logger(ctx).Error(err)
+				break
+			}
+		}
+
+		if len(participants) < limit {
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+	}
 }
 
 func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView) error {
