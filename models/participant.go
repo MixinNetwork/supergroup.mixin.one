@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -135,13 +136,21 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
+	memo := fmt.Sprintf("来自 %s 的红包", packet.User.FullName)
+	if strings.TrimSpace(packet.User.FullName) == "" {
+		memo = "来自无名氏的红包"
+	}
+	if count := utf8.RuneCountInString(memo); count > 100 {
+		name := string([]rune(packet.User.FullName)[:16])
+		memo = fmt.Sprintf("来自 %s 的红包", name)
+	}
 
 	in := &bot.TransferInput{
 		AssetId:     packet.AssetId,
 		RecipientId: userId,
 		Amount:      number.FromString(amount),
 		TraceId:     traceId,
-		Memo:        "",
+		Memo:        memo,
 	}
 	if !number.FromString(amount).Exhausted() {
 		err = bot.CreateTransfer(ctx, in, config.ClientId, config.SessionId, config.SessionKey, config.SessionAssetPIN, config.PinToken)
