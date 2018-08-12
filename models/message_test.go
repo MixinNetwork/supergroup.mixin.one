@@ -13,7 +13,7 @@ func TestMessageCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	id, uid := bot.NewV4().String(), bot.NewV4().String()
+	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	data := []byte("hello")
 	message, err := CreateMessage(ctx, id, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
@@ -27,7 +27,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 1)
 
-	message, err = CreateMessage(ctx, bot.NewV4().String(), uid, "PLAIN_TEXT", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, bot.UuidNewV4().String(), uid, "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	assert.Equal("PLAIN_TEXT", message.Category)
@@ -36,7 +36,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	user, err := createUser(ctx, "accessToken", bot.NewV4().String(), "10000", "name", "http://localhost")
+	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
 	ids, date, err := subscribedUserIds(ctx, message.LastDistributeAt, 100)
 	assert.Nil(err)
 	assert.True(date.IsZero())
@@ -54,7 +54,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 1)
 	assert.Equal(ids[0], dms[0].RecipientId)
-	user, err = createUser(ctx, "accessToken", bot.NewV4().String(), "10000", "name", "http://localhost")
+	user, err = createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
 	assert.Nil(err)
 	err = user.Subscribe(ctx)
 	assert.Nil(err)

@@ -189,6 +189,12 @@ func (user *User) Payment(ctx context.Context) error {
 	if user.State != PaymentStatePending {
 		return nil
 	}
+	item, err := readBlacklist(ctx, user.UserId)
+	if err != nil {
+		return err
+	} else if item != nil {
+		return nil
+	}
 	t := time.Now()
 	message := &Message{
 		MessageId: bot.UuidNewV4().String(),

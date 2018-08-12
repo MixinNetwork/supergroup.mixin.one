@@ -13,7 +13,7 @@ import (
 
 const (
 	testEnvironment = "test"
-	testDatabase    = "projects/mixin-183904/instances/production/databases/supergroup_test"
+	testDatabase    = "projects/mixin-183904/instances/development/databases/supergroup_test"
 )
 
 func TestClear(t *testing.T) {
@@ -28,6 +28,7 @@ func teardownTestContext(ctx context.Context) {
 		"messages",
 		"distributed_messages",
 		"properties",
+		"blacklists",
 	}
 	for _, table := range tables {
 		db.Apply(ctx, []*spanner.Mutation{spanner.Delete(table, spanner.AllKeys())}, "all", "DELETE", "DELETE FROM all")

@@ -139,6 +139,7 @@ User.prototype = {
           $('.modal-avatar').attr('src', $(that).data('avatar'));
           $('.modal-name').html($(that).data('display'));
           $('.action.kick').data('id', $(that).data('id'));
+          $('.action.block').data('id', $(that).data('id'));
           $('.modal-container').show();
 
         });
@@ -146,6 +147,17 @@ User.prototype = {
           var that = this;
           $(".modal-container").hide();
           self.api.account.remove(function (resp) {
+            if (resp.error) {
+              return;
+            }
+
+            $("."+$(that).data('id')).hide();
+          }, $(that).data('id'));
+        });
+        $('.action.block').on('click', function () {
+          var that = this;
+          $(".modal-container").hide();
+          self.api.account.block(function (resp) {
             if (resp.error) {
               return;
             }

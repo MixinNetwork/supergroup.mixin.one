@@ -83,3 +83,8 @@ CREATE TABLE assets (
 	price_btc        STRING(128) NOT NULL,
 	price_usd        STRING(128) NOT NULL,
 ) PRIMARY KEY(asset_id);
+
+
+CREATE TABLE blacklists (
+	user_id	         STRING(36) NOT NULL,
+) PRIMARY KEY(user_id);

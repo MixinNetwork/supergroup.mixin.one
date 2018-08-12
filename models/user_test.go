@@ -13,7 +13,7 @@ func TestUserCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	user, err := createUser(ctx, "accessToken", bot.NewV4().String(), "1000", "name", "http://localhost")
+	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	assert.Equal("name", user.FullName)
@@ -77,7 +77,7 @@ func TestUserCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int64(1), count)
 
-	li, err := createUser(ctx, "accessToken", bot.NewV4().String(), "1001", "name", "http://localhost")
+	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	err = li.Payment(ctx)
@@ -93,6 +93,33 @@ func TestUserCRUD(t *testing.T) {
 	admin := &User{UserId: "e9e5b807-fa8b-455a-8dfa-b189d28310ff"}
 	admin.DeleteUser(ctx, li.UserId)
 	user, err = findUserById(ctx, li.UserId)
+	assert.Nil(err)
+	assert.Nil(user)
+}
+
+func TestBlacklistCRUD(t *testing.T) {
+	assert := assert.New(t)
+	ctx := setupTestContext()
+	defer teardownTestContext(ctx)
+
+	admin := &User{UserId: "e9e5b807-fa8b-455a-8dfa-b189d28310ff"}
+	id := bot.UuidNewV4().String()
+	list, err := admin.CreateBlacklist(ctx, id)
+	assert.Nil(err)
+	assert.Nil(list)
+	list, err = readBlacklist(ctx, id)
+	assert.Nil(err)
+	assert.Nil(list)
+
+	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
+	list, err = admin.CreateBlacklist(ctx, li.UserId)
+	assert.Nil(err)
+	assert.NotNil(list)
+	list, err = readBlacklist(ctx, li.UserId)
+	assert.Nil(err)
+	assert.NotNil(list)
+
+	user, err := findUserById(ctx, li.UserId)
 	assert.Nil(err)
 	assert.Nil(user)
 }

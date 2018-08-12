@@ -33,6 +33,12 @@ Account.prototype = {
     });
   },
 
+  block: function (callback, id) {
+    this.api.request('POST', '/users/'+id+'/block', undefined, function(resp) {
+      return callback(resp);
+    });
+  },
+
   authenticate: function (callback, authorizationCode) {
     var params = {
       "code": authorizationCode

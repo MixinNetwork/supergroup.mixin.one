@@ -25,6 +25,7 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.POST("/subscribe", impl.subscribe)
 	router.POST("/unsubscribe", impl.unsubscribe)
 	router.POST("/users/:id/remove", impl.remove)
+	router.POST("/users/:id/block", impl.block)
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/amount", impl.amount)
@@ -98,6 +99,14 @@ func (impl *usersImpl) unsubscribe(w http.ResponseWriter, r *http.Request, _ map
 
 func (impl *usersImpl) remove(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if err := middlewares.CurrentUser(r).DeleteUser(r.Context(), params["id"]); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderBlankResponse(w, r)
+	}
+}
+
+func (impl *usersImpl) block(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	if _, err := middlewares.CurrentUser(r).CreateBlacklist(r.Context(), params["id"]); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderBlankResponse(w, r)
