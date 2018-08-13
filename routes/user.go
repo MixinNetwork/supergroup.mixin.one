@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
@@ -64,7 +65,8 @@ func (impl *usersImpl) me(w http.ResponseWriter, r *http.Request, _ map[string]s
 
 func (impl *usersImpl) subscribers(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	offset, _ := time.Parse(time.RFC3339Nano, r.URL.Query().Get("offset"))
-	if users, err := models.Subscribers(r.Context(), offset); err != nil {
+	num, _ := strconv.ParseInt(r.URL.Query().Get("q"), 10, 64)
+	if users, err := models.Subscribers(r.Context(), offset, num); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderUsersView(w, r, users)

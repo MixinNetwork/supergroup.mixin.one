@@ -215,7 +215,16 @@ func (user *User) Payment(ctx context.Context) error {
 	return nil
 }
 
-func Subscribers(ctx context.Context, offset time.Time) ([]*User, error) {
+func Subscribers(ctx context.Context, offset time.Time, num int64) ([]*User, error) {
+	if num > 20000 {
+		user, err := findUserByIdentityNumber(ctx, num)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		} else if user == nil {
+			return nil, nil
+		}
+		return []*User{user}, nil
+	}
 	ids, _, err := subscribedUserIds(ctx, offset, 200)
 	if err != nil {
 		return nil, err
@@ -333,6 +342,30 @@ func findUserById(ctx context.Context, userId string) (*User, error) {
 	defer txn.Close()
 
 	user, err := readUser(ctx, txn, userId)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return user, nil
+}
+
+func findUserByIdentityNumber(ctx context.Context, num int64) (*User, error) {
+	txn := session.Database(ctx).ReadOnlyTransaction()
+	defer txn.Close()
+
+	stmt := spanner.Statement{
+		SQL:    fmt.Sprintf("SELECT %s FROM users WHERE identity_number=@identity_number LIMIT 1", strings.Join(usersCols, ",")),
+		Params: map[string]interface{}{"identity_number": num},
+	}
+	it := session.Database(ctx).Query(ctx, stmt, "users", "findUserByIdentityNumber")
+	defer it.Stop()
+
+	row, err := it.Next()
+	if err == iterator.Done {
+		return nil, nil
+	} else if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	user, err := userFromRow(row)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}

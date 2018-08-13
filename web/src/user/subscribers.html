@@ -1,4 +1,8 @@
 <main class="container subscribers">
+  <div class="search bar">
+    <input type="text" class="q">
+    <span class="icon icon-magnifier"></span>
+  </div>
   <ul class="list">
     {{#each subscribers }}
     <li class="{{user_id}}" data-id="{{user_id}}" data-display="{{full_name}} {{identity_number}}" data-avatar="{{avatar_url}}">

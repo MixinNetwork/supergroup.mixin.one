@@ -1,6 +1,7 @@
 import './index.scss';
 import $ from 'jquery';
 import TimeUtils from '../utils/time.js';
+import URLUtils from '../utils/url.js';
 
 function User(router, api) {
   this.router = router;
@@ -78,13 +79,17 @@ User.prototype = {
   },
 
   subscribers: function () {
+    let q = URLUtils.getUrlParameter('q');
     let self = this;
     self.api.account.subscribers(function (resp) {
       if (resp.error) {
         return;
       }
 
-      var offset = resp.data[resp.data.length-1].subscribed_at;
+      var offset = '';
+      if (resp.data.length > 0) {
+        offset = resp.data[resp.data.length-1].subscribed_at;
+      }
       var role = self.api.account.role();
       for (var i in resp.data) {
         var data  = resp.data[i];
@@ -131,6 +136,11 @@ User.prototype = {
         });
       };
 
+      $('.search.bar').on('click', '.icon', function (e) {
+        e.preventDefault();
+
+        window.location.replace('/subscribers?q='+$('.search.bar > .q').val());
+      });
       if (self.api.account.role() === "admin") {
         $(".subscribers").on('click', 'li', function (e) {
           e.preventDefault();
@@ -169,7 +179,7 @@ User.prototype = {
           $(".modal-container").hide();
         });
       };
-    }, "");
+    }, "", q);
   },
 
   waitForPayment: function () {

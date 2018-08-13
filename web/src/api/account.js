@@ -21,8 +21,8 @@ Account.prototype = {
     });
   },
 
-  subscribers: function (callback, t) {
-    this.api.request('GET', '/subscribers?offset='+t, undefined, function(resp) {
+  subscribers: function (callback, t, q) {
+    this.api.request('GET', '/subscribers?offset='+t+'&q='+q, undefined, function(resp) {
       return callback(resp);
     });
   },

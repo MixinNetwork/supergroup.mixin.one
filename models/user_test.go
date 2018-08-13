@@ -85,6 +85,9 @@ func TestUserCRUD(t *testing.T) {
 	users, err = Subscribers(ctx, user.SubscribedAt)
 	assert.Nil(err)
 	assert.Len(users, 1)
+	li, err = findUserByIdentityNumber(ctx, li.IdentityNumber)
+	assert.Nil(err)
+	assert.NotNil(li)
 
 	li.DeleteUser(ctx, li.UserId)
 	user, err = findUserById(ctx, li.UserId)
