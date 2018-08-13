@@ -93,8 +93,10 @@ func (packet *Packet) GetParticipants(ctx context.Context) error {
 	}
 
 	for _, p := range participants {
-		p.FullName = userInfo[p.UserId].FullName
-		p.AvatarURL = userInfo[p.UserId].AvatarURL
+		if userInfo[p.UserId] != nil {
+			p.FullName = userInfo[p.UserId].FullName
+			p.AvatarURL = userInfo[p.UserId].AvatarURL
+		}
 	}
 
 	sort.Slice(participants, func(i, j int) bool { return participants[i].CreatedAt.Before(participants[j].CreatedAt) })
