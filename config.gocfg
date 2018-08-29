@@ -35,3 +35,8 @@ const (
 	GoogleCloudProject = "$GCLOUD_PROJECT"
 	GoogleCloudSpanner = "projects/$GCLOUD_PROJECT/instances/test-instance/databases/example-db"
 )
+
+const (
+	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
+	PaymentAmount  = "0.001"
+)

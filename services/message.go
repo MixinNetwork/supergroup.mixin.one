@@ -293,7 +293,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if err != nil {
 		return err
 	}
-	if user.TraceId == transfer.TraceId && transfer.Amount == models.XINAmount && transfer.AssetId == models.XINAssetId {
+	if user.TraceId == transfer.TraceId && transfer.Amount == config.PaymentAmount && transfer.AssetId == config.PaymentAssetId {
 		return user.Payment(ctx)
 	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err

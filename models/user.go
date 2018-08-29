@@ -21,9 +21,6 @@ import (
 const (
 	PaymentStatePending = "pending"
 	PaymentStatePaid    = "paid"
-
-	XINAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
-	XINAmount  = "0.001"
 )
 
 const users_DDL = `
