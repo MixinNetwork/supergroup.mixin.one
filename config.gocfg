@@ -29,7 +29,6 @@ const (
 	// commands
 	MessageCommandsInfo     = "/INFO"
 	MessageCommandsInfoResp = "当前订阅人数: %d"
-	MessageCommandsJoin     = "/JOIN"
 )
 
 var Operators = map[string]bool{
