@@ -392,17 +392,17 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 		return sendHelpMessge(ctx, mc, message)
 	}
 	if user.SubscribedAt.IsZero() {
-		return sendTextMessage(ctx, mc, message.ConversationId, models.MESSAGE_TIPS_UNSUBSCRIBE)
+		return sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsUnsubscribe)
 	}
 	dataBytes, err := base64.StdEncoding.DecodeString(message.Data)
 	if err != nil {
 		return session.BadDataError(ctx)
 	} else if len(dataBytes) < 10 {
-		if strings.ToUpper(string(dataBytes)) == models.MESSAGE_COMMANDS_INFO {
+		if strings.ToUpper(string(dataBytes)) == config.MessageCommandsInfo {
 			if count, err := models.SubscribersCount(ctx); err != nil {
 				return err
 			} else {
-				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(models.MESSAGE_COMMANDS_INFO_RESP, count))
+				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.MessageCommandsInfoResp, count))
 			}
 		}
 	}
@@ -413,10 +413,10 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 }
 
 func sendHelpMessge(ctx context.Context, mc *MessageContext, message *MessageView) error {
-	if err := sendTextMessage(ctx, mc, message.ConversationId, models.MESSAGE_TIPS_HELP); err != nil {
+	if err := sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsHelp); err != nil {
 		return err
 	}
-	if err := sendAppButton(ctx, mc, "点击加入群组", message.ConversationId, config.HTTPResourceHost); err != nil {
+	if err := sendAppButton(ctx, mc, config.MessageTipsHelpBtn, message.ConversationId, config.HTTPResourceHost); err != nil {
 		return err
 	}
 	return nil
