@@ -304,17 +304,17 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 }
 
 func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet) error {
-	description := fmt.Sprintf("来自 %s 的红包", packet.User.FullName)
+	description := fmt.Sprintf(config.GroupRedPacketDesc, packet.User.FullName)
 	if strings.TrimSpace(packet.User.FullName) == "" {
-		description = "来自无名氏的红包"
+		description = config.GroupRedPacketShortDesc
 	}
 	if count := utf8.RuneCountInString(description); count > 100 {
 		name := string([]rune(packet.User.FullName)[:16])
-		description = fmt.Sprintf("来自 %s 的红包", name)
+		description = fmt.Sprintf(config.GroupRedPacketDesc, name)
 	}
 	card, err := json.Marshal(map[string]string{
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
-		"title":       "中文群红包",
+		"title":       config.GroupRedPacket,
 		"description": description,
 		"action":      "https://chinese-group.mixin.zone/#/packets/" + packet.PacketId,
 	})

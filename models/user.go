@@ -197,7 +197,7 @@ func (user *User) Payment(ctx context.Context) error {
 		MessageId: bot.UuidNewV4().String(),
 		UserId:    config.ClientId,
 		Category:  "PLAIN_TEXT",
-		Data:      []byte(fmt.Sprintf("%s 加入了群组", user.FullName)),
+		Data:      []byte(fmt.Sprintf(config.MessageTipsJoin, user.FullName)),
 		CreatedAt: t,
 		UpdatedAt: t,
 		State:     MessageStatePending,
@@ -278,7 +278,7 @@ func SubscribersCount(ctx context.Context) (int64, error) {
 }
 
 func (user *User) DeleteUser(ctx context.Context, id string) error {
-	if !operators[user.UserId] {
+	if !config.Operators[user.UserId] {
 		return nil
 	}
 
@@ -291,7 +291,7 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (user *User) GetRole() string {
-	if operators[user.UserId] {
+	if config.Operators[user.UserId] {
 		return "admin"
 	}
 	return "user"
@@ -389,12 +389,3 @@ func userFromRow(row *spanner.Row) (*User, error) {
 }
 
 var nameColorSet = []string{"#AA4848", "#B0665E", "#EF8A44", "#A09555", "#727234", "#9CAD23", "#AA9100", "#C49B4B", "#A47758", "#DF694C", "#D65859", "#C2405A", "#A75C96", "#BD637C", "#8F7AC5", "#7983C2", "#728DB8", "#5977C2", "#5E6DA2", "#3D98D0", "#5E97A1", "#4EABAA", "#63A082", "#877C9B", "#AA66C3", "#BB5334", "#667355", "#668899", "#83BE44", "#BBA600", "#429AB6", "#75856F", "#88A299", "#B3798E", "#447899", "#D79200", "#728DB8", "#DD637C", "#887C66", "#BE6C2C", "#9B6D77", "#B69370", "#976236", "#9D77A5", "#8A660E", "#5E935E", "#9B8484", "#92B288"}
-
-var operators = map[string]bool{
-	"e9e5b807-fa8b-455a-8dfa-b189d28310ff": true,
-	"fcb87491-4fa0-4c2f-b387-262b63cbc112": true,
-	"f59b9309-70c2-4b69-8fd8-5773dbd10018": true,
-	"b847a455-aa41-4f7d-8038-0aefbe40dcaa": true,
-	"b26b9a74-40dd-4e8d-8e41-94d9fce0b5c0": true,
-	"04379bf8-87fb-41c6-a247-ee19bf9cf4a3": true,
-}
