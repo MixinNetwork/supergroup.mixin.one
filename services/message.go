@@ -385,11 +385,8 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		return sendHelpMessge(ctx, mc, message)
-	}
-	if user.State != models.PaymentStatePaid {
-		return sendHelpMessge(ctx, mc, message)
+	if user == nil || user.State != models.PaymentStatePaid {
+		return sendHelpMessge(ctx, user, mc, message)
 	}
 	if user.SubscribedAt.IsZero() {
 		return sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsUnsubscribe)
@@ -412,7 +409,13 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	return nil
 }
 
-func sendHelpMessge(ctx context.Context, mc *MessageContext, message *MessageView) error {
+func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
+	if user == nil {
+		if err := sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsGuest); err != nil {
+			return err
+		}
+		return nil
+	}
 	if err := sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsHelp); err != nil {
 		return err
 	}

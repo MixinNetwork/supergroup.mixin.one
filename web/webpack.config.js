@@ -83,7 +83,8 @@ module.exports = {
       WEB_ROOT: JSON.stringify(webRoot(process.env.NODE_ENV)),
       API_ROOT: JSON.stringify(apiRoot(process.env.NODE_ENV)),
       CLIENT_ID: JSON.stringify(clientId(process.env.NODE_ENV)),
-      APP_NAME: JSON.stringify('Mixin 中文群')
+      APP_NAME: JSON.stringify('Mixin 中文群'),
+      LOCALE: JSON.stringify('zh-CN')
     }),
     new HtmlWebpackPlugin({
       template: './src/layout.html'

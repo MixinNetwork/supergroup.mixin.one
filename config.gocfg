@@ -10,6 +10,7 @@ const (
 
 const (
 	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
+	// 设置成 "0", 所有人都可以加入
 	PaymentAmount  = "0.001"
 )
 
@@ -19,6 +20,7 @@ const (
 	GroupRedPacketDesc      = "来自 %s 的红包"
 	GroupOpenedRedPacket    = "%s 打开了你的红包"
 
+	MessageTipsGuest       = "您需要点击右下角先授权机器人。"
 	MessageTipsJoin        = "%s 加入了群组"
 	MessageTipsHelp        = "您需要先支付 0.001 XIN, 加入群组才能发消息。"
 	MessageTipsHelpBtn     = "点击加入群组"

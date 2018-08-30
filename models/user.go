@@ -11,6 +11,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -129,6 +130,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			TraceId:        bot.UuidNewV4().String(),
 			FullName:       fullName,
 			State:          PaymentStatePending,
+		}
+		if number.FromString(config.PaymentAmount).Exhausted() {
+			user.State = PaymentStatePaid
 		}
 	}
 	user.AuthenticationToken = authenticationToken
