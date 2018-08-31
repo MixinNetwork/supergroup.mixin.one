@@ -20,7 +20,7 @@ const (
 	GroupRedPacketDesc      = "来自 %s 的红包"
 	GroupOpenedRedPacket    = "%s 打开了你的红包"
 
-	MessageTipsGuest       = "您需要点击右下角先授权机器人。"
+	MessageTipsGuest       = "您需要先点击机器图标授权。"
 	MessageTipsJoin        = "%s 加入了群组"
 	MessageTipsHelp        = "您需要先支付 0.001 XIN, 加入群组才能发消息。"
 	MessageTipsHelpBtn     = "点击加入群组"
