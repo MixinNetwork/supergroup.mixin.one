@@ -113,10 +113,3 @@ func messageFromRow(row *spanner.Row) (*Message, error) {
 	err := row.Columns(&m.MessageId, &m.UserId, &m.Category, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
 	return &m, err
 }
-
-const (
-	MESSAGE_TIPS_HELP          = "您需要先支付 0.001 XIN, 加入群组才能发消息."
-	MESSAGE_TIPS_UNSUBSCRIBE   = "您已经取消了本群的消息订阅, 无法发送或者接收消息."
-	MESSAGE_COMMANDS_INFO      = "/INFO"
-	MESSAGE_COMMANDS_INFO_RESP = "当前订阅人数: %d"
-)

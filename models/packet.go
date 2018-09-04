@@ -198,7 +198,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		return nil, session.TransactionError(ctx, err)
 	}
 	if packet != nil {
-		mutation := createDistributeMessage(ctx, config.ClientId, packet.UserId, "PLAIN_TEXT", []byte(fmt.Sprintf("%s 打开了你的红包", current.FullName)))
+		mutation := createDistributeMessage(ctx, config.ClientId, packet.UserId, "PLAIN_TEXT", []byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName)))
 		session.Database(ctx).Apply(ctx, []*spanner.Mutation{mutation}, "distributed_messages", "INSERT", "ClaimPacket")
 	}
 	return packet, nil

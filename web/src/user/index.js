@@ -38,7 +38,7 @@ User.prototype = {
 
         $('body').attr('class', 'user layout');
         $('#layout-container').html(self.templateShow());
-        $('.members').html("当前群订阅成员数:" + resp.data.users_count);
+        $('.members').html(window.i18n.t('user.participants.count') + resp.data.users_count);
         if (data.subscribed_at === "0001-01-01T00:00:00Z") {
           $('.subscribe').show();
         } else {

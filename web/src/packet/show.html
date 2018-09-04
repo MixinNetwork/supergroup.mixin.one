@@ -13,14 +13,14 @@
 <div class="packet lottery">
   {{#if lottery}}
   <h3>{{lottery.amount}} <span>{{asset.symbol}}</span></h3>
-  <p>红包会发送到你的钱包</p>
+  <p>{{t 'packet.expired'}}</p>
   {{else}}
-  <h3 class="expire statement">红包已完成，如有剩余将退回发送者钱包</h3>
+  <h3 class="expire statement">{{t 'asset.completed'}}</h3>
   {{/if}}
 </div>
 
 <div class="packet history">
-  <h4>已经打开 {{opened_count}}/{{total_count}} 红包, {{opened_amount}}/{{amount}} {{asset.symbol}}</h4>
+  <h4>{{t 'packet.opened' opened_count=opened_count total_count=total_count}}, {{opened_amount}}/{{amount}} {{asset.symbol}}</h4>
   <ul>
   </ul>
 </div>

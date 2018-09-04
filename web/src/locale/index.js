@@ -1,7 +1,7 @@
 import Polyglot from 'node-polyglot';
 
 function Locale(lang) {
-  var locale = 'en-US';
+  var locale = LOCALE;
   this.polyglot = new Polyglot({locale: locale});
   this.polyglot.extend(require('./' + locale + '.json'));
 }

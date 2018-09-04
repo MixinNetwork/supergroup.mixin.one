@@ -1,0 +1,38 @@
+{
+  "general": {
+    "errors": {
+      "0": "网络错误。",
+      "403": "权限不足。",
+      "429": "请求太频繁。",
+      "500": "服务器错误",
+      "10001": "服务器错误。",
+      "10002": "数据不合法。"
+    }
+  },
+  "packet": {
+    "amount.min": "最小 0.0001",
+    "participants.max": "不能超过群成员数 %{count}",
+    "participants.num": "人数",
+    "greeting.title": "祝福语",
+    "greeting.max": "最多 36 个字符",
+    "payment": "支付红包",
+    "open": "打开红包",
+    "paid": "红包会发送到你的钱包",
+    "completed": "红包已完成，如有剩余将退回发送者钱包",
+    "opened": "已经打开 %{opened_count}/%{total_count} 红包"
+  },
+  "user": {
+    "participants.count": "当前群订阅成员数:",
+    "payment.help": "您需要支付 0.001 个 XIN, 才能使用群组功能。",
+    "payment.action": "支付 0.001 XIN 加入群组",
+    "subscribe": "订阅群组消息",
+    "unsubscribe": "取消订阅群组",
+    "browser": "浏览群组成员",
+    "red.packet": "发红包",
+    "loading": "加载更多"
+  },
+  "operator": {
+    "action.remove": "移除群组",
+    "action.block": "加入黑名单"
+  }
+}

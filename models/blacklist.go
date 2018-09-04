@@ -5,6 +5,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"google.golang.org/api/iterator"
 )
@@ -24,7 +25,7 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	if err != nil {
 		return nil, session.ForbiddenError(ctx)
 	}
-	if !operators[user.UserId] {
+	if !config.Operators[user.UserId] {
 		return nil, nil
 	}
 	user, err = findUserById(ctx, userId)

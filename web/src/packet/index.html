@@ -14,19 +14,19 @@
   <div class="form content">
     <form action="javascript:void(0);">
       <div class="field">
-        <input type="number" step="0.0001" min="0" max="{{asset.balance}}" name="amount" placeholder="最小 0.0001" />
+        <input type="number" step="0.0001" min="0" max="{{asset.balance}}" name="amount" placeholder="{{t 'packet.amount.min' }}" />
         <label for="amount">{{asset.symbol}}</label>
       </div>
       <div class="field">
-        <input type="number" min="0" max="{{conversation.participants_count}}" name="total_count" placeholder="不能超过群成员数 {{conversation.participants_count}}" />
-        <label for="total_count">人数</label>
+        <input type="number" min="0" max="{{conversation.participants_count}}" name="total_count" placeholder="{{t 'packet.participants.max' count=conversation.participants_count}}" />
+        <label for="total_count">{{t 'packet.participants.num'}}</label>
       </div>
       <div class="field">
-        <input type="text" name="greeting" placeholder="最多 36 个字符" />
-        <label for="greeting">祝福语</label>
+        <input type="text" name="greeting" placeholder="{{t 'packet.greeting.max'}}" />
+        <label for="greeting">{{t 'packet.greeting.title'}}</label>
       </div>
       <div class="field">
-        <input type="submit" value="确认支付红包" />
+        <input type="submit" value="{{t 'packet.payment'}}" />
       </div>
       <input type="hidden" value="{{conversation.conversation_id}}" name="conversation_id" />
       <input type="hidden" value="{{asset.asset_id}}" name="asset_id" />

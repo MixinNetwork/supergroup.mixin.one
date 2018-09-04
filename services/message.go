@@ -304,19 +304,19 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 }
 
 func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet) error {
-	description := fmt.Sprintf("来自 %s 的红包", packet.User.FullName)
+	description := fmt.Sprintf(config.GroupRedPacketDesc, packet.User.FullName)
 	if strings.TrimSpace(packet.User.FullName) == "" {
-		description = "来自无名氏的红包"
+		description = config.GroupRedPacketShortDesc
 	}
 	if count := utf8.RuneCountInString(description); count > 100 {
 		name := string([]rune(packet.User.FullName)[:16])
-		description = fmt.Sprintf("来自 %s 的红包", name)
+		description = fmt.Sprintf(config.GroupRedPacketDesc, name)
 	}
 	card, err := json.Marshal(map[string]string{
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
-		"title":       "中文群红包",
+		"title":       config.GroupRedPacket,
 		"description": description,
-		"action":      "https://chinese-group.mixin.zone/#/packets/" + packet.PacketId,
+		"action":      config.HTTPResourceHost + "/#/packets/" + packet.PacketId,
 	})
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
@@ -385,24 +385,21 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	if err != nil {
 		return err
 	}
-	if user == nil {
-		return sendHelpMessge(ctx, mc, message)
-	}
-	if user.State != models.PaymentStatePaid {
-		return sendHelpMessge(ctx, mc, message)
+	if user == nil || user.State != models.PaymentStatePaid {
+		return sendHelpMessge(ctx, user, mc, message)
 	}
 	if user.SubscribedAt.IsZero() {
-		return sendTextMessage(ctx, mc, message.ConversationId, models.MESSAGE_TIPS_UNSUBSCRIBE)
+		return sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsUnsubscribe)
 	}
 	dataBytes, err := base64.StdEncoding.DecodeString(message.Data)
 	if err != nil {
 		return session.BadDataError(ctx)
 	} else if len(dataBytes) < 10 {
-		if strings.ToUpper(string(dataBytes)) == models.MESSAGE_COMMANDS_INFO {
+		if strings.ToUpper(string(dataBytes)) == config.MessageCommandsInfo {
 			if count, err := models.SubscribersCount(ctx); err != nil {
 				return err
 			} else {
-				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(models.MESSAGE_COMMANDS_INFO_RESP, count))
+				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.MessageCommandsInfoResp, count))
 			}
 		}
 	}
@@ -412,11 +409,17 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	return nil
 }
 
-func sendHelpMessge(ctx context.Context, mc *MessageContext, message *MessageView) error {
-	if err := sendTextMessage(ctx, mc, message.ConversationId, models.MESSAGE_TIPS_HELP); err != nil {
+func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
+	if user == nil {
+		if err := sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsGuest); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsHelp); err != nil {
 		return err
 	}
-	if err := sendAppButton(ctx, mc, "点击加入群组", message.ConversationId, config.HTTPResourceHost); err != nil {
+	if err := sendAppButton(ctx, mc, config.MessageTipsHelpBtn, message.ConversationId, config.HTTPResourceHost); err != nil {
 		return err
 	}
 	return nil

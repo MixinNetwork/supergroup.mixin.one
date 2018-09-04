@@ -9,6 +9,38 @@ const (
 )
 
 const (
+	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
+	// 设置成 "0", 所有人都可以加入
+	PaymentAmount  = "0.001"
+)
+
+const (
+	GroupRedPacket          = "中文群红包"
+	GroupRedPacketShortDesc = "来自无名氏的红包"
+	GroupRedPacketDesc      = "来自 %s 的红包"
+	GroupOpenedRedPacket    = "%s 打开了你的红包"
+
+	MessageTipsGuest       = "您需要先点击机器图标授权。"
+	MessageTipsJoin        = "%s 加入了群组"
+	MessageTipsHelp        = "您需要先支付 0.001 XIN, 加入群组才能发消息。"
+	MessageTipsHelpBtn     = "点击加入群组"
+	MessageTipsUnsubscribe = "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
+
+	// commands
+	MessageCommandsInfo     = "/INFO"
+	MessageCommandsInfoResp = "当前订阅人数: %d"
+)
+
+var Operators = map[string]bool{
+	"e9e5b807-fa8b-455a-8dfa-b189d28310ff": true,
+	"fcb87491-4fa0-4c2f-b387-262b63cbc112": true,
+	"f59b9309-70c2-4b69-8fd8-5773dbd10018": true,
+	"b847a455-aa41-4f7d-8038-0aefbe40dcaa": true,
+	"b26b9a74-40dd-4e8d-8e41-94d9fce0b5c0": true,
+	"04379bf8-87fb-41c6-a247-ee19bf9cf4a3": true,
+}
+
+const (
 	ClientId        = "5fcd897e-e7b2-40d5-93cd-487e2d955556"
 	ClientSecret    = "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
 	SessionAssetPIN = "133123"
@@ -36,7 +68,3 @@ const (
 	GoogleCloudSpanner = "projects/$GCLOUD_PROJECT/instances/test-instance/databases/example-db"
 )
 
-const (
-	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
-	PaymentAmount  = "0.001"
-)
