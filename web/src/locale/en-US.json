@@ -15,11 +15,11 @@
     "participants.num": "PART",
     "greeting.title": "Greeting",
     "greeting.max": "Can't exceed 36 characters",
-    "payment": "Pay red packet",
-    "open": "Open red packet",
-    "paid": "The packet has sent to your wallet",
-    "completed": "Packet has beed completed, if there are any remains will be return to the sender.",
-    "opened": "Opened %{opened_count}/%{total_count} packets"
+    "payment": "Pay lucky coin",
+    "open": "Open lucky coin",
+    "paid": "The lucky coin has sent to your wallet",
+    "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender.",
+    "opened": "Opened %{opened_count}/%{total_count} lucky coin"
   },
   "user": {
     "participants.count": "Group members:",
@@ -28,7 +28,7 @@
     "subscribe": "Subscribe the group",
     "unsubscribe": "Unsubscribe the group",
     "browser": "Browse the group members",
-    "red.packet": "Send red packet",
+    "red.packet": "Send lucky coin",
     "loading": "Loading"
   },
   "operator": {
