@@ -26,7 +26,7 @@ User.prototype = {
         $('.btn.pay').on('click', function() {
           $('.submitting.overlay').show();
           setTimeout(function() { self.waitForPayment(); }, 1500);
-          window.location.replace('mixin://pay?recipient=' + CLIENT_ID + '&asset=c94ac88f-4671-3976-b60a-09064f1811e8&amount=0.001&trace=' + data.trace_id);
+          window.location.replace('mixin://pay?recipient=' + CLIENT_ID + '&asset=c94ac88f-4671-3976-b60a-09064f1811e8&amount=0.001&trace=' + data.trace_id + '&memo=0.001%20XIN');
         });
         return;
       }
