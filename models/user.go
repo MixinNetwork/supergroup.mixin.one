@@ -133,6 +133,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		}
 		if number.FromString(config.PaymentAmount).Exhausted() {
 			user.State = PaymentStatePaid
+			user.SubscribedAt = time.Now()
 		}
 	}
 	user.AuthenticationToken = authenticationToken
