@@ -134,6 +134,10 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		if number.FromString(config.PaymentAmount).Exhausted() {
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
+			err = createConversation(ctx, "CONTACT", userId)
+			if err != nil {
+				return nil, session.ServerError(ctx, err)
+			}
 		}
 	}
 	user.AuthenticationToken = authenticationToken
@@ -145,6 +149,22 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		return nil, session.TransactionError(ctx, err)
 	}
 	return user, nil
+}
+
+func createConversation(ctx context.Context, category, participantId string) error {
+	conversationId := bot.UniqueConversationId(config.ClientId, participantId)
+	participant := bot.Participant{
+		UserId: participantId,
+		Role:   "",
+	}
+	participants := []bot.Participant{
+		participant,
+	}
+	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.ClientId, config.SessionId, config.SessionKey)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (user *User) UpdateProfile(ctx context.Context, fullName string) error {

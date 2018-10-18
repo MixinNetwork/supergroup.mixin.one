@@ -22,7 +22,7 @@ import (
 const (
 	keepAlivePeriod = 3 * time.Second
 	writeWait       = 10 * time.Second
-	pongWait        = 60 * time.Second
+	pongWait        = 10 * time.Second
 	pingPeriod      = (pongWait * 9) / 10
 )
 
@@ -149,8 +149,18 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		mc.ReadDone <- true
 	}()
 	conn.SetReadDeadline(time.Now().Add(pongWait))
-	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	conn.SetPongHandler(func(string) error {
+		err := conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			return session.BlazeServerError(ctx, err)
+		}
+		return nil
+	})
 	for {
+		err := conn.SetReadDeadline(time.Now().Add(pongWait))
+		if err != nil {
+			return session.BlazeServerError(ctx, err)
+		}
 		messageType, wsReader, err := conn.NextReader()
 		if err != nil {
 			return session.BlazeServerError(ctx, err)
@@ -176,15 +186,15 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 		case data := <-mc.WriteBuffer:
 			err := writeGzipToConn(ctx, conn, data)
 			if err != nil {
-				return err
+				return session.BlazeServerError(ctx, err)
 			}
 		case <-mc.WriteDone:
 			return nil
 		case <-pingTicker.C:
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
-			err := conn.WriteMessage(websocket.PingMessage, []byte{})
+			err := conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
-				return err
+				return session.BlazeServerError(ctx, err)
 			}
 		}
 	}
@@ -196,7 +206,7 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 	mc.Transactions.set(id, func(t BlazeMessage) error {
 		select {
 		case resp <- t:
-		case <-time.After(3 * time.Second):
+		case <-time.After(2 * time.Second):
 			return fmt.Errorf("timeout to hook %s %s", action, id)
 		}
 		return nil
