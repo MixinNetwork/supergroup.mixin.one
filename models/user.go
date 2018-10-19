@@ -161,10 +161,7 @@ func createConversation(ctx context.Context, category, participantId string) err
 		participant,
 	}
 	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.ClientId, config.SessionId, config.SessionKey)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (user *User) UpdateProfile(ctx context.Context, fullName string) error {
