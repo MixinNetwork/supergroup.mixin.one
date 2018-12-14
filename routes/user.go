@@ -30,6 +30,7 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/amount", impl.amount)
+	router.GET("/users/:id", impl.show)
 }
 
 func (impl *usersImpl) authenticate(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -112,5 +113,15 @@ func (impl *usersImpl) block(w http.ResponseWriter, r *http.Request, params map[
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderBlankResponse(w, r)
+	}
+}
+
+func (impl *usersImpl) show(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	if user, err := models.FindUser(r.Context(), params["id"]); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else if user == nil {
+		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
+	} else {
+		views.RenderUserView(w, r, user)
 	}
 }

@@ -45,6 +45,10 @@ func RenderUsersView(w http.ResponseWriter, r *http.Request, users []*models.Use
 	RenderDataResponse(w, r, userViews)
 }
 
+func RenderUserView(w http.ResponseWriter, r *http.Request, user *models.User) {
+	RenderDataResponse(w, r, buildUserView(user))
+}
+
 func RenderAccount(w http.ResponseWriter, r *http.Request, user *models.User) {
 	userView := AccountView{
 		UserView:            buildUserView(user),

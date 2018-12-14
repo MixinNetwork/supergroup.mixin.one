@@ -14,6 +14,7 @@ import (
 var whitelist = [][2]string{
 	{"GET", "^/$"},
 	{"GET", "^/_hc$"},
+	{"GET", "^/users"},
 	{"POST", "^/auth$"},
 }
 
