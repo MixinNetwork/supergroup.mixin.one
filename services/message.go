@@ -148,6 +148,7 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		mc.WriteDone <- true
 		mc.ReadDone <- true
 	}()
+	conn.SetReadLimit(1024000 * 128)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
 		err := conn.SetReadDeadline(time.Now().Add(pongWait))
