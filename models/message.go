@@ -50,7 +50,7 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, messageId, userId, category string, data []byte, createdAt, updatedAt time.Time) (*Message, error) {
-	if category == "PLAIN_AUDIO" {
+	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
 		return nil, nil
 	}
 	message := &Message{
