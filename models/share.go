@@ -8,7 +8,7 @@ import (
 
 	"cloud.google.com/go/spanner"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
-	uuid "github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"google.golang.org/api/iterator"
 )
 
