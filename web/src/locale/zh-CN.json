@@ -24,8 +24,8 @@
   },
   "user": {
     "participants.count": "当前群订阅成员数:",
-    "payment.help": "您需要支付 0.001 个 XIN, 才能使用群组功能。",
-    "payment.action": "支付 0.001 XIN 加入群组",
+    "payment.help": "您需要支付 0.01 个 XIN, 才能使用群组功能。",
+    "payment.action": "支付 0.01 XIN 加入群组",
     "subscribe": "订阅群组消息",
     "unsubscribe": "取消订阅群组",
     "browser": "浏览群组成员",

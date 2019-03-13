@@ -24,8 +24,8 @@
   },
   "user": {
     "participants.count": "Group members:",
-    "payment.help": "You need to pay 0.001 XIN to join the group.",
-    "payment.action": "Pay 0.001 XIN to join the group",
+    "payment.help": "You need to pay 0.01 XIN to join the group.",
+    "payment.action": "Pay 0.01 XIN to join the group",
     "subscribe": "Subscribe the group",
     "unsubscribe": "Unsubscribe the group",
     "browser": "Browse the group members",
