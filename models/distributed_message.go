@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
-	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"google.golang.org/api/iterator"
 )
 
 const (
-	DistributeSubscriberLimit      = 300
+	DistributeSubscriberLimit      = 100
 	ExpiredDistributedMessageLimit = 100
 	PendingDistributedMessageLimit = 20
 )
@@ -52,10 +51,10 @@ type DistributedMessage struct {
 	UpdatedAt      time.Time
 }
 
-func createDistributeMessage(ctx context.Context, userId, recipientId, category string, data []byte) *spanner.Mutation {
+func createDistributeMessage(ctx context.Context, messageId, userId, recipientId, category string, data []byte) *spanner.Mutation {
 	t := time.Now()
 	dm := &DistributedMessage{
-		MessageId:      bot.UuidNewV4().String(),
+		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,
@@ -74,11 +73,23 @@ func (message *Message) Distribute(ctx context.Context) error {
 			return session.TransactionError(ctx, err)
 		}
 		mutations := []*spanner.Mutation{}
+		messageIds := make([]string, len(ids))
+		for i, id := range ids {
+			messageIds[i] = UniqueConversationId(id, message.MessageId)
+		}
+		set, err := readDistributedMessagesByIds(ctx, messageIds)
+		if err != nil {
+			return session.TransactionError(ctx, err)
+		}
 		for _, id := range ids {
 			if id == message.UserId {
 				continue
 			}
-			mutations = append(mutations, createDistributeMessage(ctx, message.UserId, id, message.Category, message.Data))
+			messageId := UniqueConversationId(id, message.MessageId)
+			if set[messageId] {
+				continue
+			}
+			mutations = append(mutations, createDistributeMessage(ctx, messageId, message.UserId, id, message.Category, message.Data))
 		}
 		if len(ids) < DistributeSubscriberLimit {
 			message.LastDistributeAt = time.Now()
@@ -169,6 +180,30 @@ func CleanUpExpiredDistributedMessages(ctx context.Context, ids []string) error 
 		return session.TransactionError(ctx, err)
 	}
 	return nil
+}
+
+func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
+	stmt := spanner.Statement{
+		SQL:    "SELECT message_id FROM distributed_messages WHERE message_id IN UNNEST(@ids)",
+		Params: map[string]interface{}{"ids": ids},
+	}
+	it := session.Database(ctx).Query(ctx, stmt, "distributed_messages", "SELECT")
+	defer it.Stop()
+
+	set := make(map[string]bool)
+	for {
+		row, err := it.Next()
+		if err == iterator.Done {
+			return set, nil
+		} else if err != nil {
+			return nil, err
+		}
+		var id string
+		if err := row.Columns(&id); err != nil {
+			return nil, err
+		}
+		set[id] = true
+	}
 }
 
 func distributedMessageFromRow(row *spanner.Row) (*DistributedMessage, error) {
