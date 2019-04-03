@@ -109,6 +109,16 @@ func (message *Message) Distribute(ctx context.Context) error {
 	return nil
 }
 
+func (message *Message) Leapfrog(ctx context.Context) error {
+	message.LastDistributeAt = time.Now()
+	message.State = MessageStateSuccess
+	err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{spanner.Update("messages", []string{"message_id", "state", "last_distribute_at"}, []interface{}{message.MessageId, message.State, message.LastDistributeAt})}, "messages", "UPDATE", "Leapfrog")
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
 func PendingDistributedMessages(ctx context.Context, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
 	txn := session.Database(ctx).ReadOnlyTransaction()

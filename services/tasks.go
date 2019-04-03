@@ -31,6 +31,10 @@ func loopPendingMessage(ctx context.Context) {
 			if !config.Operators[message.UserId] {
 				if message.Category == "PLAIN_TEXT" {
 					if re.Match(message.Data) {
+						if err := message.Leapfrog(ctx); err != nil {
+							time.Sleep(500 * time.Millisecond)
+							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
+						}
 						continue
 					}
 				}
