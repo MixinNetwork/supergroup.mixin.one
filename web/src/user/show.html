@@ -15,8 +15,10 @@
     <a href="/subscribers" class="action btn subscriber" data-navigo>
       {{t 'user.browser'}}
     </a>
+    {{#if isMixin}}
     <a href="/prepare" class="action btn red-packet" data-navigo>
       {{t 'user.red.packet'}}
     </a>
+    {{/if}}
   </div>
 </main>
