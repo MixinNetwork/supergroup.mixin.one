@@ -11,11 +11,16 @@ import (
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/interceptors"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gorilla/websocket"
 	"mvdan.cc/xurls"
 )
+
+type Attachment struct {
+	AttachmentId string `json:"attachment_id"`
+}
 
 func loopPendingMessage(ctx context.Context) {
 	limit := 5
@@ -35,6 +40,20 @@ func loopPendingMessage(ctx context.Context) {
 							time.Sleep(500 * time.Millisecond)
 							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
 						}
+						continue
+					}
+				}
+				if message.Category == "PLAIN_IMAGE" {
+					var a Attachment
+					err = json.Unmarshal(message.Data, &a)
+					if err != nil {
+						continue
+					}
+					attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
+					if err != nil {
+						continue
+					}
+					if interceptors.CheckQRCode(attachment.ViewURL) {
 						continue
 					}
 				}
