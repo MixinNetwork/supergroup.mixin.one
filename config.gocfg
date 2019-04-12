@@ -6,6 +6,9 @@ const (
 	BuildVersion     = "BUILD_VERSION"
 	HTTPListenPort   = 7001
 	HTTPResourceHost = "https://chinese-group.mixin.test"
+
+	DetectImageEnabled = false
+	DetectLinkEnabled  = false
 )
 
 const (
