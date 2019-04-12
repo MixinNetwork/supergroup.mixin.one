@@ -34,7 +34,7 @@ func loopPendingMessage(ctx context.Context) {
 		}
 		for _, message := range messages {
 			if !config.Operators[message.UserId] {
-				if message.Category == "PLAIN_TEXT" {
+				if config.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
 					if re.Match(message.Data) {
 						if err := message.Leapfrog(ctx); err != nil {
 							time.Sleep(500 * time.Millisecond)
@@ -43,7 +43,7 @@ func loopPendingMessage(ctx context.Context) {
 						continue
 					}
 				}
-				if message.Category == "PLAIN_IMAGE" {
+				if config.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
 					if !validateMessage(ctx, message) {
 						if err := message.Leapfrog(ctx); err != nil {
 							time.Sleep(500 * time.Millisecond)
@@ -214,5 +214,8 @@ func validateMessage(ctx context.Context, message *models.Message) bool {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false
 	}
-	return !interceptors.CheckQRCode(attachment.ViewURL)
+	if interceptors.CheckQRCode(attachment.ViewURL) {
+		return false
+	}
+	return !interceptors.CheckSex(ctx, attachment.ViewURL)
 }

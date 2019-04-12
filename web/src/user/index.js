@@ -2,6 +2,7 @@ import './index.scss';
 import $ from 'jquery';
 import TimeUtils from '../utils/time.js';
 import URLUtils from '../utils/url.js';
+import MixinUtils from '../utils/mixin.js';
 
 function User(router, api) {
   this.router = router;
@@ -38,7 +39,7 @@ User.prototype = {
 
         $('body').attr('class', 'user layout');
         $('#layout-container').html(self.templateShow({
-          isMixin: (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext) || (window.MixinContext && window.MixinContext.getContext)
+          isMixin: !!MixinUtils.environment()
         }));
         $('.members').html(window.i18n.t('user.participants.count') + resp.data.users_count);
         if (data.subscribed_at === "0001-01-01T00:00:00Z") {
