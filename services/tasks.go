@@ -44,16 +44,11 @@ func loopPendingMessage(ctx context.Context) {
 					}
 				}
 				if message.Category == "PLAIN_IMAGE" {
-					var a Attachment
-					err = json.Unmarshal(message.Data, &a)
-					if err != nil {
-						continue
-					}
-					attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
-					if err != nil {
-						continue
-					}
-					if interceptors.CheckQRCode(attachment.ViewURL) {
+					if !validateMessage(ctx, message) {
+						if err := message.Leapfrog(ctx); err != nil {
+							time.Sleep(500 * time.Millisecond)
+							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
+						}
 						continue
 					}
 				}
@@ -205,4 +200,19 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 		return session.BlazeServerError(ctx, err)
 	}
 	return nil
+}
+
+func validateMessage(ctx context.Context, message *models.Message) bool {
+	var a Attachment
+	err := json.Unmarshal(message.Data, &a)
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
+		return false
+	}
+	attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
+		return false
+	}
+	return !interceptors.CheckQRCode(attachment.ViewURL)
 }
