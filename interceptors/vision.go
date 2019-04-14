@@ -10,12 +10,12 @@ import (
 func CheckSex(ctx context.Context, uri string) bool {
 	client, err := vision.NewImageAnnotatorClient(ctx)
 	if err != nil {
-		return false
+		return true
 	}
 	image := vision.NewImageFromURI(uri)
 	safe, err := client.DetectSafeSearch(ctx, image, nil)
 	if err != nil {
-		return false
+		return true
 	}
 	if safe.Adult >= pp.Likelihood_LIKELY {
 		return true
