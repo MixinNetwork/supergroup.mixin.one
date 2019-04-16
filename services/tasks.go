@@ -214,7 +214,7 @@ func validateMessage(ctx context.Context, message *models.Message) bool {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false
 	}
-	if interceptors.CheckQRCode(attachment.ViewURL) {
+	if interceptors.CheckQRCode(ctx, attachment.ViewURL) {
 		return false
 	}
 	return !interceptors.CheckSex(ctx, attachment.ViewURL)

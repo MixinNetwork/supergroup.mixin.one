@@ -29,7 +29,6 @@ func (hub *Hub) StartService(name string) error {
 	}
 
 	ctx := session.WithLogger(hub.context, durable.BuildLogger())
-
 	return service.Run(ctx)
 }
 
