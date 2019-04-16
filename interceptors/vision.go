@@ -17,7 +17,7 @@ func CheckSex(ctx context.Context, uri string) bool {
 	image := vision.NewImageFromURI(uri)
 	safe, err := client.DetectSafeSearch(ctx, image, nil)
 	if err != nil {
-		session.Logger(ctx).Errorf("CheckSex DetectSafeSearch ERROR: %+v", err)
+		session.Logger(ctx).Errorf("CheckSex DetectSafeSearch ERROR: %+v, URI: %s", err, uri)
 		return true
 	}
 	if safe.Adult >= pp.Likelihood_LIKELY {
