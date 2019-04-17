@@ -20,6 +20,7 @@ func CheckSex(ctx context.Context, uri string) bool {
 		session.Logger(ctx).Errorf("CheckSex DetectSafeSearch ERROR: %+v, URI: %s", err, uri)
 		return true
 	}
+	session.Logger(ctx).Infof("CheckSex DetectSafeSearch Adult: %s  URI: %s", safe.Adult, uri)
 	if safe.Adult >= pp.Likelihood_LIKELY {
 		return true
 	}

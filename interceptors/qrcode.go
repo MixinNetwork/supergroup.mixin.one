@@ -34,6 +34,7 @@ func CheckQRCode(ctx context.Context, uri string) bool {
 
 		return false
 	}
+	session.Logger(ctx).Infof("CheckQRCode qrmatrix: %d URI: %s", len(qrmatrix.Content), uri)
 	if len(qrmatrix.Content) > 0 {
 		return true
 	}
