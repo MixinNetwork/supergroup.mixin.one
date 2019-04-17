@@ -1,31 +1,16 @@
 package interceptors
 
 import (
+	"bytes"
 	"context"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/tuotoo/qrcode"
 )
 
-func CheckQRCode(ctx context.Context, uri string) bool {
-	req, err := http.NewRequest(http.MethodGet, uri, nil)
-	if err != nil {
-		return false
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
-	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil {
-		session.Logger(ctx).Errorf("CheckQRCode ERROR: %+v", err)
-		return false
-	}
-	defer resp.Body.Close()
-
-	qrmatrix, err := qrcode.Decode(resp.Body)
+func CheckQRCode(ctx context.Context, data []byte) bool {
+	qrmatrix, err := qrcode.Decode(bytes.NewReader(data))
 	if err != nil {
 		session.Logger(ctx).Errorf("CheckQRCode Decode ERROR: %+v", err)
 		if strings.Contains(err.Error(), "level and mask") {
@@ -34,7 +19,7 @@ func CheckQRCode(ctx context.Context, uri string) bool {
 
 		return false
 	}
-	session.Logger(ctx).Infof("CheckQRCode qrmatrix: %d URI: %s", len(qrmatrix.Content), uri)
+	session.Logger(ctx).Infof("CheckQRCode qrmatrix: %d", len(qrmatrix.Content))
 	if len(qrmatrix.Content) > 0 {
 		return true
 	}

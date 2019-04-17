@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"sync"
 	"time"
 
@@ -214,8 +216,33 @@ func validateMessage(ctx context.Context, message *models.Message) bool {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false
 	}
-	if interceptors.CheckQRCode(ctx, attachment.ViewURL) {
+
+	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", attachment.ViewURL)
+	req, err := http.NewRequest(http.MethodGet, attachment.ViewURL, nil)
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false
 	}
-	return !interceptors.CheckSex(ctx, attachment.ViewURL)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
+		return false
+	}
+	defer resp.Body.Close()
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+		session.Logger(ctx).Errorf("validateMessage StatusCode ERROR: %d", resp.StatusCode)
+		return false
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
+		return false
+	}
+	if interceptors.CheckQRCode(ctx, data) {
+		return false
+	}
+	return !interceptors.CheckSex(ctx, data)
 }
