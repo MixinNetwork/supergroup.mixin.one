@@ -110,9 +110,33 @@ func (message *Message) Distribute(ctx context.Context) error {
 }
 
 func (message *Message) Leapfrog(ctx context.Context) error {
+	ids := make([]string, 0)
+	for key, _ := range config.Operators {
+		ids = append(ids, key)
+	}
+	messageIds := make([]string, len(ids))
+	for i, id := range ids {
+		messageIds[i] = UniqueConversationId(id, message.MessageId)
+	}
+	set, err := readDistributedMessagesByIds(ctx, messageIds)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	mutations := make([]*spanner.Mutation, 0)
+	for _, id := range ids {
+		if id == message.UserId {
+			continue
+		}
+		messageId := UniqueConversationId(id, message.MessageId)
+		if set[messageId] {
+			continue
+		}
+		mutations = append(mutations, createDistributeMessage(ctx, messageId, message.UserId, id, message.Category, message.Data))
+	}
 	message.LastDistributeAt = time.Now()
 	message.State = MessageStateSuccess
-	err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{spanner.Update("messages", []string{"message_id", "state", "last_distribute_at"}, []interface{}{message.MessageId, message.State, message.LastDistributeAt})}, "messages", "UPDATE", "Leapfrog")
+	mutations = append(mutations, spanner.Update("messages", []string{"message_id", "state", "last_distribute_at"}, []interface{}{message.MessageId, message.State, message.LastDistributeAt}))
+	err = session.Database(ctx).Apply(ctx, mutations, "messages", "UPDATE", "Leapfrog")
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
