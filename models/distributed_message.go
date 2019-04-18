@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"google.golang.org/api/iterator"
@@ -109,7 +110,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 	return nil
 }
 
-func (message *Message) Leapfrog(ctx context.Context) error {
+func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	ids := make([]string, 0)
 	for key, _ := range config.Operators {
 		ids = append(ids, key)
@@ -131,7 +132,9 @@ func (message *Message) Leapfrog(ctx context.Context) error {
 		if set[messageId] {
 			continue
 		}
+		data := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		mutations = append(mutations, createDistributeMessage(ctx, messageId, message.UserId, id, message.Category, message.Data))
+		mutations = append(mutations, createDistributeMessage(ctx, bot.UuidNewV4().String(), message.UserId, id, "PLAIN_TEXT", []byte(data)))
 	}
 	message.LastDistributeAt = time.Now()
 	message.State = MessageStateSuccess

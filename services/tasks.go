@@ -38,7 +38,7 @@ func loopPendingMessage(ctx context.Context) {
 			if !config.Operators[message.UserId] {
 				if config.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
 					if re.Match(message.Data) {
-						if err := message.Leapfrog(ctx); err != nil {
+						if err := message.Leapfrog(ctx, "Message contains link"); err != nil {
 							time.Sleep(500 * time.Millisecond)
 							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
 						}
@@ -46,8 +46,8 @@ func loopPendingMessage(ctx context.Context) {
 					}
 				}
 				if config.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
-					if !validateMessage(ctx, message) {
-						if err := message.Leapfrog(ctx); err != nil {
+					if b, reason := validateMessage(ctx, message); !b {
+						if err := message.Leapfrog(ctx, reason); err != nil {
 							time.Sleep(500 * time.Millisecond)
 							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
 						}
@@ -204,45 +204,51 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 	return nil
 }
 
-func validateMessage(ctx context.Context, message *models.Message) bool {
+func validateMessage(ctx context.Context, message *models.Message) (bool, string) {
 	var a Attachment
 	err := json.Unmarshal(message.Data, &a)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false
+		return false, "message.Data Unmarshal error"
 	}
 	attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false
+		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id", err, a.AttachmentId)
 	}
 
 	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", attachment.ViewURL)
 	req, err := http.NewRequest(http.MethodGet, attachment.ViewURL, nil)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false
+		return false, fmt.Sprintf("http.NewRequest error: %+v", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false
+		return false, fmt.Sprintf("http.Do error: %+v", err)
 	}
 	defer resp.Body.Close()
 	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		session.Logger(ctx).Errorf("validateMessage StatusCode ERROR: %d", resp.StatusCode)
-		return false
+		return false, fmt.Sprintf("resp.StatusCode error: %d", resp.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false
+		return false, fmt.Sprintf("ioutil.ReadAll error: %+v", err)
 	}
-	if interceptors.CheckQRCode(ctx, data) {
-		return false
+	if b, err := interceptors.CheckQRCode(ctx, data); b {
+		if err != nil {
+			return false, fmt.Sprintf("CheckQRCode error: %+v", err)
+		}
+		return false, "Image contains QR Code"
 	}
-	return !interceptors.CheckSex(ctx, data)
+	if b, err := interceptors.CheckSex(ctx, data); b {
+		return false, fmt.Sprintf("CheckSex: %+v", err)
+	}
+	return true, ""
 }

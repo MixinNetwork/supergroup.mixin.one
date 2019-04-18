@@ -9,19 +9,19 @@ import (
 	"github.com/tuotoo/qrcode"
 )
 
-func CheckQRCode(ctx context.Context, data []byte) bool {
+func CheckQRCode(ctx context.Context, data []byte) (bool, error) {
 	qrmatrix, err := qrcode.Decode(bytes.NewReader(data))
 	if err != nil {
 		session.Logger(ctx).Errorf("CheckQRCode Decode ERROR: %+v", err)
 		if strings.Contains(err.Error(), "level and mask") {
-			return true
+			return true, err
 		}
 
-		return false
+		return false, err
 	}
 	session.Logger(ctx).Infof("CheckQRCode qrmatrix: %d", len(qrmatrix.Content))
 	if len(qrmatrix.Content) > 0 {
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }
