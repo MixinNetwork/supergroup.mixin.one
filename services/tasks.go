@@ -214,7 +214,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 	attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id", err, a.AttachmentId)
+		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
 	}
 
 	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", attachment.ViewURL)
@@ -223,7 +223,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, fmt.Sprintf("http.NewRequest error: %+v", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*6)
 	defer cancel()
 	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
