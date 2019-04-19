@@ -5,6 +5,10 @@ function Packet(api) {
 Packet.prototype = {
   prepare: function (callback) {
     this.api.request('GET', '/packets/prepare', undefined, function(resp) {
+      if (!!resp.error && resp.error.code === 403) {
+        resp.error.code = 401;
+        return
+      }
       return callback(resp);
     });
   },
