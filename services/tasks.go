@@ -223,7 +223,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, fmt.Sprintf("http.NewRequest error: %+v", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*6)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
