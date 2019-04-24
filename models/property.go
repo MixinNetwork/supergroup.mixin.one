@@ -47,7 +47,7 @@ func ReadProperty(ctx context.Context, key string) (string, error) {
 }
 
 func writeProperty(ctx context.Context, tx *sql.Tx, key, value string) error {
-	query := "INSERT INTO properties ('key','value','updated_at') VALUES($1,$2,$3) ON CONFLICT ('key') DO UPDATE SET ('value', 'updated_at')=(EXCLUDED.value, EXCLUDED.updated_at)"
+	query := "INSERT INTO properties (key,value,updated_at) VALUES($1,$2,$3) ON CONFLICT (key) DO UPDATE SET (value,updated_at)=(EXCLUDED.value, EXCLUDED.updated_at)"
 	_, err := tx.ExecContext(ctx, query, key, value, time.Now())
 	return err
 }

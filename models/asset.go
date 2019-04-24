@@ -110,7 +110,7 @@ func upsertAssets(ctx context.Context, assets []*Asset) error {
 		}
 		values.WriteString(fmt.Sprintf("('%s','%s','%s','%s','%s','%s')", a.AssetId, a.Symbol, a.Name, a.IconURL, a.PriceBTC, a.PriceUSD))
 	}
-	query := fmt.Sprintf("INSERT INTO assets (%s) VALUES %s ON CONFLICT (asset_id) DO UPDATE SET ('icon_url', 'price_btc', 'price_usd')=(EXCLUDED.icon_url, EXCLUDED.price_btc, EXCLUDED.price_usd)", strings.Join(assetsCols, ","), values.String())
+	query := fmt.Sprintf("INSERT INTO assets (%s) VALUES %s ON CONFLICT (asset_id) DO UPDATE SET (icon_url,price_btc,price_usd)=(EXCLUDED.icon_url, EXCLUDED.price_btc, EXCLUDED.price_usd)", strings.Join(assetsCols, ","), values.String())
 	_, err := session.Database(ctx).ExecContext(ctx, query)
 	return err
 }

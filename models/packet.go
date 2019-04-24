@@ -183,9 +183,6 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		}
 		var userId string
 		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1", packet.PacketId).Scan(&userId)
-		if err != nil {
-			return err
-		}
 		if err == sql.ErrNoRows {
 			return handlePacketClaim(ctx, tx, packet, current.UserId)
 		}

@@ -91,37 +91,39 @@ func (message *Message) Distribute(ctx context.Context) error {
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
-		messageIds := make([]string, len(users))
-		for i, user := range users {
-			messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
-		}
-		set, err := readDistributedMessagesByIds(ctx, messageIds)
-		if err != nil {
-			return session.TransactionError(ctx, err)
-		}
 		var last time.Time
 		var values bytes.Buffer
-		i := 0
-		for _, user := range users {
-			last = user.SubscribedAt
-			if user.UserId == message.UserId {
-				continue
+		if len(users) > 0 {
+			messageIds := make([]string, len(users))
+			for i, user := range users {
+				messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
 			}
-			messageId := UniqueConversationId(user.UserId, message.MessageId)
-			if set[messageId] {
-				continue
-			}
-			dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
+			set, err := readDistributedMessagesByIds(ctx, messageIds)
 			if err != nil {
-				session.TransactionError(ctx, err)
+				return session.TransactionError(ctx, err)
 			}
-			if i > 0 {
-				values.WriteString(",")
+			i := 0
+			for _, user := range users {
+				last = user.SubscribedAt
+				if user.UserId == message.UserId {
+					continue
+				}
+				messageId := UniqueConversationId(user.UserId, message.MessageId)
+				if set[messageId] {
+					continue
+				}
+				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
+				if err != nil {
+					session.TransactionError(ctx, err)
+				}
+				if i > 0 {
+					values.WriteString(",")
+				}
+				i += 1
+				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
 			}
-			values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
-			i += 1
+			message.LastDistributeAt = last
 		}
-		message.LastDistributeAt = last
 		if len(users) < DistributeSubscriberLimit {
 			message.LastDistributeAt = time.Now()
 			message.State = MessageStateSuccess
@@ -131,9 +133,13 @@ func (message *Message) Distribute(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-			_, err = tx.ExecContext(ctx, query)
-			return err
+			v := values.String()
+			if v != "" {
+				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+				_, err = tx.ExecContext(ctx, query)
+				return err
+			}
+			return nil
 		})
 		if err != nil {
 			return session.TransactionError(ctx, err)
@@ -175,19 +181,19 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		if i > 0 {
 			values.WriteString(",")
 		}
+		i += 1
 		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
 		values.WriteString(",")
 		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
-		i += 1
 	}
 
 	message.LastDistributeAt = time.Now()
 	message.State = MessageStateSuccess
 	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		_, err = tx.ExecContext(ctx, "UPDATE messages SET ('last_distribute_at', 'state') VALUES ($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
+		_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
 		if err != nil {
 			return err
 		}
@@ -232,8 +238,8 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 }
 
 func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64, error) {
-	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE status=$1")
-	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered)
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE status=$1 LIMIT $2)")
+	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, limit)
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}

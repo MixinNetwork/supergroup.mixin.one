@@ -91,6 +91,18 @@ func TestMessageCRUD(t *testing.T) {
 	count, err := CleanUpExpiredDistributedMessages(ctx, 100)
 	assert.Nil(err)
 	assert.Equal(int64(3), count)
+	count, err = CleanUpExpiredDistributedMessages(ctx, 100)
+	assert.Nil(err)
+	assert.Equal(int64(0), count)
+
+	message, err = CreateMessage(ctx, id, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
+	assert.Nil(err)
+	assert.NotNil(message)
+	err = message.Leapfrog(ctx, "ONLY TEST")
+	assert.Nil(err)
+	dms, err = testReadDistributedMessages(ctx)
+	assert.Nil(err)
+	assert.True(len(dms) > 1)
 }
 
 func testReadMessage(ctx context.Context, id string) (*Message, error) {

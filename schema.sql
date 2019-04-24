@@ -36,10 +36,12 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   shard                 VARCHAR(36) NOT NULL,
   category              VARCHAR(512) NOT NULL,
   data                  TEXT NOT NULL,
+	status                VARCHAR(512) NOT NULL,
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_createdx ON distributed_messages(shard, created_at);
+CREATE INDEX IF NOT EXISTS message_shard_status_createdx ON distributed_messages(shard, status, created_at);
+CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
 
 
 CREATE TABLE IF NOT EXISTS properties (
@@ -60,7 +62,7 @@ CREATE TABLE IF NOT EXISTS packets (
 	remaining_amount  VARCHAR(128) NOT NULL,
 	state             VARCHAR(36) NOT NULL,
 	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-)
+);
 
 CREATE INDEX IF NOT EXISTS packets_state_createdx ON packets(state, created_at);
 
