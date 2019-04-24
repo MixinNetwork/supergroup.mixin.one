@@ -1,90 +1,92 @@
-CREATE TABLE users (
-    user_id           STRING(36) NOT NULL,
-    identity_number   INT64 NOT NULL,
-    full_name         STRING(512) NOT NULL,
-    access_token      STRING(512) NOT NULL,
-    avatar_url        STRING(1024) NOT NULL,
-    trace_id          STRING(36) NOT NULL,
-    state             STRING(128) NOT NULL,
-    subscribed_at     TIMESTAMP NOT NULL,
-) PRIMARY KEY(user_id);
+CREATE TABLE IF NOT EXISTS users (
+  user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  identity_number   BIGINT NOT NULL,
+  full_name         VARCHAR(512) NOT NULL DEFAULT '',
+  access_token      VARCHAR(512) NOT NULL DEFAULT '',
+  avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
+  trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
+  state             VARCHAR(128) NOT NULL,
+  subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
+);
 
-CREATE INDEX users_by_subscribed ON users(subscribed_at) STORING(full_name);
-
-
-CREATE TABLE messages (
-    message_id            STRING(36) NOT NULL,
-    user_id               STRING(36) NOT NULL,
-    category              STRING(512) NOT NULL,
-    data                  BYTES(MAX) NOT NULL,
-    created_at            TIMESTAMP NOT NULL,
-    updated_at            TIMESTAMP NOT NULL,
-    state                 STRING(128) NOT NULL,
-    last_distribute_at    TIMESTAMP NOT NULL,
-) PRIMARY KEY(message_id);
-
-CREATE INDEX messages_by_state_updated ON messages(state, updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
+CREATE INDEX IF NOT EXISTS users_subscribedx ON users(subscribed_at);
 
 
-CREATE TABLE distributed_messages (
-    message_id            STRING(36) NOT NULL,
-    conversation_id       STRING(36) NOT NULL,
-    recipient_id          STRING(36) NOT NULL,
-    user_id               STRING(36) NOT NULL,
-    category              STRING(512) NOT NULL,
-    data                  BYTES(MAX) NOT NULL,
-    created_at            TIMESTAMP NOT NULL,
-    updated_at            TIMESTAMP NOT NULL,
-) PRIMARY KEY(message_id);
+CREATE TABLE IF NOT EXISTS messages (
+	message_id	          VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id	              VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	category              VARCHAR(512) NOT NULL,
+	data                  TEXT NOT NULL,
+	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	updated_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	state                 VARCHAR(128) NOT NULL,
+	last_distribute_at    TIMESTAMP WITH TIME ZONE NOT NULL
+);
 
-CREATE INDEX distributed_messages_by_updated ON distributed_messages(updated_at);
-
-
-CREATE TABLE properties (
-    key         STRING(512) NOT NULL,
-    value       STRING(8192) NOT NULL,
-    updated_at  TIMESTAMP NOT NULL,
-) PRIMARY KEY(key);
+CREATE INDEX IF NOT EXISTS messages_state_updatedx ON messages(state, updated_at);
 
 
-CREATE TABLE packets (
-	packet_id         STRING(36) NOT NULL,
-	user_id	          STRING(36) NOT NULL,
-	asset_id          STRING(36) NOT NULL,
-	amount            STRING(128) NOT NULL,
-	greeting          STRING(36) NOT NULL,
-	total_count       INT64 NOT NULL,
-	remaining_count   INT64 NOT NULL,
-	remaining_amount  STRING(128) NOT NULL,
-	state             STRING(36) NOT NULL,
-	created_at        TIMESTAMP NOT NULL,
-) PRIMARY KEY(packet_id);
+CREATE TABLE IF NOT EXISTS distributed_messages (
+  message_id            VARCHAR(36) PRIMARY KEY,
+  conversation_id       VARCHAR(36) NOT NULL,
+  recipient_id          VARCHAR(36) NOT NULL,
+  user_id	              VARCHAR(36) NOT NULL,
+  parent_id             VARCHAR(36) NOT NULL,
+  shard                 VARCHAR(36) NOT NULL,
+  category              VARCHAR(512) NOT NULL,
+  data                  TEXT NOT NULL,
+  created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 
-CREATE INDEX packets_by_state_created ON packets(state, created_at);
-
-
-CREATE TABLE participants (
-	packet_id         STRING(36) NOT NULL,
-	user_id	          STRING(36) NOT NULL,
-	amount            STRING(128) NOT NULL,
-	created_at        TIMESTAMP NOT NULL,
-	paid_at           TIMESTAMP,
-) PRIMARY KEY(packet_id, user_id),
-INTERLEAVE IN PARENT packets ON DELETE CASCADE;
-
-CREATE INDEX participants_by_created_paid ON participants(created_at, paid_at) STORING(amount);
+CREATE INDEX IF NOT EXISTS message_shard_createdx ON distributed_messages(shard, created_at);
 
 
-CREATE TABLE assets (
-	asset_id         STRING(36) NOT NULL,
-	symbol           STRING(512) NOT NULL,
-	name             STRING(512) NOT NULL,
-	icon_url         STRING(1024) NOT NULL,
-	price_btc        STRING(128) NOT NULL,
-	price_usd        STRING(128) NOT NULL,
-) PRIMARY KEY(asset_id);
+CREATE TABLE IF NOT EXISTS properties (
+  key         VARCHAR(512) PRIMARY KEY,
+  value       VARCHAR(8192) NOT NULL,
+  updated_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 
 
-CREATE TABLE blacklists (
-	user_id	         STRING(36) NOT NULL,
-) PRIMARY KEY(user_id);
+CREATE TABLE IF NOT EXISTS packets (
+	packet_id         VARCHAR(36) PRIMARY KEY CHECK (packet_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	asset_id          VARCHAR(36) NOT NULL CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
+	amount            VARCHAR(128) NOT NULL,
+	greeting          VARCHAR(36) NOT NULL,
+	total_count       BIGINT NOT NULL,
+	remaining_count   BIGINT NOT NULL,
+	remaining_amount  VARCHAR(128) NOT NULL,
+	state             VARCHAR(36) NOT NULL,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+)
+
+CREATE INDEX IF NOT EXISTS packets_state_createdx ON packets(state, created_at);
+
+
+CREATE TABLE IF NOT EXISTS participants (
+	packet_id         VARCHAR(36) NOT NULL REFERENCES packets(packet_id) ON DELETE CASCADE,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	amount            VARCHAR(128) NOT NULL,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	paid_at           TIMESTAMP WITH TIME ZONE,
+	PRIMARY KEY(packet_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS participants_created_paidx ON participants(created_at, paid_at);
+
+
+CREATE TABLE IF NOT EXISTS assets (
+	asset_id         VARCHAR(36) PRIMARY KEY CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
+	symbol           VARCHAR(512) NOT NULL,
+	name             VARCHAR(512) NOT NULL,
+	icon_url         VARCHAR(1024) NOT NULL,
+	price_btc        VARCHAR(128) NOT NULL,
+	price_usd        VARCHAR(128) NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS blacklists (
+  user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$')
+);

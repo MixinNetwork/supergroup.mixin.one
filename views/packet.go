@@ -10,7 +10,7 @@ import (
 
 type PreparationView struct {
 	Conversation struct {
-		PariticipantsCount int `json:"participants_count"`
+		PariticipantsCount int64 `json:"participants_count"`
 	} `json:"conversation"`
 	Assets []AssetView `json:"assets"`
 }
@@ -79,7 +79,7 @@ func buildParticipantsView(participants []*models.Participant) []ParticipantView
 	return participantsView
 }
 
-func RenderPacketPreparation(w http.ResponseWriter, r *http.Request, participantsCount int, assets []*models.Asset) {
+func RenderPacketPreparation(w http.ResponseWriter, r *http.Request, participantsCount int64, assets []*models.Asset) {
 	assetsView := make([]AssetView, len(assets))
 	for i, a := range assets {
 		assetsView[i] = buildAssetView(a)

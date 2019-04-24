@@ -3,20 +3,21 @@ package models
 import (
 	"context"
 	"crypto/md5"
+	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/rand"
+	"strings"
 	"time"
 	"unicode/utf8"
 
-	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
-	"google.golang.org/api/iterator"
 )
 
 const (
@@ -27,20 +28,20 @@ const (
 )
 
 const packets_DDL = `
-CREATE TABLE packets (
-	packet_id         STRING(36) NOT NULL,
-	user_id	          STRING(36) NOT NULL,
-	asset_id          STRING(36) NOT NULL,
-	amount            STRING(128) NOT NULL,
-	greeting          STRING(36) NOT NULL,
-	total_count       INT64 NOT NULL,
-	remaining_count   INT64 NOT NULL,
-	remaining_amount  STRING(128) NOT NULL,
-	state             STRING(36) NOT NULL,
-	created_at        TIMESTAMP NOT NULL,
-) PRIMARY KEY(packet_id);
+CREATE TABLE IF NOT EXISTS packets (
+	packet_id         VARCHAR(36) PRIMARY KEY CHECK (packet_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	asset_id          VARCHAR(36) NOT NULL CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
+	amount            VARCHAR(128) NOT NULL,
+	greeting          VARCHAR(36) NOT NULL,
+	total_count       BIGINT NOT NULL,
+	remaining_count   BIGINT NOT NULL,
+	remaining_amount  VARCHAR(128) NOT NULL,
+	state             VARCHAR(36) NOT NULL,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 
-CREATE INDEX packets_by_state_created ON packets(state, created_at);
+CREATE INDEX IF NOT EXISTS packets_state_createdx ON packets(state, created_at);
 `
 
 var packetsCols = []string{"packet_id", "user_id", "asset_id", "amount", "greeting", "total_count", "remaining_count", "remaining_amount", "state", "created_at"}
@@ -66,9 +67,9 @@ type Packet struct {
 	Participants []*Participant
 }
 
-func (current *User) Prepare(ctx context.Context) (int, error) {
+func (current *User) Prepare(ctx context.Context) (int64, error) {
 	sum, err := SubscribersCount(ctx)
-	return int(sum), err
+	return sum, err
 }
 
 func (current *User) CreatePacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
@@ -106,9 +107,10 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 		User:            current,
 		Asset:           asset,
 	}
-	err = session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Insert("packets", packetsCols, packet.values()),
-	}, "packets", "INSERT", "CreatePacket")
+
+	params, positions := compileTableQuery(packetsCols)
+	query := fmt.Sprintf("INSERT INTO packets (%s) VALUES (%s)", params, positions)
+	_, err = session.Database(ctx).ExecContext(ctx, query, packet.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -117,9 +119,9 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 
 func PayPacket(ctx context.Context, packetId string, assetId, amount string) (*Packet, error) {
 	var packet *Packet
-	_, err := session.Database(ctx).ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
-		packet, err = readPacketWithAssetAndUser(ctx, txn, packetId)
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil || packet == nil {
 			return err
 		}
@@ -130,11 +132,12 @@ func PayPacket(ctx context.Context, packetId string, assetId, amount string) (*P
 			return nil
 		}
 		packet.State = PacketStatePaid
-		txn.BufferWrite([]*spanner.Mutation{
-			spanner.Update("packets", []string{"packet_id", "state"}, []interface{}{packetId, packet.State}),
-		})
-		return handlePacketExpiration(ctx, txn, packet)
-	}, "packets", "UPDATE", "PayPacket")
+		_, err = tx.ExecContext(ctx, "UPDATE packets SET state=$1 WHERE packet_id=$2", packet.State, packet.PacketId)
+		if err != nil {
+			return err
+		}
+		return handlePacketExpiration(ctx, tx, packet)
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -143,14 +146,14 @@ func PayPacket(ctx context.Context, packetId string, assetId, amount string) (*P
 
 func ShowPacket(ctx context.Context, packetId string) (*Packet, error) {
 	var packet *Packet
-	_, err := session.Database(ctx).ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
-		packet, err = readPacketWithAssetAndUser(ctx, txn, packetId)
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil || packet == nil {
 			return err
 		}
-		return handlePacketExpiration(ctx, txn, packet)
-	}, "packets", "SELECT", "ShowPacket")
+		return handlePacketExpiration(ctx, tx, packet)
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -169,27 +172,25 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 	if packet.State != PacketStatePaid {
 		return packet, nil
 	}
-	_, err = session.Database(ctx).ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
-		packet, err = readPacketWithAssetAndUser(ctx, txn, packetId)
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil || packet == nil {
 			return err
 		}
-		err = handlePacketExpiration(ctx, txn, packet)
+		err = handlePacketExpiration(ctx, tx, packet)
 		if err != nil {
 			return err
 		}
-		it := txn.Read(ctx, "participants", spanner.Key{packet.PacketId, current.UserId}, []string{"packet_id", "user_id"})
-		defer it.Stop()
-
-		_, err := it.Next()
-		if err == iterator.Done {
-			return handlePacketClaim(ctx, txn, packet, current.UserId)
-		} else if err != nil {
+		var userId string
+		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1", packet.PacketId).Scan(&userId)
+		if err != nil {
 			return err
-		} else {
-			return nil
 		}
-	}, "participants", "INSERT", "ClaimPacket")
+		if err == sql.ErrNoRows {
+			return handlePacketClaim(ctx, tx, packet, current.UserId)
+		}
+		return err
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -198,21 +199,29 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		return nil, session.TransactionError(ctx, err)
 	}
 	if packet != nil {
-		mutation := createDistributeMessage(ctx, bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", []byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName)))
-		session.Database(ctx).Apply(ctx, []*spanner.Mutation{mutation}, "distributed_messages", "INSERT", "ClaimPacket")
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		params, positions := compileTableQuery(distributedMessagesCols)
+		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+		_, err = session.Database(ctx).ExecContext(ctx, query, dm.values())
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
 	}
 	return packet, nil
 }
 
 func RefundPacket(ctx context.Context, packetId string) (*Packet, error) {
 	var packet *Packet
-	_, err := session.Database(ctx).ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
-		packet, err = readPacketWithAssetAndUser(ctx, txn, packetId)
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil || packet == nil {
 			return err
 		}
-		err = handlePacketExpiration(ctx, txn, packet)
+		err = handlePacketExpiration(ctx, tx, packet)
 		if err != nil {
 			return err
 		}
@@ -220,10 +229,9 @@ func RefundPacket(ctx context.Context, packetId string) (*Packet, error) {
 			return nil
 		}
 		packet.State = PacketStateRefunded
-		return txn.BufferWrite([]*spanner.Mutation{
-			spanner.Update("packets", []string{"packet_id", "state"}, []interface{}{packet.PacketId, packet.State}),
-		})
-	}, "packets", "UPDATE", "RefundPacket")
+		_, err = tx.ExecContext(ctx, "UPDATE packets SET state=$1 WHERE packet_id=$2", packet.State, packet.PacketId)
+		return err
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -264,30 +272,24 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 }
 
 func ListExpiredPackets(ctx context.Context, limit int) ([]string, error) {
-	it := session.Database(ctx).Query(ctx, spanner.Statement{
-		SQL:    fmt.Sprintf("SELECT packet_id FROM packets@{FORCE_INDEX=packets_by_state_created} WHERE state IN UNNEST(@states) AND created_at<@threshold LIMIT %d", limit),
-		Params: map[string]interface{}{"states": []string{PacketStatePaid, PacketStateExpired}, "threshold": time.Now().Add(-25 * time.Hour)},
-	}, "packets", "ListExpiredPackets")
-	defer it.Stop()
-
 	var packetIds []string
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			return packetIds, nil
-		} else if err != nil {
-			return packetIds, session.TransactionError(ctx, err)
-		}
+	query := "SELECT packet_id FROM packets WHERE states IN ($1, $2) AND created_at<$3 LIMIT $4"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, PacketStatePaid, PacketStateExpired, time.Now().Add(-25*time.Hour), limit)
+	if err != nil {
+		return packetIds, session.TransactionError(ctx, err)
+	}
+	for rows.Next() {
 		var id string
-		err = row.Columns(&id)
+		err = rows.Scan(&id)
 		if err != nil {
 			return packetIds, session.TransactionError(ctx, err)
 		}
 		packetIds = append(packetIds, id)
 	}
+	return packetIds, nil
 }
 
-func handlePacketClaim(ctx context.Context, txn *spanner.ReadWriteTransaction, packet *Packet, userId string) error {
+func handlePacketClaim(ctx context.Context, tx *sql.Tx, packet *Packet, userId string) error {
 	if packet.State != PacketStatePaid {
 		return nil
 	}
@@ -314,13 +316,15 @@ func handlePacketClaim(ctx context.Context, txn *spanner.ReadWriteTransaction, p
 	amount = number.FromString(amount.PresentFloor())
 	packet.RemainingCount = packet.RemainingCount - 1
 	packet.RemainingAmount = number.FromString(packet.RemainingAmount).Sub(amount).Persist()
-	return txn.BufferWrite([]*spanner.Mutation{
-		spanner.Update("packets", []string{"packet_id", "remaining_count", "remaining_amount"}, []interface{}{packet.PacketId, packet.RemainingCount, packet.RemainingAmount}),
-		spanner.Insert("participants", []string{"packet_id", "user_id", "amount", "created_at"}, []interface{}{packet.PacketId, userId, amount.Persist(), time.Now()}),
-	})
+	_, err := tx.ExecContext(ctx, "UPDATE packets SET (remaining_count, remaining_amount)=($1,$2)", packet.RemainingCount, packet.RemainingAmount)
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "INSERT INTO participants ('packet_id', 'user_id', 'amount') VALUES ($1, $2, $3)", packet.PacketId, userId, amount.Persist())
+	return err
 }
 
-func handlePacketExpiration(ctx context.Context, txn *spanner.ReadWriteTransaction, packet *Packet) error {
+func handlePacketExpiration(ctx context.Context, tx *sql.Tx, packet *Packet) error {
 	if packet.State != PacketStatePaid {
 		return nil
 	}
@@ -329,50 +333,55 @@ func handlePacketExpiration(ctx context.Context, txn *spanner.ReadWriteTransacti
 	} else if packet.CreatedAt.Before(time.Now().Add(-24 * time.Hour)) {
 		packet.State = PacketStateExpired
 	}
-	return txn.BufferWrite([]*spanner.Mutation{
-		spanner.Update("packets", []string{"packet_id", "state"}, []interface{}{packet.PacketId, packet.State}),
-	})
+	if packet.State == PacketStatePaid {
+		return nil
+	}
+	_, err := tx.ExecContext(ctx, "UPDATE packets SET state=$1 WHERE packet_id=$2", packet.State, packet.PacketId)
+	return err
 }
 
-func readPacketWithAssetAndUser(ctx context.Context, txn durable.Transaction, packetId string) (*Packet, error) {
-	packet, err := readPacket(ctx, txn, packetId)
+func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, error) {
+	packet, err := readPacket(ctx, tx, packetId)
 	if err != nil || packet == nil {
 		return nil, err
 	}
-	packet.Asset, err = readAsset(ctx, txn, packet.AssetId)
+	packet.Asset, err = readAsset(ctx, tx, packet.AssetId)
 	if err != nil {
 		return nil, err
 	}
-	packet.User, err = readUser(ctx, txn, packet.UserId)
+	packet.User, err = findUserById(ctx, tx, packet.UserId)
 	if err != nil {
 		return nil, err
 	}
 	return packet, nil
 }
 
-func readPacket(ctx context.Context, txn durable.Transaction, packetId string) (*Packet, error) {
-	it := txn.Read(ctx, "packets", spanner.Key{packetId}, packetsCols)
-	defer it.Stop()
-
-	row, err := it.Next()
-	if err == iterator.Done {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
+func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, error) {
+	query := fmt.Sprintf("SELECT %s FROM packets WHERE packet_id=$1", strings.Join(packetsCols, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, packetId)
+	p, err := packetFromRow(row)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
 	}
-	return packetFromRow(row)
+	return p, nil
 }
 
 func ReadPackageWithRelation(ctx context.Context, packetId string) (*Packet, error) {
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	return readPacketWithAssetAndUser(ctx, txn, packetId)
+	var packet *Packet
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
+		return err
+	})
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return packet, err
 }
 
-func packetFromRow(row *spanner.Row) (*Packet, error) {
+func packetFromRow(row durable.Row) (*Packet, error) {
 	var p Packet
-	err := row.Columns(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
+	err := row.Scan(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
 	return &p, err
 }
 

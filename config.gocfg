@@ -18,6 +18,11 @@ const (
 )
 
 const (
+	MessageShardModifier = "SHARD"
+	MessageShardSize     = 64
+)
+
+const (
 	GroupRedPacket          = "中文群红包"
 	GroupRedPacketShortDesc = "来自无名氏的红包"
 	GroupRedPacketDesc      = "来自 %s 的红包"

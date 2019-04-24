@@ -1,22 +1,23 @@
 package models
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
+	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	jwt "github.com/dgrijalva/jwt-go"
-	"google.golang.org/api/iterator"
 )
 
 const (
@@ -25,18 +26,19 @@ const (
 )
 
 const users_DDL = `
-CREATE TABLE users (
-	user_id	          STRING(36) NOT NULL,
-	identity_number   INT64 NOT NULL,
-	full_name         STRING(512) NOT NULL,
-	access_token      STRING(512) NOT NULL,
-	avatar_url        STRING(1024) NOT NULL,
-	trace_id          STRING(36) NOT NULL,
-	state             STRING(128) NOT NULL,
-	subscribed_at     TIMESTAMP NOT NULL,
-) PRIMARY KEY(user_id);
+CREATE TABLE IF NOT EXISTS users (
+	user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	identity_number   BIGINT NOT NULL,
+	full_name         VARCHAR(512) NOT NULL DEFAULT '',
+	access_token      VARCHAR(512) NOT NULL DEFAULT '',
+	avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
+	trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
+	state             VARCHAR(128) NOT NULL,
+	subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
+);
 
-CREATE INDEX users_by_subscribed ON users(subscribed_at) STORING(full_name);
+CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
+CREATE INDEX IF NOT EXISTS users_subscribedx ON users(subscribed_at);
 `
 
 type User struct {
@@ -49,6 +51,7 @@ type User struct {
 	State          string
 	SubscribedAt   time.Time
 
+	isNew               bool
 	AuthenticationToken string
 }
 
@@ -74,6 +77,77 @@ func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*Us
 	return createUser(ctx, accessToken, me.UserId, me.IdentityNumber, me.FullName, me.AvatarURL)
 }
 
+func createUser(ctx context.Context, accessToken, userId, identityNumber, fullName, avatarURL string) (*User, error) {
+	id, err := bot.UuidFromString(userId)
+	if err != nil {
+		return nil, session.ForbiddenError(ctx)
+	}
+	if avatarURL == "" {
+		avatarURL = "https://images.mixin.one/E2y0BnTopFK9qey0YI-8xV3M82kudNnTaGw0U5SU065864SsewNUo6fe9kDF1HIzVYhXqzws4lBZnLj1lPsjk-0=s128"
+	}
+	identity, _ := strconv.ParseInt(identityNumber, 10, 64)
+	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), accessToken)
+	if err != nil {
+		return nil, session.ServerError(ctx, err)
+	}
+	user, err := FindUser(ctx, userId)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	if user == nil {
+		user = &User{
+			UserId:         userId,
+			IdentityNumber: identity,
+			TraceId:        bot.UuidNewV4().String(),
+			State:          PaymentStatePending,
+			isNew:          true,
+		}
+		if number.FromString(config.PaymentAmount).Exhausted() {
+			user.State = PaymentStatePaid
+			user.SubscribedAt = time.Now()
+			err = createConversation(ctx, "CONTACT", userId)
+			if err != nil {
+				return nil, session.ServerError(ctx, err)
+			}
+		}
+	}
+	if strings.TrimSpace(fullName) != "" {
+		user.FullName = fullName
+	}
+	user.AccessToken = accessToken
+	user.AvatarURL = avatarURL
+	user.AuthenticationToken = authenticationToken
+
+	if user.isNew {
+		params, positions := compileTableQuery(usersCols)
+		_, err = session.Database(ctx).ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		return user, nil
+	}
+
+	params, positions := compileTableQuery([]string{"fullName", "access_token", "avatar_url"})
+	_, err = session.Database(ctx).Exec(fmt.Sprintf("UPDATE users SET (%s)=(%s) WHERE user_id=%s", params, positions, user.UserId), user.FullName, user.AccessToken, user.AvatarURL)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return user, nil
+}
+
+func createConversation(ctx context.Context, category, participantId string) error {
+	conversationId := bot.UniqueConversationId(config.ClientId, participantId)
+	participant := bot.Participant{
+		UserId: participantId,
+		Role:   "",
+	}
+	participants := []bot.Participant{
+		participant,
+	}
+	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.ClientId, config.SessionId, config.SessionKey)
+	return err
+}
+
 func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*User, error) {
 	var user *User = nil
 	var queryErr error = nil
@@ -86,7 +160,7 @@ func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*
 		if !ok {
 			return nil, session.BadDataError(ctx)
 		}
-		user, queryErr = findUserById(ctx, fmt.Sprint(claims["jti"]))
+		user, queryErr = FindUser(ctx, fmt.Sprint(claims["jti"]))
 		if queryErr != nil {
 			return nil, queryErr
 		}
@@ -106,99 +180,38 @@ func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*
 	return user, nil
 }
 
-func createUser(ctx context.Context, accessToken, userId, identityNumber, fullName, avatarURL string) (*User, error) {
-	id, err := bot.UuidFromString(userId)
-	if err != nil {
-		return nil, session.ForbiddenError(ctx)
-	}
-	if avatarURL == "" {
-		avatarURL = "https://images.mixin.one/E2y0BnTopFK9qey0YI-8xV3M82kudNnTaGw0U5SU065864SsewNUo6fe9kDF1HIzVYhXqzws4lBZnLj1lPsjk-0=s128"
-	}
-	num, _ := strconv.ParseInt(identityNumber, 10, 64)
-	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), accessToken)
-	if err != nil {
-		return nil, session.ServerError(ctx, err)
-	}
-	user, err := findUserById(ctx, userId)
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
-	if user == nil {
-		user = &User{
-			UserId:         userId,
-			IdentityNumber: num,
-			TraceId:        bot.UuidNewV4().String(),
-			FullName:       fullName,
-			State:          PaymentStatePending,
-		}
-		if number.FromString(config.PaymentAmount).Exhausted() {
-			user.State = PaymentStatePaid
-			user.SubscribedAt = time.Now()
-			err = createConversation(ctx, "CONTACT", userId)
-			if err != nil {
-				return nil, session.ServerError(ctx, err)
-			}
-		}
-	}
-	user.AuthenticationToken = authenticationToken
-	user.AccessToken = accessToken
-	user.AvatarURL = avatarURL
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.InsertOrUpdate("users", usersCols, user.values()),
-	}, "users", "INSERT", "createUser"); err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
-	return user, nil
-}
-
-func createConversation(ctx context.Context, category, participantId string) error {
-	conversationId := bot.UniqueConversationId(config.ClientId, participantId)
-	participant := bot.Participant{
-		UserId: participantId,
-		Role:   "",
-	}
-	participants := []bot.Participant{
-		participant,
-	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.ClientId, config.SessionId, config.SessionKey)
-	return err
-}
-
 func (user *User) UpdateProfile(ctx context.Context, fullName string) error {
 	fullName = strings.TrimSpace(fullName)
 	if fullName == "" {
 		return nil
 	}
 	user.FullName = fullName
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Update("users", []string{"user_id", "full_name"}, []interface{}{user.UserId, user.FullName}),
-	}, "users", "UPDATE", "UpdateProfile"); err != nil {
+	query := "UPDATE users SET full_name=$1 WHERE user_id=$2"
+	if _, err := session.Database(ctx).ExecContext(ctx, query, user.FullName, user.UserId); err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
 }
 
 func (user *User) Subscribe(ctx context.Context) error {
-	if !user.SubscribedAt.IsZero() {
+	if user.SubscribedAt.After(genesisStartedAt()) {
 		return nil
 	}
 	user.SubscribedAt = time.Now()
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Update("users", []string{"user_id", "subscribed_at"}, []interface{}{user.UserId, user.SubscribedAt}),
-	}, "users", "UPDATE", "Subscribe"); err != nil {
+	query := "UPDATE users SET subscribed_at=$1 WHERE user_id=$2"
+	if _, err := session.Database(ctx).ExecContext(ctx, query, user.SubscribedAt, user.UserId); err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
 }
 
 func (user *User) Unsubscribe(ctx context.Context) error {
-	if user.SubscribedAt.IsZero() {
+	if user.SubscribedAt.Before(genesisStartedAt()) || user.SubscribedAt.Equal(genesisStartedAt()) {
 		return nil
 	}
 	user.SubscribedAt = time.Time{}
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Update("users", []string{"user_id", "subscribed_at"}, []interface{}{user.UserId, user.SubscribedAt}),
-	}, "users", "UPDATE", "Subscribe"); err != nil {
+	query := "UPDATE users SET subscribed_at=$1 WHERE user_id=$2"
+	if _, err := session.Database(ctx).ExecContext(ctx, query, user.SubscribedAt, user.UserId); err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
@@ -219,81 +232,45 @@ func (user *User) Payment(ctx context.Context) error {
 		MessageId: bot.UuidNewV4().String(),
 		UserId:    config.ClientId,
 		Category:  "PLAIN_TEXT",
-		Data:      []byte(fmt.Sprintf(config.MessageTipsJoin, user.FullName)),
+		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.MessageTipsJoin, user.FullName))),
 		CreatedAt: t,
 		UpdatedAt: t,
 		State:     MessageStatePending,
 	}
 	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Insert("messages", messagesCols, message.values()),
-		spanner.Update("users", []string{"user_id", "state", "subscribed_at"}, []interface{}{user.UserId, user.State, user.SubscribedAt}),
-	}, "users", "UPDATE", "Payment"); err != nil {
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		params, positions := compileTableQuery(messagesCols)
+		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+		_, err := tx.ExecContext(ctx, query, message.values()...)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
+		return err
+	})
+	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
 }
 
-func Subscribers(ctx context.Context, offset time.Time, num int64) ([]*User, error) {
-	if num > 20000 {
-		user, err := findUserByIdentityNumber(ctx, num)
-		if err != nil {
-			return nil, session.TransactionError(ctx, err)
-		} else if user == nil {
-			return nil, nil
-		}
-		return []*User{user}, nil
+func Subscribers(ctx context.Context, offset time.Time, identity int64) ([]*User, error) {
+	if identity > 20000 {
+		return findUserByIdentityNumber(ctx, identity)
 	}
-	ids, _, err := subscribedUserIds(ctx, offset, 200)
+	users, err := subscribedUsers(ctx, offset, 200)
 	if err != nil {
-		return nil, err
-	}
-
-	if len(ids) == 0 {
-		return nil, nil
-	}
-	stmt := spanner.Statement{
-		SQL:    fmt.Sprintf("SELECT %s FROM users WHERE user_id IN UNNEST(@user_ids)", strings.Join(usersCols, ",")),
-		Params: map[string]interface{}{"user_ids": ids},
-	}
-	it := session.Database(ctx).Query(ctx, stmt, "users", "Subscribers")
-	defer it.Stop()
-
-	var users []*User
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return users, session.TransactionError(ctx, err)
-		}
-		user, err := userFromRow(row)
-		if err != nil {
-			return users, session.TransactionError(ctx, err)
-		}
-		users = append(users, user)
+		return nil, session.TransactionError(ctx, err)
 	}
 	sort.Slice(users, func(i, j int) bool { return users[i].SubscribedAt.Before(users[j].SubscribedAt) })
 	return users, nil
 }
 
 func SubscribersCount(ctx context.Context) (int64, error) {
-	stmt := spanner.Statement{
-		SQL:    "SELECT COUNT(*) AS count FROM users@{FORCE_INDEX=users_by_subscribed} WHERE subscribed_at>@subscribed_at",
-		Params: map[string]interface{}{"subscribed_at": time.Time{}},
-	}
-	it := session.Database(ctx).Query(ctx, stmt, "users", "SubscribersCount")
-	defer it.Stop()
-
-	row, err := it.Next()
-	if err == iterator.Done {
-		return 0, nil
-	} else if err != nil {
-		return 0, session.TransactionError(ctx, err)
-	}
-
+	query := "SELECT COUNT(*) FROM users WHERE subscribed_at>$1"
 	var count int64
-	if err := row.Columns(&count); err != nil {
+	err := session.Database(ctx).QueryRowContext(ctx, query, genesisStartedAt()).Scan(&count)
+	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}
 	return count, nil
@@ -303,10 +280,8 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 	if !config.Operators[user.UserId] {
 		return nil
 	}
-
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Delete("users", spanner.Key{id}),
-	}, "users", "DELETE", "DeleteUser"); err != nil {
+	_, err := session.Database(ctx).ExecContext(ctx, fmt.Sprintf("DELETE FROM users WHERE user_id=$1"), id)
+	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
@@ -319,28 +294,21 @@ func (user *User) GetRole() string {
 	return "user"
 }
 
-func subscribedUserIds(ctx context.Context, subscribedAt time.Time, limit int) ([]string, time.Time, error) {
-	var ids []string
-	stmt := spanner.Statement{
-		SQL:    fmt.Sprintf("SELECT user_id,subscribed_at FROM users@{FORCE_INDEX=users_by_subscribed} WHERE subscribed_at>@subscribed_at ORDER BY subscribed_at LIMIT %d", limit),
-		Params: map[string]interface{}{"subscribed_at": subscribedAt},
+func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
+	var users []*User
+	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt)
+	if err != nil {
+		return users, session.TransactionError(ctx, err)
 	}
-	it := session.Database(ctx).Query(ctx, stmt, "users", "SubscribedUsers")
-	defer it.Stop()
-
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			return ids, subscribedAt, nil
-		} else if err != nil {
-			return ids, subscribedAt, session.TransactionError(ctx, err)
+	for rows.Next() {
+		u, err := userFromRow(rows)
+		if err != nil {
+			return users, session.TransactionError(ctx, err)
 		}
-		var id string
-		if err := row.Columns(&id, &subscribedAt); err != nil {
-			return ids, subscribedAt, session.TransactionError(ctx, err)
-		}
-		ids = append(ids, id)
+		users = append(users, u)
 	}
+	return users, nil
 }
 
 func generateAuthenticationToken(ctx context.Context, userId, accessToken string) (string, error) {
@@ -353,61 +321,60 @@ func generateAuthenticationToken(ctx context.Context, userId, accessToken string
 }
 
 func FindUser(ctx context.Context, userId string) (*User, error) {
-	return findUserById(ctx, userId)
-}
-
-func findUserById(ctx context.Context, userId string) (*User, error) {
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	user, err := readUser(ctx, txn, userId)
+	var user *User
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		user, err = findUserById(ctx, tx, userId)
+		return err
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return user, nil
 }
 
-func findUserByIdentityNumber(ctx context.Context, num int64) (*User, error) {
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	stmt := spanner.Statement{
-		SQL:    fmt.Sprintf("SELECT %s FROM users WHERE identity_number=@identity_number LIMIT 1", strings.Join(usersCols, ",")),
-		Params: map[string]interface{}{"identity_number": num},
-	}
-	it := session.Database(ctx).Query(ctx, stmt, "users", "findUserByIdentityNumber")
-	defer it.Stop()
-
-	row, err := it.Next()
-	if err == iterator.Done {
-		return nil, nil
-	} else if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
+func findUserByIdentityNumber(ctx context.Context, identity int64) ([]*User, error) {
+	query := fmt.Sprintf("SELECT %s FROM users WHERE identity_number=$1", strings.Join(usersCols, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, identity)
 	user, err := userFromRow(row)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return []*User{}, nil
+	} else if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	return user, nil
+	return []*User{user}, nil
 }
 
-func readUser(ctx context.Context, txn durable.Transaction, userId string) (*User, error) {
-	it := txn.Read(ctx, "users", spanner.Key{userId}, usersCols)
-	defer it.Stop()
-
-	row, err := it.Next()
-	if err == iterator.Done {
+func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error) {
+	query := fmt.Sprintf("SELECT %s FROM users WHERE user_id=$1", strings.Join(usersCols, ","))
+	row := tx.QueryRowContext(ctx, query, userId)
+	user, err := userFromRow(row)
+	if err == sql.ErrNoRows {
 		return nil, nil
-	} else if err != nil {
-		return nil, err
 	}
-	return userFromRow(row)
+	return user, err
 }
 
-func userFromRow(row *spanner.Row) (*User, error) {
+func userFromRow(row durable.Row) (*User, error) {
 	var u User
-	err := row.Columns(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.SubscribedAt)
+	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.SubscribedAt)
 	return &u, err
 }
 
-var nameColorSet = []string{"#AA4848", "#B0665E", "#EF8A44", "#A09555", "#727234", "#9CAD23", "#AA9100", "#C49B4B", "#A47758", "#DF694C", "#D65859", "#C2405A", "#A75C96", "#BD637C", "#8F7AC5", "#7983C2", "#728DB8", "#5977C2", "#5E6DA2", "#3D98D0", "#5E97A1", "#4EABAA", "#63A082", "#877C9B", "#AA66C3", "#BB5334", "#667355", "#668899", "#83BE44", "#BBA600", "#429AB6", "#75856F", "#88A299", "#B3798E", "#447899", "#D79200", "#728DB8", "#DD637C", "#887C66", "#BE6C2C", "#9B6D77", "#B69370", "#976236", "#9D77A5", "#8A660E", "#5E935E", "#9B8484", "#92B288"}
+func genesisStartedAt() time.Time {
+	startedAt, _ := time.Parse(time.RFC3339, "2017-01-01T00:00:00Z")
+	return startedAt
+}
+
+func compileTableQuery(fields []string) (string, string) {
+	var params, positions bytes.Buffer
+	for i, f := range fields {
+		if i != 0 {
+			params.WriteString(",")
+			positions.WriteString(",")
+		}
+		params.WriteString(f)
+		positions.WriteString(fmt.Sprintf("$%d", i+1))
+	}
+	return params.String(), positions.String()
+}

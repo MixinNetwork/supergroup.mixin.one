@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"cloud.google.com/go/spanner"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
@@ -15,14 +14,14 @@ import (
 	"github.com/unrolled/render"
 )
 
-func StartServer(spanner *spanner.Client) error {
+func StartServer(database *durable.Database) error {
 	logger := durable.NewLoggerClient()
 	router := httptreemux.New()
 	routes.RegisterHanders(router)
 	routes.RegisterRoutes(router)
 	handler := middlewares.Authenticate(router)
 	handler = middlewares.Constraint(handler)
-	handler = middlewares.Context(handler, spanner, render.New(render.Options{UnEscapeHTML: true}))
+	handler = middlewares.Context(handler, database, render.New(render.Options{UnEscapeHTML: true}))
 	handler = middlewares.Stats(handler, "http", true, config.BuildVersion)
 	handler = middlewares.Log(handler, logger, "http")
 	handler = handlers.ProxyHeaders(handler)
