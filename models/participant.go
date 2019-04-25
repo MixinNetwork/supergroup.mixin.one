@@ -15,6 +15,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/go-pg/pg"
 	"github.com/gofrs/uuid"
 )
 
@@ -36,6 +37,7 @@ type Participant struct {
 	UserId    string
 	Amount    string
 	CreatedAt time.Time
+	PaidAt    pg.NullTime
 
 	FullName  string
 	AvatarURL string
@@ -121,7 +123,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 
 func participantFromRow(row durable.Row) (*Participant, error) {
 	var p Participant
-	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.FullName, &p.AvatarURL)
+	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.PaidAt, &p.FullName, &p.AvatarURL)
 	return &p, err
 }
 

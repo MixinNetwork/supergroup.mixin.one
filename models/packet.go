@@ -73,15 +73,19 @@ func (current *User) Prepare(ctx context.Context) (int64, error) {
 }
 
 func (current *User) CreatePacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
+	asset, err := current.ShowAsset(ctx, assetId)
+	if err != nil {
+		return nil, session.ServerError(ctx, err)
+	}
+	return current.createPacket(ctx, asset, amount, totalCount, greeting)
+}
+
+func (current *User) createPacket(ctx context.Context, asset *Asset, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
 	if amount.Cmp(number.FromString("0.0001")) < 0 {
 		return nil, session.BadDataError(ctx)
 	}
 	if utf8.RuneCountInString(greeting) > 36 {
 		return nil, session.BadDataError(ctx)
-	}
-	asset, err := current.ShowAsset(ctx, assetId)
-	if err != nil {
-		return nil, session.ServerError(ctx, err)
 	}
 	if number.FromString(asset.Balance).Cmp(amount) < 0 {
 		return nil, session.InsufficientAccountBalanceError(ctx)
@@ -182,7 +186,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 			return err
 		}
 		var userId string
-		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1", packet.PacketId).Scan(&userId)
+		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
 		if err == sql.ErrNoRows {
 			return handlePacketClaim(ctx, tx, packet, current.UserId)
 		}
@@ -202,7 +206,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		}
 		params, positions := compileTableQuery(distributedMessagesCols)
 		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
-		_, err = session.Database(ctx).ExecContext(ctx, query, dm.values())
+		_, err = session.Database(ctx).ExecContext(ctx, query, dm.values()...)
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
@@ -270,7 +274,7 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 
 func ListExpiredPackets(ctx context.Context, limit int) ([]string, error) {
 	var packetIds []string
-	query := "SELECT packet_id FROM packets WHERE states IN ($1, $2) AND created_at<$3 LIMIT $4"
+	query := "SELECT packet_id FROM packets WHERE state IN ($1, $2) AND created_at<$3 LIMIT $4"
 	rows, err := session.Database(ctx).QueryContext(ctx, query, PacketStatePaid, PacketStateExpired, time.Now().Add(-25*time.Hour), limit)
 	if err != nil {
 		return packetIds, session.TransactionError(ctx, err)
@@ -317,7 +321,7 @@ func handlePacketClaim(ctx context.Context, tx *sql.Tx, packet *Packet, userId s
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, "INSERT INTO participants ('packet_id', 'user_id', 'amount') VALUES ($1, $2, $3)", packet.PacketId, userId, amount.Persist())
+	_, err = tx.ExecContext(ctx, "INSERT INTO participants (packet_id,user_id,amount) VALUES ($1, $2, $3)", packet.PacketId, userId, amount.Persist())
 	return err
 }
 
@@ -363,7 +367,7 @@ func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, erro
 	return p, nil
 }
 
-func ReadPackageWithRelation(ctx context.Context, packetId string) (*Packet, error) {
+func ReadPacketWithRelation(ctx context.Context, packetId string) (*Packet, error) {
 	var packet *Packet
 	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
