@@ -130,7 +130,6 @@ Packet.prototype = {
           return;
         }
         var pkt = resp.data;
-        console.info('mixin://pay?recipient=' + CLIENT_ID + '&asset=' + pkt.asset.asset_id + '&amount=' + pkt.amount + '&trace=' + pkt.packet_id + '&memo=' + pkt.greeting);
         setTimeout(function() { self.waitForPayment(pkt.packet_id); }, 1500);
         window.location.replace('mixin://pay?recipient=' + CLIENT_ID + '&asset=' + pkt.asset.asset_id + '&amount=' + pkt.amount + '&trace=' + pkt.packet_id + '&memo=' + pkt.greeting);
       }, params);

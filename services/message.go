@@ -301,7 +301,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 		return nil
 	}
 	user, err := models.FindUser(ctx, userId)
-	if err != nil {
+	if user == nil || err != nil {
 		return err
 	}
 	if user.TraceId == transfer.TraceId && transfer.Amount == config.PaymentAmount && transfer.AssetId == config.PaymentAssetId {

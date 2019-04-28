@@ -15,8 +15,8 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
-	"github.com/go-pg/pg"
 	"github.com/gofrs/uuid"
+	"github.com/lib/pq"
 )
 
 const participants_DDL = `
@@ -37,7 +37,7 @@ type Participant struct {
 	UserId    string
 	Amount    string
 	CreatedAt time.Time
-	PaidAt    pg.NullTime
+	PaidAt    pq.NullTime
 
 	FullName  string
 	AvatarURL string
