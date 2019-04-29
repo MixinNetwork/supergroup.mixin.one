@@ -84,7 +84,7 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, error) {
 	a, err := bot.AssetShow(ctx, assetId, current.AccessToken)
 	if err != nil {
-		return nil, session.ServerError(ctx, err)
+		return nil, err
 	}
 	asset := &Asset{
 		AssetId:  a.AssetId,

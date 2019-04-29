@@ -75,7 +75,7 @@ func (current *User) Prepare(ctx context.Context) (int64, error) {
 func (current *User) CreatePacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
 	asset, err := current.ShowAsset(ctx, assetId)
 	if err != nil {
-		return nil, session.ServerError(ctx, err)
+		return nil, err
 	}
 	return current.createPacket(ctx, asset, amount, totalCount, greeting)
 }

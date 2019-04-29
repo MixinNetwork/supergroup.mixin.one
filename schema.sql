@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS users (
-  user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  user_id           VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
   identity_number   BIGINT NOT NULL,
   full_name         VARCHAR(512) NOT NULL DEFAULT '',
   access_token      VARCHAR(512) NOT NULL DEFAULT '',
