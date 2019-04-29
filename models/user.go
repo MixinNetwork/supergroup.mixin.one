@@ -64,7 +64,7 @@ func (u *User) values() []interface{} {
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
 	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.ClientId, config.ClientSecret, authorizationCode, "")
 	if err != nil {
-		return nil, session.ServerError(ctx, err)
+		return nil, err
 	}
 	if !strings.Contains(scope, "PROFILE:READ") {
 		return nil, session.ForbiddenError(ctx)
