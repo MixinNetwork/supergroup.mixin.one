@@ -2,10 +2,11 @@ package models
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"testing"
 
-	"cloud.google.com/go/spanner"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -13,7 +14,18 @@ import (
 
 const (
 	testEnvironment = "test"
-	testDatabase    = "projects/mixin-183904/instances/development/databases/supergroup_test"
+	testDatabase    = "group_test"
+)
+
+const (
+	dropParticipantsDDL        = `DROP TABLE IF EXISTS participants;`
+	dropPacketsDDL             = `DROP TABLE IF EXISTS packets;`
+	dropAssetsDDL              = `DROP TABLE IF EXISTS assets;`
+	dropBlacklistsDDL          = `DROP TABLE IF EXISTS blacklists;`
+	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
+	dropDistributedMessagesDDL = `DROP TABLE IF EXISTS distributed_messages;`
+	dropMessagesDDL            = `DROP TABLE IF EXISTS messages;`
+	dropUsersDDL               = `DROP TABLE IF EXISTS users;`
 )
 
 func TestClear(t *testing.T) {
@@ -24,28 +36,50 @@ func TestClear(t *testing.T) {
 func teardownTestContext(ctx context.Context) {
 	db := session.Database(ctx)
 	tables := []string{
-		"users",
-		"messages",
-		"distributed_messages",
-		"properties",
-		"blacklists",
+		dropUsersDDL,
+		dropMessagesDDL,
+		dropDistributedMessagesDDL,
+		dropPropertiesDDL,
+		dropBlacklistsDDL,
+		dropAssetsDDL,
+		dropParticipantsDDL,
+		dropPacketsDDL,
 	}
-	for _, table := range tables {
-		db.Apply(ctx, []*spanner.Mutation{spanner.Delete(table, spanner.AllKeys())}, "all", "DELETE", "DELETE FROM all")
+	for _, q := range tables {
+		if _, err := db.Exec(q); err != nil {
+			log.Panicln(err)
+		}
 	}
-	db.Close()
 }
 
 func setupTestContext() context.Context {
-	if config.Environment != testEnvironment || config.GoogleCloudSpanner != testDatabase {
-		log.Panicln(config.Environment, config.GoogleCloudSpanner)
+	if config.Environment != testEnvironment || config.DatabaseName != testDatabase {
+		log.Panicln(config.Environment, config.DatabaseName)
 	}
 
-	spanner, err := durable.OpenSpannerClient(context.Background(), config.GoogleCloudSpanner)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.DatebaseUser, config.DatabasePassword, config.DatabaseHost, config.DatabasePort, config.DatabaseName)
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
 	}
-
-	db := durable.WrapDatabase(spanner, nil)
-	return session.WithDatabase(context.Background(), db)
+	tables := []string{
+		users_DDL,
+		messages_DDL,
+		distributed_messages_DDL,
+		assets_DDL,
+		blacklist_DDL,
+		packets_DDL,
+		participants_DDL,
+		properties_DDL,
+	}
+	for _, q := range tables {
+		if _, err := db.Exec(q); err != nil {
+			log.Panicln(err)
+		}
+	}
+	database, err := durable.NewDatabase(context.Background(), db)
+	if err != nil {
+		log.Panicln(err)
+	}
+	return session.WithDatabase(context.Background(), database)
 }

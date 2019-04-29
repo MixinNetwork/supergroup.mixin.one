@@ -2,18 +2,17 @@ package models
 
 import (
 	"context"
+	"database/sql"
 
-	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
-	"google.golang.org/api/iterator"
 )
 
 const blacklist_DDL = `
-CREATE TABLE blacklists (
-	user_id	          STRING(36) NOT NULL,
-) PRIMARY KEY(user_id);
+CREATE TABLE IF NOT EXISTS blacklists (
+	user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$')
+);
 `
 
 type Blacklist struct {
@@ -28,34 +27,36 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	if !config.Operators[user.UserId] {
 		return nil, nil
 	}
-	user, err = findUserById(ctx, userId)
+	if config.Operators[userId] {
+		return nil, nil
+	}
+	user, err = FindUser(ctx, userId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	} else if user == nil {
 		return nil, nil
 	}
 
-	session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Delete("users", spanner.Key{userId}),
-		spanner.Insert("blacklists", []string{"user_id"}, []interface{}{userId}),
-	}, "blacklists", "INSERT", "CreateBlacklist")
-
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.ExecContext(ctx, "INSERT INTO blacklists (user_id) VALUES ($1)", user.UserId)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE user_id=$1", user.UserId)
+		return err
+	})
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
 	return &Blacklist{UserId: userId}, nil
 }
 
 func readBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
-	it := session.Database(ctx).Read(ctx, "blacklists", spanner.Key{userId}, []string{"user_id"}, "readBlacklist")
-	defer it.Stop()
-
-	row, err := it.Next()
-	if err == iterator.Done {
+	var b Blacklist
+	err := session.Database(ctx).QueryRowContext(ctx, "SELECT user_id from blacklists WHERE user_id=$1", userId).Scan(&b.UserId)
+	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
-
-	var b Blacklist
-	if err := row.Columns(&b.UserId); err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return &b, nil

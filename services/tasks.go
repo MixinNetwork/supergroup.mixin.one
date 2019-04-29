@@ -2,13 +2,13 @@ package services
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
-	"sync"
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -16,6 +16,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/interceptors"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 	"mvdan.cc/xurls"
 )
@@ -37,7 +38,11 @@ func loopPendingMessage(ctx context.Context) {
 		for _, message := range messages {
 			if !config.Operators[message.UserId] {
 				if config.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
-					if re.Match(message.Data) {
+					data, err := base64.StdEncoding.DecodeString(message.Data)
+					if err != nil {
+						session.Logger(ctx).Errorf("DetectLink ERROR: %+v", err)
+					}
+					if re.Match(data) {
 						if err := message.Leapfrog(ctx, "Message contains link"); err != nil {
 							time.Sleep(500 * time.Millisecond)
 							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
@@ -68,20 +73,17 @@ func loopPendingMessage(ctx context.Context) {
 }
 
 func cleanUpDistributedMessages(ctx context.Context) {
+	limit := int64(100)
 	for {
-		ids, err := models.ExpiredDistributedMessageIds(ctx)
+		count, err := models.CleanUpExpiredDistributedMessages(ctx, limit)
 		if err != nil {
 			session.Logger(ctx).Errorf("cleanUpDistributedMessages ERROR: %+v", err)
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-		if len(ids) == 0 {
-			time.Sleep(500 * time.Millisecond)
+		if count < 100 {
+			time.Sleep(10 * time.Second)
 			continue
-		}
-		if err := models.CleanUpExpiredDistributedMessages(ctx, ids); err != nil {
-			session.Logger(ctx).Errorf("cleanUpDistributedMessages ERROR: %+v", err)
-			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
@@ -89,57 +91,38 @@ func cleanUpDistributedMessages(ctx context.Context) {
 func loopPendingDistributeMessages(ctx context.Context, conn *websocket.Conn, mc *MessageContext) error {
 	defer conn.Close()
 
-	magnifier := 10
+	limit := int64(10)
+	for i := int64(0); i < config.MessageShardSize; i++ {
+		shard := shardId(config.MessageShardModifier, i)
+		go pendingDistributedMessages(ctx, shard, limit, mc)
+	}
+	err := make(chan error)
+	return <-err
+}
+
+func pendingDistributedMessages(ctx context.Context, shard string, limit int64, mc *MessageContext) {
 	for {
-		messages, err := models.PendingDistributedMessages(ctx, int64(magnifier*models.PendingDistributedMessageLimit))
+		messages, err := models.PendingDistributedMessages(ctx, shard, limit)
 		if err != nil {
-			session.Logger(ctx).Errorf("loopPendingMessages Error: %+v", err)
-			time.Sleep(500 * time.Millisecond)
+			session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		l := len(messages)
-		m, r := l/magnifier, l%magnifier
-		if l > 0 {
-			if l <= magnifier {
-				if err := sendDistributedMessges(ctx, mc, messages); err != nil {
-					session.Logger(ctx).Errorf("sendDistributedMessges Error: %+v", err)
-					return err
-				}
-			} else {
-				var wg sync.WaitGroup
-				var errs []error
-				for i := 0; i < magnifier; i++ {
-					wg.Add(1)
-					go func(i int) {
-						defer wg.Done()
-						start, end := i*m, (i+1)*m
-						if i < r {
-							start, end = start+i, end+i+1
-						} else {
-							start, end = start+r, end+r
-						}
-						if i+1 == magnifier {
-							end = l
-						}
-						if err := sendDistributedMessges(ctx, mc, messages[start:end]); err != nil {
-							errs = append(errs, err)
-						}
-					}(i)
-				}
-				wg.Wait()
-				if len(errs) > 0 {
-					session.Logger(ctx).Errorf("WaitGroup SendDistributedMessges ERRORS size %d, first ERROR %+v", len(errs), errs[0])
-					return session.BlazeServerError(ctx, errors.New(fmt.Sprintf("SendDistributedMessges ERRORS %d", len(errs))))
-				}
-			}
-			err := models.WriteProperty(ctx, models.MessageQueueCheckpoint, messages[len(messages)-1].UpdatedAt.Format(time.RFC3339Nano))
-			if err != nil {
-				session.Logger(ctx).Errorf("WriteProperty ERROR: %+v", err)
-				return err
-			}
+		if len(messages) < 1 {
+			time.Sleep(2 * time.Second)
+			continue
 		}
-		if len(messages) < models.PendingDistributedMessageLimit {
-			time.Sleep(500 * time.Millisecond)
+		err = sendDistributedMessges(ctx, mc, messages)
+		if err != nil {
+			session.Logger(ctx).Errorf("PendingDistributedMessages sendDistributedMessges ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		err = models.UpdateMessagesStatus(ctx, messages)
+		if err != nil {
+			session.Logger(ctx).Errorf("PendingDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
 		}
 	}
 }
@@ -155,10 +138,10 @@ func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []
 			"recipient_id":      message.RecipientId,
 			"message_id":        message.MessageId,
 			"category":          message.Category,
-			"data":              base64.StdEncoding.EncodeToString(message.Data),
+			"data":              message.Data,
 			"representative_id": message.UserId,
 			"created_at":        message.CreatedAt,
-			"updated_at":        message.UpdatedAt,
+			"updated_at":        message.CreatedAt,
 		})
 	}
 	err := writeMessageAndWait(ctx, mc, "CREATE_PLAIN_MESSAGES", map[string]interface{}{"messages": body})
@@ -206,7 +189,11 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 
 func validateMessage(ctx context.Context, message *models.Message) (bool, string) {
 	var a Attachment
-	err := json.Unmarshal(message.Data, &a)
+	src, err := base64.StdEncoding.DecodeString(message.Data)
+	if err != nil {
+		return false, "message.Data format error is not Base64"
+	}
+	err = json.Unmarshal(src, &a)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, "message.Data Unmarshal error"
@@ -251,4 +238,18 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		return false, fmt.Sprintf("CheckSex: %+v", err)
 	}
 	return true, ""
+}
+
+func shardId(modifier string, i int64) string {
+	h := md5.New()
+	h.Write([]byte(modifier))
+	h.Write(new(big.Int).SetInt64(i).Bytes())
+	s := h.Sum(nil)
+	s[6] = (s[6] & 0x0f) | 0x30
+	s[8] = (s[8] & 0x3f) | 0x80
+	id, err := uuid.FromBytes(s)
+	if err != nil {
+		panic(err)
+	}
+	return id.String()
 }

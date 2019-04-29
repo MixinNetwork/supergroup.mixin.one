@@ -41,5 +41,5 @@ func (logger *Logger) Errorf(format string, v ...interface{}) {
 }
 
 func (logger *Logger) Panicln(v ...interface{}) {
-	log.Panicln(v)
+	log.Panicln(v...)
 }

@@ -1,44 +1,55 @@
 package models
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"database/sql"
+	"encoding/base64"
 	"fmt"
-	"sort"
+	"io"
+	"math/big"
 	"strings"
 	"time"
 
-	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
-	"google.golang.org/api/iterator"
+	"github.com/gofrs/uuid"
 )
 
 const (
 	DistributeSubscriberLimit      = 100
 	ExpiredDistributedMessageLimit = 100
 	PendingDistributedMessageLimit = 20
+
+	MessageStatusSent      = "SENT"
+	MessageStatusDelivered = "DELIVERED"
 )
 
 const distributed_messages_DDL = `
-CREATE TABLE distributed_messages (
-	message_id            STRING(36) NOT NULL,
-	conversation_id       STRING(36) NOT NULL,
-	recipient_id          STRING(36) NOT NULL,
-	user_id	              STRING(36) NOT NULL,
-	category              STRING(512) NOT NULL,
-	data                  BYTES(MAX) NOT NULL,
-	created_at            TIMESTAMP NOT NULL,
-	updated_at            TIMESTAMP NOT NULL,
-) PRIMARY KEY(message_id);
+CREATE TABLE IF NOT EXISTS distributed_messages (
+	message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
+	conversation_id       VARCHAR(36) NOT NULL CHECK (conversation_id ~* '^[0-9a-f-]{36,36}$'),
+	recipient_id          VARCHAR(36) NOT NULL CHECK (recipient_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	parent_id             VARCHAR(36) NOT NULL CHECK (parent_id ~* '^[0-9a-f-]{36,36}$'),
+	shard                 VARCHAR(36) NOT NULL,
+	category              VARCHAR(512) NOT NULL,
+	data                  TEXT NOT NULL,
+	status                VARCHAR(512) NOT NULL,
+	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 
-CREATE INDEX distributed_messages_by_updated ON distributed_messages(updated_at);
+CREATE INDEX IF NOT EXISTS message_shard_status_createdx ON distributed_messages(shard, status, created_at);
+CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
 `
 
-var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "category", "data", "created_at", "updated_at"}
+var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "shard", "category", "data", "status", "created_at"}
 
 func (dm *DistributedMessage) values() []interface{} {
-	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.Category, dm.Data, dm.CreatedAt, dm.UpdatedAt}
+	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
 }
 
 type DistributedMessage struct {
@@ -46,61 +57,91 @@ type DistributedMessage struct {
 	ConversationId string
 	RecipientId    string
 	UserId         string
+	ParentId       string
+	Shard          string
 	Category       string
-	Data           []byte
+	Data           string
+	Status         string
 	CreatedAt      time.Time
-	UpdatedAt      time.Time
 }
 
-func createDistributeMessage(ctx context.Context, messageId, userId, recipientId, category string, data []byte) *spanner.Mutation {
-	t := time.Now()
+func createDistributeMessage(ctx context.Context, messageId, parentId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,
+		ParentId:       parentId,
 		Category:       category,
 		Data:           data,
-		CreatedAt:      t,
-		UpdatedAt:      t,
+		Status:         MessageStatusSent,
+		CreatedAt:      time.Now(),
 	}
-	return spanner.Insert("distributed_messages", distributedMessagesCols, dm.values())
+	shard, err := shardId(dm.ConversationId, dm.RecipientId)
+	if err != nil {
+		return nil, err
+	}
+	dm.Shard = shard
+	return dm, nil
 }
 
 func (message *Message) Distribute(ctx context.Context) error {
 	for {
-		ids, subscribedAt, err := subscribedUserIds(ctx, message.LastDistributeAt, DistributeSubscriberLimit)
+		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit)
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
-		mutations := []*spanner.Mutation{}
-		messageIds := make([]string, len(ids))
-		for i, id := range ids {
-			messageIds[i] = UniqueConversationId(id, message.MessageId)
-		}
-		set, err := readDistributedMessagesByIds(ctx, messageIds)
-		if err != nil {
-			return session.TransactionError(ctx, err)
-		}
-		for _, id := range ids {
-			if id == message.UserId {
-				continue
+		var last time.Time
+		var values bytes.Buffer
+		if len(users) > 0 {
+			messageIds := make([]string, len(users))
+			for i, user := range users {
+				messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
 			}
-			messageId := UniqueConversationId(id, message.MessageId)
-			if set[messageId] {
-				continue
+			set, err := readDistributedMessagesByIds(ctx, messageIds)
+			if err != nil {
+				return session.TransactionError(ctx, err)
 			}
-			mutations = append(mutations, createDistributeMessage(ctx, messageId, message.UserId, id, message.Category, message.Data))
+			i := 0
+			for _, user := range users {
+				last = user.SubscribedAt
+				if user.UserId == message.UserId {
+					continue
+				}
+				messageId := UniqueConversationId(user.UserId, message.MessageId)
+				if set[messageId] {
+					continue
+				}
+				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
+				if err != nil {
+					session.TransactionError(ctx, err)
+				}
+				if i > 0 {
+					values.WriteString(",")
+				}
+				i += 1
+				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
+			}
+			message.LastDistributeAt = last
 		}
-		if len(ids) < DistributeSubscriberLimit {
+		if len(users) < DistributeSubscriberLimit {
 			message.LastDistributeAt = time.Now()
 			message.State = MessageStateSuccess
-			mutations = append(mutations, spanner.Update("messages", []string{"message_id", "state", "last_distribute_at"}, []interface{}{message.MessageId, message.State, message.LastDistributeAt}))
-		} else {
-			message.LastDistributeAt = subscribedAt
-			mutations = append(mutations, spanner.Update("messages", []string{"message_id", "last_distribute_at"}, []interface{}{message.MessageId, message.LastDistributeAt}))
 		}
-		if err := session.Database(ctx).Apply(ctx, mutations, "distributed_messages", "INSERT", "DistributeMessage"); err != nil {
+		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
+			if err != nil {
+				return err
+			}
+			v := values.String()
+			if v != "" {
+				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+				_, err = tx.ExecContext(ctx, query)
+				return err
+			}
+			return nil
+		})
+		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
 		if message.State == MessageStateSuccess {
@@ -123,7 +164,8 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
-	mutations := make([]*spanner.Mutation, 0)
+	var values bytes.Buffer
+	i := 0
 	for _, id := range ids {
 		if id == message.UserId {
 			continue
@@ -132,119 +174,127 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		data := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
-		mutations = append(mutations, createDistributeMessage(ctx, messageId, message.UserId, id, message.Category, message.Data))
-		mutations = append(mutations, createDistributeMessage(ctx, bot.UuidNewV4().String(), message.UserId, id, "PLAIN_TEXT", []byte(data)))
+		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, id, message.Category, message.Data)
+		if err != nil {
+			session.TransactionError(ctx, err)
+		}
+		if i > 0 {
+			values.WriteString(",")
+		}
+		i += 1
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
+
+		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
+		data := base64.StdEncoding.EncodeToString([]byte(why))
+		values.WriteString(",")
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
 	}
+
 	message.LastDistributeAt = time.Now()
 	message.State = MessageStateSuccess
-	mutations = append(mutations, spanner.Update("messages", []string{"message_id", "state", "last_distribute_at"}, []interface{}{message.MessageId, message.State, message.LastDistributeAt}))
-	err = session.Database(ctx).Apply(ctx, mutations, "messages", "UPDATE", "Leapfrog")
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
+		if err != nil {
+			return err
+		}
+		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+		_, err = tx.ExecContext(ctx, query)
+		return err
+	})
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
 }
 
-func PendingDistributedMessages(ctx context.Context, limit int64) ([]*DistributedMessage, error) {
+func PendingDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	offset, err := ReadPropertyAsOffset(ctx, MessageQueueCheckpoint)
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY created_at LIMIT $3", strings.Join(distributedMessagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, limit)
 	if err != nil {
-		return messages, err
+		return messages, session.TransactionError(ctx, err)
 	}
-	query := fmt.Sprintf("SELECT message_id FROM distributed_messages@{FORCE_INDEX=distributed_messages_by_updated} WHERE updated_at>@updated_at ORDER BY updated_at LIMIT %d", limit)
-	params := map[string]interface{}{"updated_at": offset}
-	ids, err := readCollectionIds(ctx, txn, query, params)
-	if err != nil || len(ids) == 0 {
-		return messages, err
-	}
-
-	it := txn.Query(ctx, spanner.Statement{
-		SQL:    fmt.Sprintf("SELECT %s FROM distributed_messages WHERE message_id IN UNNEST(@message_ids)", strings.Join(distributedMessagesCols, ",")),
-		Params: map[string]interface{}{"message_ids": ids},
-	})
-	defer it.Stop()
-
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return messages, session.TransactionError(ctx, err)
-		}
-
-		message, err := distributedMessageFromRow(row)
+	for rows.Next() {
+		m, err := distributedMessageFromRow(rows)
 		if err != nil {
 			return messages, session.TransactionError(ctx, err)
 		}
-		messages = append(messages, message)
+		messages = append(messages, m)
 	}
-	sort.Slice(messages, func(i, j int) bool { return messages[i].UpdatedAt.Before(messages[j].UpdatedAt) })
 	return messages, nil
 }
 
-func ExpiredDistributedMessageIds(ctx context.Context) ([]string, error) {
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	var offset time.Time
-	timestamp, err := readProperty(ctx, txn, MessageQueueCheckpoint)
+func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) error {
+	ids := make([]string, len(messages))
+	for i, m := range messages {
+		ids[i] = m.MessageId
+	}
+	query := fmt.Sprintf("UPDATE distributed_messages SET status=$1 WHERE message_id IN ('%s')", strings.Join(ids, "','"))
+	_, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered)
 	if err != nil {
-		return nil, err
-	}
-	if timestamp != "" {
-		offset, err = time.Parse(time.RFC3339Nano, timestamp)
-	}
-	if err != nil {
-		return nil, err
-	}
-	query := fmt.Sprintf("SELECT message_id FROM distributed_messages@{FORCE_INDEX=distributed_messages_by_updated} WHERE updated_at<@updated_at ORDER BY updated_at LIMIT %d", ExpiredDistributedMessageLimit)
-	params := map[string]interface{}{"updated_at": offset}
-	return readCollectionIds(ctx, txn, query, params)
-}
-
-func CleanUpExpiredDistributedMessages(ctx context.Context, ids []string) error {
-	var keySets []spanner.KeySet
-	for _, id := range ids {
-		keySets = append(keySets, spanner.Key{id})
-	}
-	if err := session.Database(ctx).Apply(ctx, []*spanner.Mutation{
-		spanner.Delete("distributed_messages", spanner.KeySets(keySets...)),
-	}, "distributed_messages", "DELETE", "DeleteDistributedMessage"); err != nil {
 		return session.TransactionError(ctx, err)
 	}
 	return nil
 }
 
-func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
-	stmt := spanner.Statement{
-		SQL:    "SELECT message_id FROM distributed_messages WHERE message_id IN UNNEST(@ids)",
-		Params: map[string]interface{}{"ids": ids},
+func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE status=$1 LIMIT $2)")
+	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, limit)
+	if err != nil {
+		return 0, session.TransactionError(ctx, err)
 	}
-	it := session.Database(ctx).Query(ctx, stmt, "distributed_messages", "SELECT")
-	defer it.Stop()
+	count, err := r.RowsAffected()
+	if err != nil {
+		return 0, session.TransactionError(ctx, err)
+	}
+	return count, nil
+}
 
+func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
 	set := make(map[string]bool)
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			return set, nil
-		} else if err != nil {
-			return nil, err
-		}
+	query := fmt.Sprintf("SELECT message_id FROM distributed_messages WHERE message_id IN ('%s')", strings.Join(ids, "','"))
+	rows, err := session.Database(ctx).QueryContext(ctx, query)
+	if err != nil {
+		return set, err
+	}
+	for rows.Next() {
 		var id string
-		if err := row.Columns(&id); err != nil {
-			return nil, err
+		if err := rows.Scan(&id); err != nil {
+			return set, err
 		}
 		set[id] = true
 	}
+	return set, nil
 }
 
-func distributedMessageFromRow(row *spanner.Row) (*DistributedMessage, error) {
+func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	var m DistributedMessage
-	err := row.Columns(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.Category, &m.Data, &m.CreatedAt, &m.UpdatedAt)
+	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
 	return &m, err
+}
+
+func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, shard, category, data, status string) string {
+	return fmt.Sprintf("('%s','%s','%s','%s','%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, shard, category, data, status)
+}
+
+func shardId(cid, uid string) (string, error) {
+	minId, maxId := cid, uid
+	if strings.Compare(cid, uid) > 0 {
+		maxId, minId = cid, uid
+	}
+	h := md5.New()
+	io.WriteString(h, minId)
+	io.WriteString(h, maxId)
+
+	b := new(big.Int).SetInt64(config.MessageShardSize)
+	c := new(big.Int).SetBytes(h.Sum(nil))
+	m := new(big.Int).Mod(c, b)
+	h = md5.New()
+	h.Write([]byte(config.MessageShardModifier))
+	h.Write(m.Bytes())
+	s := h.Sum(nil)
+	s[6] = (s[6] & 0x0f) | 0x30
+	s[8] = (s[8] & 0x3f) | 0x80
+	sid, err := uuid.FromBytes(s)
+	return sid.String(), err
 }

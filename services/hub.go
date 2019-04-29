@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"cloud.google.com/go/spanner"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
@@ -14,8 +13,7 @@ type Hub struct {
 	services map[string]Service
 }
 
-func NewHub(spanner *spanner.Client) *Hub {
-	db := durable.WrapDatabase(spanner, nil)
+func NewHub(db *durable.Database) *Hub {
 	hub := &Hub{services: make(map[string]Service)}
 	hub.context = session.WithDatabase(context.Background(), db)
 	hub.registerServices()

@@ -3,33 +3,33 @@ package models
 import (
 	"context"
 	"crypto/md5"
+	"database/sql"
 	"fmt"
 	"io"
-	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
 
-	"cloud.google.com/go/spanner"
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
-	"google.golang.org/api/iterator"
+	"github.com/lib/pq"
 )
 
 const participants_DDL = `
-CREATE TABLE participants (
-	packet_id         STRING(36) NOT NULL,
-	user_id	          STRING(36) NOT NULL,
-	amount            STRING(128) NOT NULL,
-	created_at        TIMESTAMP NOT NULL,
-	paid_at           TIMESTAMP,
-) PRIMARY KEY(packet_id, user_id),
-INTERLEAVE IN PARENT packets ON DELETE CASCADE;
+CREATE TABLE IF NOT EXISTS participants (
+	packet_id         VARCHAR(36) NOT NULL REFERENCES packets(packet_id) ON DELETE CASCADE,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	amount            VARCHAR(128) NOT NULL,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	paid_at           TIMESTAMP WITH TIME ZONE,
+	PRIMARY KEY(packet_id, user_id)
+);
 
-CREATE INDEX participants_by_created_paid ON participants(created_at, paid_at) STORING(amount);
+CREATE INDEX IF NOT EXISTS participants_created_paidx ON participants(created_at, paid_at);
 `
 
 type Participant struct {
@@ -37,93 +37,48 @@ type Participant struct {
 	UserId    string
 	Amount    string
 	CreatedAt time.Time
+	PaidAt    pq.NullTime
 
 	FullName  string
 	AvatarURL string
 }
 
 func (packet *Packet) GetParticipants(ctx context.Context) error {
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-
-	it := txn.Query(ctx, spanner.Statement{
-		SQL:    "SELECT user_id,amount,created_at FROM participants WHERE packet_id=@packet_id LIMIT 1000",
-		Params: map[string]interface{}{"packet_id": packet.PacketId},
-	})
-	defer it.Stop()
+	query := fmt.Sprintf("SELECT p.packet_id,p.user_id,p.amount,p.created_at,p.paid_at,u.full_name,u.avatar_url FROM participants p INNER JOIN users u ON p.user_id=u.user_id WHERE p.packet_id=$1 ORDER BY p.created_at")
+	rows, err := session.Database(ctx).QueryContext(ctx, query, packet.PacketId)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
 
 	var participants []*Participant
-	var userIds []string
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return session.TransactionError(ctx, err)
-		}
-		var p Participant
-		err = row.Columns(&p.UserId, &p.Amount, &p.CreatedAt)
+	for rows.Next() {
+		p, err := participantFromRow(rows)
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
-		participants = append(participants, &p)
-		userIds = append(userIds, p.UserId)
+		participants = append(participants, p)
 	}
-
-	cit := txn.Query(ctx, spanner.Statement{
-		SQL:    "SELECT user_id,full_name,avatar_url FROM users WHERE user_id IN UNNEST(@user_ids)",
-		Params: map[string]interface{}{"user_ids": userIds},
-	})
-	defer cit.Stop()
-
-	var userInfo = make(map[string]*User)
-	for {
-		row, err := cit.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return session.TransactionError(ctx, err)
-		}
-		var u User
-		err = row.Columns(&u.UserId, &u.FullName, &u.AvatarURL)
-		if err != nil {
-			return session.TransactionError(ctx, err)
-		}
-		userInfo[u.UserId] = &u
-	}
-
-	for _, p := range participants {
-		if userInfo[p.UserId] != nil {
-			p.FullName = userInfo[p.UserId].FullName
-			p.AvatarURL = userInfo[p.UserId].AvatarURL
-		}
-	}
-
-	sort.Slice(participants, func(i, j int) bool { return participants[i].CreatedAt.Before(participants[j].CreatedAt) })
 	packet.Participants = participants
 	return nil
 }
 
 func ListPendingParticipants(ctx context.Context, limit int) ([]*Participant, error) {
-	query := fmt.Sprintf("SELECT packet_id,user_id,amount FROM participants@{FORCE_INDEX=participants_by_created_paid} WHERE paid_at IS NULL ORDER BY created_at LIMIT %d", limit)
-	it := session.Database(ctx).Query(ctx, spanner.Statement{SQL: query}, "participants", "ListPendingParticipants")
-	defer it.Stop()
-
 	var participants []*Participant
-	for {
-		row, err := it.Next()
-		if err == iterator.Done {
-			return participants, nil
-		} else if err != nil {
-			return participants, session.TransactionError(ctx, err)
-		}
+	query := "SELECT packet_id,user_id,amount FROM participants WHERE paid_at IS NULL ORDER BY created_at LIMIT $1"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, limit)
+	if err != nil {
+		return participants, session.TransactionError(ctx, err)
+	}
+
+	for rows.Next() {
 		var p Participant
-		err = row.Columns(&p.PacketId, &p.UserId, &p.Amount)
+		err = rows.Scan(&p.PacketId, &p.UserId, &p.Amount)
 		if err != nil {
 			return participants, session.TransactionError(ctx, err)
 		}
 		participants = append(participants, &p)
 	}
+	return participants, nil
 }
 
 func SendParticipantTransfer(ctx context.Context, packetId, userId string, amount string) error {
@@ -131,45 +86,45 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
-
-	txn := session.Database(ctx).ReadOnlyTransaction()
-	defer txn.Close()
-	packet, err := readPacketWithAssetAndUser(ctx, txn, packetId)
-	if err != nil {
-		return session.TransactionError(ctx, err)
-	}
-	memo := fmt.Sprintf("来自 %s 的红包", packet.User.FullName)
-	if strings.TrimSpace(packet.User.FullName) == "" {
-		memo = "来自无名氏的红包"
-	}
-	if count := utf8.RuneCountInString(memo); count > 100 {
-		name := string([]rune(packet.User.FullName)[:16])
-		memo = fmt.Sprintf("来自 %s 的红包", name)
-	}
-
-	in := &bot.TransferInput{
-		AssetId:     packet.AssetId,
-		RecipientId: userId,
-		Amount:      number.FromString(amount),
-		TraceId:     traceId,
-		Memo:        memo,
-	}
-	if !number.FromString(amount).Exhausted() {
-		err = bot.CreateTransfer(ctx, in, config.ClientId, config.SessionId, config.SessionKey, config.SessionAssetPIN, config.PinToken)
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		packet, err := readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil {
-			return session.ServerError(ctx, err)
+			return err
 		}
-	}
-
-	_, err = session.Database(ctx).ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
-		return txn.BufferWrite([]*spanner.Mutation{
-			spanner.Update("participants", []string{"packet_id", "user_id", "paid_at"}, []interface{}{packetId, userId, time.Now()}),
-		})
-	}, "packets", "UPDATE", "SendParticipantTransfer")
+		memo := fmt.Sprintf(config.GroupRedPacketDesc, packet.User.FullName)
+		if strings.TrimSpace(packet.User.FullName) == "" {
+			memo = config.GroupRedPacketShortDesc
+		}
+		if count := utf8.RuneCountInString(memo); count > 100 {
+			name := string([]rune(packet.User.FullName)[:16])
+			memo = fmt.Sprintf(config.GroupRedPacketDesc, name)
+		}
+		in := &bot.TransferInput{
+			AssetId:     packet.AssetId,
+			RecipientId: userId,
+			Amount:      number.FromString(amount),
+			TraceId:     traceId,
+			Memo:        memo,
+		}
+		if !number.FromString(amount).Exhausted() {
+			err = bot.CreateTransfer(ctx, in, config.ClientId, config.SessionId, config.SessionKey, config.SessionAssetPIN, config.PinToken)
+			if err != nil {
+				return err
+			}
+		}
+		_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", time.Now(), packetId, userId)
+		return err
+	})
 	if err != nil {
-		return session.TransactionError(ctx, err)
+		return session.ServerError(ctx, err)
 	}
 	return nil
+}
+
+func participantFromRow(row durable.Row) (*Participant, error) {
+	var p Participant
+	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.PaidAt, &p.FullName, &p.AvatarURL)
+	return &p, err
 }
 
 func generateParticipantId(packetId, userId string) (string, error) {

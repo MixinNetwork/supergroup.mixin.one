@@ -12,9 +12,22 @@ const (
 )
 
 const (
+	DatebaseUser     = "Your-Database-User"
+	DatabasePassword = "Your-Database-Password"
+	DatabaseHost     = "Your-Database-Host"
+	DatabasePort     = "Your-Database-Port"
+	DatabaseName     = "Your-Database-Name"
+)
+
+const (
 	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
 	// 设置成 "0", 所有人都可以加入
 	PaymentAmount  = "0.001"
+)
+
+const (
+	MessageShardModifier = "SHARD"
+	MessageShardSize     = 64
 )
 
 const (
@@ -65,9 +78,3 @@ MdepjmjG/PyRnoq/qgECQQCmoIh+xR6vJZ8VRWgjSzmJUPrZFz8uWk6BoePFGrGV
 FIHlQELVfFxLB2Xo9zDXvDVRK5N5O1bCNMfXUuQsmstm
 -----END RSA PRIVATE KEY-----`
 )
-
-const (
-	GoogleCloudProject = "$GCLOUD_PROJECT"
-	GoogleCloudSpanner = "projects/$GCLOUD_PROJECT/instances/test-instance/databases/example-db"
-)
-
