@@ -98,4 +98,7 @@ func TestPacketCRUD(t *testing.T) {
 	packet, err = ReadPacketWithRelation(ctx, packet.PacketId)
 	assert.Nil(err)
 	assert.NotNil(packet)
+	packet, err = ReadPacketWithRelation(ctx, bot.UuidNewV4().String())
+	assert.Nil(err)
+	assert.Nil(packet)
 }

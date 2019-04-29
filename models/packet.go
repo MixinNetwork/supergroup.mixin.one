@@ -161,9 +161,11 @@ func ShowPacket(ctx context.Context, packetId string) (*Packet, error) {
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	err = packet.GetParticipants(ctx)
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
+	if packet != nil {
+		err = packet.GetParticipants(ctx)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
 	}
 	return packet, nil
 }
@@ -366,7 +368,9 @@ func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, erro
 	query := fmt.Sprintf("SELECT %s FROM packets WHERE packet_id=$1", strings.Join(packetsCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, packetId)
 	p, err := packetFromRow(row)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return p, nil

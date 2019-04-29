@@ -55,6 +55,8 @@ func (impl *packetsImpl) create(w http.ResponseWriter, r *http.Request, params m
 func (impl *packetsImpl) show(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if packet, err := models.ShowPacket(r.Context(), params["id"]); err != nil {
 		views.RenderErrorResponse(w, r, err)
+	} else if packet == nil {
+		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderPacket(w, r, packet)
 	}
@@ -63,6 +65,8 @@ func (impl *packetsImpl) show(w http.ResponseWriter, r *http.Request, params map
 func (impl *packetsImpl) claim(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	if packet, err := middlewares.CurrentUser(r).ClaimPacket(r.Context(), params["id"]); err != nil {
 		views.RenderErrorResponse(w, r, err)
+	} else if packet == nil {
+		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderPacket(w, r, packet)
 	}
