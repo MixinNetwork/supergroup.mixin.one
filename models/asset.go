@@ -118,7 +118,11 @@ func upsertAssets(ctx context.Context, assets []*Asset) error {
 func readAsset(ctx context.Context, tx *sql.Tx, assetId string) (*Asset, error) {
 	query := fmt.Sprintf("SELECT %s FROM assets WHERE asset_id=$1", strings.Join(assetsCols, ","))
 	row := tx.QueryRowContext(ctx, query, assetId)
-	return assetFromRow(row)
+	asset, err := assetFromRow(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return asset, err
 }
 
 func assetFromRow(row durable.Row) (*Asset, error) {

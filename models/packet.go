@@ -357,9 +357,15 @@ func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string
 	if err != nil {
 		return nil, err
 	}
+	if packet.Asset == nil {
+		return nil, nil
+	}
 	packet.User, err = findUserById(ctx, tx, packet.UserId)
 	if err != nil {
 		return nil, err
+	}
+	if packet.User == nil {
+		return nil, nil
 	}
 	return packet, nil
 }
