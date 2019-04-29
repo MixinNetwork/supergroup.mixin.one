@@ -127,8 +127,8 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		return user, nil
 	}
 
-	params, positions := compileTableQuery([]string{"fullName", "access_token", "avatar_url"})
-	_, err = session.Database(ctx).Exec(fmt.Sprintf("UPDATE users SET (%s)=(%s) WHERE user_id=%s", params, positions, user.UserId), user.FullName, user.AccessToken, user.AvatarURL)
+	params, positions := compileTableQuery([]string{"full_name", "access_token", "avatar_url"})
+	_, err = session.Database(ctx).Exec(fmt.Sprintf("UPDATE users SET (%s)=(%s) WHERE user_id='%s'", params, positions, user.UserId), user.FullName, user.AccessToken, user.AvatarURL)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
