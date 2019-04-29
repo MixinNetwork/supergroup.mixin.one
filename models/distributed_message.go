@@ -30,11 +30,11 @@ const (
 
 const distributed_messages_DDL = `
 CREATE TABLE IF NOT EXISTS distributed_messages (
-	message_id            VARCHAR(36) PRIMARY KEY,
-	conversation_id       VARCHAR(36) NOT NULL,
-	recipient_id          VARCHAR(36) NOT NULL,
-	user_id	              VARCHAR(36) NOT NULL,
-	parent_id             VARCHAR(36) NOT NULL,
+	message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
+	conversation_id       VARCHAR(36) NOT NULL CHECK (conversation_id ~* '^[0-9a-f-]{36,36}$'),
+	recipient_id          VARCHAR(36) NOT NULL CHECK (recipient_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	parent_id             VARCHAR(36) NOT NULL CHECK (parent_id ~* '^[0-9a-f-]{36,36}$'),
 	shard                 VARCHAR(36) NOT NULL,
 	category              VARCHAR(512) NOT NULL,
 	data                  TEXT NOT NULL,
