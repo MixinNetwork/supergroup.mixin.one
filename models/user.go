@@ -256,7 +256,7 @@ func (user *User) Payment(ctx context.Context) error {
 
 func Subscribers(ctx context.Context, offset time.Time, identity int64) ([]*User, error) {
 	if identity > 20000 {
-		return findUserByIdentityNumber(ctx, identity)
+		return findUsersByIdentityNumber(ctx, identity)
 	}
 	users, err := subscribedUsers(ctx, offset, 200)
 	if err != nil {
@@ -333,7 +333,7 @@ func FindUser(ctx context.Context, userId string) (*User, error) {
 	return user, nil
 }
 
-func findUserByIdentityNumber(ctx context.Context, identity int64) ([]*User, error) {
+func findUsersByIdentityNumber(ctx context.Context, identity int64) ([]*User, error) {
 	query := fmt.Sprintf("SELECT %s FROM users WHERE identity_number=$1", strings.Join(usersCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, identity)
 	user, err := userFromRow(row)

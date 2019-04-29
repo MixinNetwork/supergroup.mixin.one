@@ -194,7 +194,18 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		var userId string
 		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
 		if err == sql.ErrNoRows {
-			return handlePacketClaim(ctx, tx, packet, current.UserId)
+			err = handlePacketClaim(ctx, tx, packet, current.UserId)
+			if err != nil {
+				return err
+			}
+			dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
+			if err != nil {
+				return err
+			}
+			params, positions := compileTableQuery(distributedMessagesCols)
+			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+			_, err = tx.ExecContext(ctx, query, dm.values()...)
+			return err
 		}
 		return err
 	})
@@ -204,18 +215,6 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 	err = packet.GetParticipants(ctx)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
-	}
-	if packet != nil {
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
-		if err != nil {
-			return nil, session.TransactionError(ctx, err)
-		}
-		params, positions := compileTableQuery(distributedMessagesCols)
-		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
-		_, err = session.Database(ctx).ExecContext(ctx, query, dm.values()...)
-		if err != nil {
-			return nil, session.TransactionError(ctx, err)
-		}
 	}
 	return packet, nil
 }

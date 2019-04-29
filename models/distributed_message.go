@@ -255,12 +255,12 @@ func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string
 	query := fmt.Sprintf("SELECT message_id FROM distributed_messages WHERE message_id IN ('%s')", strings.Join(ids, "','"))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
-		return set, session.TransactionError(ctx, err)
+		return set, err
 	}
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return set, session.TransactionError(ctx, err)
+			return set, err
 		}
 		set[id] = true
 	}
