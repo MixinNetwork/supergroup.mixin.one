@@ -55,6 +55,8 @@ func TestPacketCRUD(t *testing.T) {
 	packet, err = ShowPacket(ctx, packet.PacketId)
 	assert.Nil(err)
 	assert.NotNil(packet)
+	assert.Equal("1", packet.Amount)
+	assert.Equal(int64(2), packet.TotalCount)
 	packet, err = li.ClaimPacket(ctx, packet.PacketId)
 	assert.Nil(err)
 	assert.NotNil(packet)

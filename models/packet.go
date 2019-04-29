@@ -176,6 +176,12 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 	if packet.State != PacketStatePaid {
 		return packet, nil
 	}
+	if packet.RemainingCount > packet.TotalCount {
+		return nil, session.InsufficientAccountBalanceError(ctx)
+	}
+	if number.FromString(packet.RemainingAmount).Cmp(number.FromString(packet.Amount)) > 0 {
+		return nil, session.InsufficientAccountBalanceError(ctx)
+	}
 	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil || packet == nil {
@@ -317,7 +323,7 @@ func handlePacketClaim(ctx context.Context, tx *sql.Tx, packet *Packet, userId s
 	amount = number.FromString(amount.PresentFloor())
 	packet.RemainingCount = packet.RemainingCount - 1
 	packet.RemainingAmount = number.FromString(packet.RemainingAmount).Sub(amount).Persist()
-	_, err := tx.ExecContext(ctx, "UPDATE packets SET (remaining_count, remaining_amount)=($1,$2)", packet.RemainingCount, packet.RemainingAmount)
+	_, err := tx.ExecContext(ctx, "UPDATE packets SET (remaining_count, remaining_amount)=($1,$2) WHERE packet_id=$3", packet.RemainingCount, packet.RemainingAmount, packet.PacketId)
 	if err != nil {
 		return err
 	}

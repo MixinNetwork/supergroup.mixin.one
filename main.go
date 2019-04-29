@@ -21,6 +21,9 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
+	db.SetMaxOpenConns(128)
+	db.SetMaxIdleConns(16)
+
 	defer db.Close()
 	database, err := durable.NewDatabase(context.Background(), db)
 	if err != nil {
