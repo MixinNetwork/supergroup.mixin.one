@@ -77,6 +77,18 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 	if err != nil {
 		return nil, err
 	}
+	u, _ := bot.UserMe(ctx, current.AccessToken)
+	if u != nil {
+		name := strings.TrimSpace(u.FullName)
+		if name != current.FullName {
+			if u.AvatarURL != "" {
+				current.AvatarURL = u.AvatarURL
+			}
+			if _, err = session.Database(ctx).ExecContext(ctx, "UPDATE users SET (full_name, avatar_url)=($1,$2) WHERE user_id=$3", name, current.AvatarURL, current.UserId); err != nil {
+				session.TransactionError(ctx, err)
+			}
+		}
+	}
 	return current.createPacket(ctx, asset, amount, totalCount, greeting)
 }
 
