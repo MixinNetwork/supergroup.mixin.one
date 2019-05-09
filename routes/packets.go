@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
@@ -12,7 +13,9 @@ import (
 	"github.com/dimfeld/httptreemux"
 )
 
-type packetsImpl struct{}
+type packetsImpl struct {
+	mutex sync.Mutex
+}
 
 type packetRequest struct {
 	ConversationId string `json:"conversation_id"`
@@ -63,6 +66,8 @@ func (impl *packetsImpl) show(w http.ResponseWriter, r *http.Request, params map
 }
 
 func (impl *packetsImpl) claim(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	impl.mutex.Lock()
+	defer impl.mutex.Unlock()
 	if packet, err := middlewares.CurrentUser(r).ClaimPacket(r.Context(), params["id"]); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else if packet == nil {
