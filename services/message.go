@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	keepAlivePeriod = 20 * time.Second
-	writeWait       = 10 * time.Second
+	keepAlivePeriod = 30 * time.Second
+	writeWait       = 15 * time.Second
 	pongWait        = 10 * time.Second
 	pingPeriod      = (pongWait * 9) / 10
 )
