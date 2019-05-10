@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -205,7 +206,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 	}
 
 	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", attachment.ViewURL)
-	req, err := http.NewRequest(http.MethodGet, attachment.ViewURL, nil)
+	req, err := http.NewRequest(http.MethodGet, strings.Replace(attachment.ViewURL, "assets.zeromesh.net", "s3.cn-north-1.amazonaws.com.cn", 0), nil)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, fmt.Sprintf("http.NewRequest error: %+v", err)
