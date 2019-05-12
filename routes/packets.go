@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"crypto/md5"
 	"encoding/json"
+	"io"
+	"math/big"
 	"net/http"
 	"sync"
 
@@ -11,10 +14,11 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/MixinNetwork/supergroup.mixin.one/views"
 	"github.com/dimfeld/httptreemux"
+	"github.com/gofrs/uuid"
 )
 
 type packetsImpl struct {
-	mutex sync.Mutex
+	mutexes map[string]*sync.Mutex
 }
 
 type packetRequest struct {
@@ -26,7 +30,8 @@ type packetRequest struct {
 }
 
 func registerPackets(router *httptreemux.TreeMux) {
-	impl := &packetsImpl{}
+	impl := &packetsImpl{mutexes: make(map[string]*sync.Mutex, 0)}
+
 	router.GET("/packets/prepare", impl.prepare)
 	router.POST("/packets", impl.create)
 	router.GET("/packets/:id", impl.show)
@@ -66,8 +71,20 @@ func (impl *packetsImpl) show(w http.ResponseWriter, r *http.Request, params map
 }
 
 func (impl *packetsImpl) claim(w http.ResponseWriter, r *http.Request, params map[string]string) {
-	impl.mutex.Lock()
-	defer impl.mutex.Unlock()
+	id, err := shardId(params["id"])
+	if err != nil {
+		views.RenderErrorResponse(w, r, session.ServerError(r.Context(), err))
+		return
+	}
+
+	mutex := impl.mutexes[id]
+	if mutex == nil {
+		mutex = &sync.Mutex{}
+		impl.mutexes[id] = mutex
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if packet, err := middlewares.CurrentUser(r).ClaimPacket(r.Context(), params["id"]); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else if packet == nil {
@@ -75,4 +92,20 @@ func (impl *packetsImpl) claim(w http.ResponseWriter, r *http.Request, params ma
 	} else {
 		views.RenderPacket(w, r, packet)
 	}
+}
+
+func shardId(id string) (string, error) {
+	h := md5.New()
+	io.WriteString(h, id)
+
+	b := new(big.Int).SetInt64(32)
+	c := new(big.Int).SetBytes(h.Sum(nil))
+	m := new(big.Int).Mod(c, b)
+	h = md5.New()
+	h.Write(m.Bytes())
+	s := h.Sum(nil)
+	s[6] = (s[6] & 0x0f) | 0x30
+	s[8] = (s[8] & 0x3f) | 0x80
+	sid, err := uuid.FromBytes(s)
+	return sid.String(), err
 }
