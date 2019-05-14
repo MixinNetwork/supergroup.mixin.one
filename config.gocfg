@@ -1,14 +1,14 @@
 package config
 
 const (
-	Name             = "Mixin Group Bot"
-	Environment      = "test"
-	BuildVersion     = "BUILD_VERSION"
-	HTTPListenPort   = 7001
-	HTTPResourceHost = "https://chinese-group.mixin.test"
+    Name             = "Group Bot Name"
+    Environment      = "Your Environment like production, development or test"
+    BuildVersion     = "BUILD_VERSION"
+    HTTPListenPort   = 7001 // HTTP Port
+    HTTPResourceHost = "https://you-domain-name" // 大群的网址
 
-	DetectImageEnabled = false
-	DetectLinkEnabled  = false
+    DetectImageEnabled = false
+    DetectLinkEnabled  = false
 )
 
 const (
@@ -20,6 +20,7 @@ const (
 )
 
 const (
+  // 用什么 token 支付入群费，默认 XIN, 其它的资产可以在这里找到 https://mixin.one/snapshots
 	PaymentAssetId = "c94ac88f-4671-3976-b60a-09064f1811e8"
 	// 设置成 "0", 所有人都可以加入
 	PaymentAmount  = "0.001"
@@ -27,7 +28,7 @@ const (
 
 const (
 	MessageShardModifier = "SHARD"
-	MessageShardSize     = 64
+	MessageShardSize     = 64 // 多少个 Goroutine 发送消息，开始可以小一些，比如 8
 )
 
 const (
@@ -47,15 +48,13 @@ const (
 	MessageCommandsInfoResp = "当前订阅人数: %d"
 )
 
+// 管理员列表，可以踢人，拉入黑名单
 var Operators = map[string]bool{
-	"e9e5b807-fa8b-455a-8dfa-b189d28310ff": true,
-	"fcb87491-4fa0-4c2f-b387-262b63cbc112": true,
-	"f59b9309-70c2-4b69-8fd8-5773dbd10018": true,
-	"b847a455-aa41-4f7d-8038-0aefbe40dcaa": true,
-	"b26b9a74-40dd-4e8d-8e41-94d9fce0b5c0": true,
-	"04379bf8-87fb-41c6-a247-ee19bf9cf4a3": true,
+	"e9a5b807-fa8b-455a-8dfa-b189d28310ff": true,
+	"fcc87491-4fa0-4c2f-b387-262b63cbc112": true,
 }
 
+// 参考 https://steemit.com/cn/@over140/45sh3k-mixin-messenger
 const (
 	ClientId        = "5fcd897e-e7b2-40d5-93cd-487e2d955556"
 	ClientSecret    = "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
