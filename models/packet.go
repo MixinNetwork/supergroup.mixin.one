@@ -9,6 +9,7 @@ import (
 	"io"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -25,6 +26,8 @@ const (
 	PacketStatePaid     = "PAID"
 	PacketStateExpired  = "EXPIRED"
 	PacketStateRefunded = "REFUNDED"
+
+	shareShardId = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
 const packets_DDL = `
@@ -183,6 +186,8 @@ func ShowPacket(ctx context.Context, packetId string) (*Packet, error) {
 	return packet, nil
 }
 
+var mutexeSet map[string]*sync.Mutex
+
 func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet, error) {
 	packet, err := ShowPacket(ctx, packetId)
 	if err != nil || packet == nil {
@@ -191,6 +196,18 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 	if packet.State != PacketStatePaid {
 		return packet, nil
 	}
+	shard, err := shardId(packetId, shareShardId)
+	if err != nil {
+		return nil, session.ServerError(ctx, err)
+	}
+	mutex := mutexeSet[shard]
+	if mutex == nil {
+		mutex = &sync.Mutex{}
+		mutexeSet[shard] = mutex
+	}
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if packet.RemainingCount > packet.TotalCount {
 		return nil, session.InsufficientAccountBalanceError(ctx)
 	}
@@ -423,4 +440,8 @@ func generatePacketRefundId(packetId string) (string, error) {
 	sum[8] = (sum[8] & 0x3f) | 0x80
 	id, err := uuid.FromBytes(sum)
 	return id.String(), err
+}
+
+func init() {
+	mutexeSet = make(map[string]*sync.Mutex, 0)
 }

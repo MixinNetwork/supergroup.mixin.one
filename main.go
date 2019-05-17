@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -37,10 +39,14 @@ func main() {
 			log.Println(err)
 		}
 	default:
-		hub := services.NewHub(database)
-		err := hub.StartService(*service)
-		if err != nil {
-			log.Println(err)
-		}
+		go func() {
+			hub := services.NewHub(database)
+			err := hub.StartService(*service)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+
+		http.ListenAndServe(fmt.Sprintf(":%d", config.HTTPListenPort+2000), http.DefaultServeMux)
 	}
 }
