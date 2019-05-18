@@ -92,7 +92,7 @@ func cleanUpDistributedMessages(ctx context.Context) {
 func loopPendingDistributeMessages(ctx context.Context, conn *websocket.Conn, mc *MessageContext) error {
 	defer conn.Close()
 
-	limit := int64(15)
+	limit := int64(20)
 	for i := int64(0); i < config.MessageShardSize; i++ {
 		shard := shardId(config.MessageShardModifier, i)
 		go pendingDistributedMessages(ctx, shard, limit, mc)

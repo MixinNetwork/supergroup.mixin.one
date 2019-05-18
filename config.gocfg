@@ -28,7 +28,7 @@ const (
 
 const (
 	MessageShardModifier = "SHARD"
-	MessageShardSize     = 64 // 多少个 Goroutine 发送消息，开始可以小一些，比如 8
+	MessageShardSize     = 8
 )
 
 const (
