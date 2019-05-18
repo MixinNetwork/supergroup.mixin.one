@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -205,50 +206,68 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		mutex = &sync.Mutex{}
 		mutexeSet[shard] = mutex
 	}
-	mutex.Lock()
-	defer mutex.Unlock()
-
 	if packet.RemainingCount > packet.TotalCount {
 		return nil, session.InsufficientAccountBalanceError(ctx)
 	}
 	if number.FromString(packet.RemainingAmount).Cmp(number.FromString(packet.Amount)) > 0 {
 		return nil, session.InsufficientAccountBalanceError(ctx)
 	}
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
-		if err != nil || packet == nil {
+
+	mutex.Lock()
+	errChain := make(chan error, 1)
+	packetChain := make(chan *Packet, 1)
+
+	go func() {
+		var packet *Packet
+		err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			var err error
+			packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
+			if err != nil || packet == nil {
+				return err
+			}
+			err = handlePacketExpiration(ctx, tx, packet)
+			if err != nil {
+				return err
+			}
+			var userId string
+			err = tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
+			if err == sql.ErrNoRows {
+				err = handlePacketClaim(ctx, tx, packet, current.UserId)
+				if err != nil {
+					return err
+				}
+				dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
+				if err != nil {
+					return err
+				}
+				params, positions := compileTableQuery(distributedMessagesCols)
+				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+				_, err = tx.ExecContext(ctx, query, dm.values()...)
+				return err
+			}
 			return err
-		}
-		err = handlePacketExpiration(ctx, tx, packet)
+		})
 		if err != nil {
-			return err
+			errChain <- session.TransactionError(ctx, err)
 		}
-		var userId string
-		err := tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
-		if err == sql.ErrNoRows {
-			err = handlePacketClaim(ctx, tx, packet, current.UserId)
-			if err != nil {
-				return err
-			}
-			dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
-			if err != nil {
-				return err
-			}
-			params, positions := compileTableQuery(distributedMessagesCols)
-			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
-			_, err = tx.ExecContext(ctx, query, dm.values()...)
-			return err
+		packetChain <- packet
+	}()
+
+	select {
+	case err := <-errChain:
+		mutex.Unlock()
+		return nil, err
+	case packet := <-packetChain:
+		mutex.Unlock()
+		err = packet.GetParticipants(ctx)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
 		}
-		return err
-	})
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
+		return packet, nil
+	case <-time.After(5 * time.Second):
+		mutex.Unlock()
+		return nil, session.ServerError(ctx, errors.New("mutex timeout"))
 	}
-	err = packet.GetParticipants(ctx)
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
-	return packet, nil
 }
 
 func RefundPacket(ctx context.Context, packetId string) (*Packet, error) {
