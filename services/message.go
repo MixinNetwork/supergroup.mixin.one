@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	keepAlivePeriod = 30 * time.Second
+	keepAlivePeriod = 20 * time.Second
 	writeWait       = 15 * time.Second
 	pongWait        = 10 * time.Second
 	pingPeriod      = (pongWait * 9) / 10
@@ -223,8 +223,12 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 	case mc.WriteBuffer <- blazeMessage:
 	}
 
+	alive := keepAlivePeriod
+	if action == "CREATE_PLAIN_MESSAGES" {
+		alive = time.Minute
+	}
 	select {
-	case <-time.After(keepAlivePeriod):
+	case <-time.After(alive):
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
 		if t.Error != nil && t.Error.Code != 403 {
