@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -201,11 +200,6 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}
-	mutex := mutexeSet[shard]
-	if mutex == nil {
-		mutex = &sync.Mutex{}
-		mutexeSet[shard] = mutex
-	}
 	if packet.RemainingCount > packet.TotalCount {
 		return nil, session.InsufficientAccountBalanceError(ctx)
 	}
@@ -213,61 +207,54 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 		return nil, session.InsufficientAccountBalanceError(ctx)
 	}
 
+	mutex := mutexeSet[shard]
+	if mutex == nil {
+		mutex = &sync.Mutex{}
+		mutexeSet[shard] = mutex
+	}
+	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
+	defer cancel()
 	mutex.Lock()
-	errChain := make(chan error, 1)
-	packetChain := make(chan *Packet, 1)
+	defer mutex.Unlock()
 
-	go func() {
-		var packet *Packet
-		err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-			var err error
-			packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
-			if err != nil || packet == nil {
-				return err
-			}
-			err = handlePacketExpiration(ctx, tx, packet)
+	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
+		if err != nil || packet == nil {
+			return err
+		}
+		err = handlePacketExpiration(ctx, tx, packet)
+		if err != nil {
+			return err
+		}
+		var userId string
+		err = tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
+		if err == sql.ErrNoRows {
+			err = handlePacketClaim(ctx, tx, packet, current.UserId)
 			if err != nil {
 				return err
 			}
-			var userId string
-			err = tx.QueryRowContext(ctx, "SELECT user_id FROM participants WHERE packet_id=$1 AND user_id=$2", packet.PacketId, current.UserId).Scan(&userId)
-			if err == sql.ErrNoRows {
-				err = handlePacketClaim(ctx, tx, packet, current.UserId)
-				if err != nil {
-					return err
-				}
-				dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
-				if err != nil {
-					return err
-				}
-				params, positions := compileTableQuery(distributedMessagesCols)
-				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
-				_, err = tx.ExecContext(ctx, query, dm.values()...)
+			dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
+			if err != nil {
 				return err
 			}
+			params, positions := compileTableQuery(distributedMessagesCols)
+			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+			_, err = tx.ExecContext(ctx, query, dm.values()...)
 			return err
-		})
-		if err != nil {
-			errChain <- session.TransactionError(ctx, err)
 		}
-		packetChain <- packet
-	}()
-
-	select {
-	case err := <-errChain:
-		mutex.Unlock()
-		return nil, err
-	case packet := <-packetChain:
-		mutex.Unlock()
+		return err
+	})
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	if packet != nil {
 		err = packet.GetParticipants(ctx)
 		if err != nil {
-			return nil, session.TransactionError(ctx, err)
+			return nil, err
 		}
-		return packet, nil
-	case <-time.After(5 * time.Second):
-		mutex.Unlock()
-		return nil, session.ServerError(ctx, errors.New("mutex timeout"))
 	}
+	return packet, nil
 }
 
 func RefundPacket(ctx context.Context, packetId string) (*Packet, error) {
@@ -421,7 +408,7 @@ func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string
 
 func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, error) {
 	query := fmt.Sprintf("SELECT %s FROM packets WHERE packet_id=$1", strings.Join(packetsCols, ","))
-	row := session.Database(ctx).QueryRowContext(ctx, query, packetId)
+	row := tx.QueryRowContext(ctx, query, packetId)
 	p, err := packetFromRow(row)
 	if err == sql.ErrNoRows {
 		return nil, nil

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -23,6 +24,7 @@ func main() {
 	if err != nil {
 		log.Panicln(err)
 	}
+	db.SetConnMaxLifetime(time.Hour)
 	db.SetMaxOpenConns(128)
 	db.SetMaxIdleConns(16)
 
