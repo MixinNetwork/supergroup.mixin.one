@@ -229,6 +229,7 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 	}
 	select {
 	case <-time.After(alive):
+		mc.Transactions.retrive(id)
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
 		if t.Error != nil && t.Error.Code != 403 {
