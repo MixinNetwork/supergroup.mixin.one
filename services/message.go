@@ -60,11 +60,12 @@ type TransferView struct {
 type MessageService struct{}
 
 type MessageContext struct {
-	Transactions *tmap
-	ReadDone     chan bool
-	WriteDone    chan bool
-	ReadBuffer   chan MessageView
-	WriteBuffer  chan []byte
+	Transactions   *tmap
+	ReadDone       chan bool
+	WriteDone      chan bool
+	DistributeDone chan bool
+	ReadBuffer     chan MessageView
+	WriteBuffer    chan []byte
 }
 
 func (service *MessageService) Run(ctx context.Context) error {
@@ -92,11 +93,12 @@ func (service *MessageService) loop(ctx context.Context) error {
 	defer conn.Close()
 
 	mc := &MessageContext{
-		Transactions: newTmap(),
-		ReadDone:     make(chan bool, 1),
-		WriteDone:    make(chan bool, 1),
-		ReadBuffer:   make(chan MessageView, 102400),
-		WriteBuffer:  make(chan []byte, 102400),
+		Transactions:   newTmap(),
+		ReadDone:       make(chan bool, 1),
+		WriteDone:      make(chan bool, 1),
+		DistributeDone: make(chan bool, 1),
+		ReadBuffer:     make(chan MessageView, 102400),
+		WriteBuffer:    make(chan []byte, 102400),
 	}
 
 	go writePump(ctx, conn, mc)
@@ -107,7 +109,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		return session.BlazeServerError(ctx, err)
 	}
 
-	go loopPendingDistributeMessages(ctx, conn, mc)
+	go loopPendingDistributeMessages(ctx, mc)
 	for {
 		select {
 		case <-mc.ReadDone:
@@ -147,6 +149,7 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		conn.Close()
 		mc.WriteDone <- true
 		mc.ReadDone <- true
+		mc.DistributeDone <- true
 	}()
 	conn.SetReadLimit(1024000 * 128)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
