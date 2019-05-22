@@ -64,6 +64,9 @@ func TestUserCRUD(t *testing.T) {
 	messages, err := PendingMessages(ctx, 100)
 	assert.Nil(err)
 	assert.Len(messages, 1)
+	dms, err := testReadDistributedMessages(ctx)
+	assert.Nil(err)
+	assert.Len(dms, 1)
 
 	err = user.Payment(ctx)
 	assert.Nil(err)
