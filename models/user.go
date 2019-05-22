@@ -245,6 +245,16 @@ func (user *User) Payment(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)))
+		if err != nil {
+			return err
+		}
+		dparams, dpositions := compileTableQuery(distributedMessagesCols)
+		dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", dparams, dpositions)
+		_, err = tx.ExecContext(ctx, dquery, dm.values()...)
+		if err != nil {
+			return err
+		}
 		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
 		return err
 	})
