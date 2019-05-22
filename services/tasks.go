@@ -18,7 +18,6 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
-	"github.com/gorilla/websocket"
 	"mvdan.cc/xurls"
 )
 
@@ -89,41 +88,49 @@ func cleanUpDistributedMessages(ctx context.Context) {
 	}
 }
 
-func loopPendingDistributeMessages(ctx context.Context, conn *websocket.Conn, mc *MessageContext) error {
-	defer conn.Close()
-
+func loopPendingDistributeMessages(ctx context.Context, mc *MessageContext) {
+	shardChan := make(chan bool, config.MessageShardSize)
 	limit := int64(20)
 	for i := int64(0); i < config.MessageShardSize; i++ {
 		shard := shardId(config.MessageShardModifier, i)
-		go pendingDistributedMessages(ctx, shard, limit, mc)
+		go pendingDistributedMessages(ctx, shard, shardChan, limit, mc)
 	}
-	err := make(chan error)
-	return <-err
+	if <-mc.DistributeDone {
+		for i := int64(0); i < config.MessageShardSize; i++ {
+			shardChan <- true
+		}
+	}
+	return
 }
 
-func pendingDistributedMessages(ctx context.Context, shard string, limit int64, mc *MessageContext) {
+func pendingDistributedMessages(ctx context.Context, shard string, shardChan chan bool, limit int64, mc *MessageContext) {
 	for {
-		messages, err := models.PendingDistributedMessages(ctx, shard, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		if len(messages) < 1 {
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		err = sendDistributedMessges(ctx, mc, messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages sendDistributedMessges ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		err = models.UpdateMessagesStatus(ctx, messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
+		select {
+		case <-shardChan:
+			return
+		default:
+			messages, err := models.PendingDistributedMessages(ctx, shard, limit)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			if len(messages) < 1 {
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			err = sendDistributedMessges(ctx, mc, messages)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingDistributedMessages sendDistributedMessges ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			err = models.UpdateMessagesStatus(ctx, messages)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
 		}
 	}
 }
