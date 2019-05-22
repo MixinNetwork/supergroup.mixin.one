@@ -26,7 +26,7 @@ func main() {
 	}
 	db.SetConnMaxLifetime(time.Hour)
 	db.SetMaxOpenConns(128)
-	db.SetMaxIdleConns(16)
+	db.SetMaxIdleConns(4)
 
 	defer db.Close()
 	database, err := durable.NewDatabase(context.Background(), db)
