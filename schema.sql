@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
   trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
   state             VARCHAR(128) NOT NULL,
-  active_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
