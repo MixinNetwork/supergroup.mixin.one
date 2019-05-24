@@ -292,6 +292,9 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT json.Unmarshal", err)
 			return nil
 		}
+		if msg.Status != "READ" {
+			return nil
+		}
 		id, err := models.FindDistributedMessageRecipientId(ctx, msg.MessageId)
 		if err != nil {
 			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT json.Unmarshal", err)
