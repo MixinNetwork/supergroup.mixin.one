@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_activex ON distributed_messages(shard, status, active_at, created_at);
+CREATE INDEX IF NOT EXISTS message_shard_status_active_descx ON distributed_messages(shard, status, active_at DESC, created_at);
 CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
 `
 
@@ -213,7 +213,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 
 func PendingDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
-	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY active_at, created_at LIMIT $3", strings.Join(distributedMessagesCols, ","))
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY active_at DESC, created_at LIMIT $3", strings.Join(distributedMessagesCols, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, limit)
 	if err != nil {
 		return messages, session.TransactionError(ctx, err)
