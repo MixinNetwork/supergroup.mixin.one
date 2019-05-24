@@ -91,10 +91,13 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	count, err := CleanUpExpiredDistributedMessages(ctx, 100)
 	assert.Nil(err)
-	assert.Equal(int64(3), count)
+	assert.Equal(int64(0), count)
+	query := "UPDATE distributed_messages SET created_at=$1"
+	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-3*time.Hour))
+	assert.Nil(err)
 	count, err = CleanUpExpiredDistributedMessages(ctx, 100)
 	assert.Nil(err)
-	assert.Equal(int64(0), count)
+	assert.Equal(int64(3), count)
 
 	message, err = CreateMessage(ctx, user, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
@@ -103,7 +106,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)
-	assert.True(len(dms) > 1)
+	assert.Len(dms, 0)
 }
 
 func testReadMessage(ctx context.Context, id string) (*Message, error) {
@@ -117,7 +120,7 @@ func testReadDistributedMessages(ctx context.Context) ([]*DistributedMessage, er
 	dms := make([]*DistributedMessage, 0)
 	for i := int64(0); i < config.MessageShardSize; i++ {
 		shard := testShardId(config.MessageShardModifier, i)
-		messages, err := PendingDistributedMessages(ctx, shard, limit)
+		messages, err := PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			return dms, err
 		}

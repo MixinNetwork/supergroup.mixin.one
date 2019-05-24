@@ -28,7 +28,7 @@ const (
 
 const (
 	MessageShardModifier = "SHARD"
-	MessageShardSize     = 8
+	MessageShardSize     = 4
 )
 
 const (

@@ -40,18 +40,18 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 	category              VARCHAR(512) NOT NULL,
 	data                  TEXT NOT NULL,
 	status                VARCHAR(512) NOT NULL,
-	active_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_active_descx ON distributed_messages(shard, status, active_at DESC, created_at);
-CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
+CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
+CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
+CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
 `
 
-var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "shard", "category", "data", "status", "active_at", "created_at"}
+var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "shard", "category", "data", "status", "created_at"}
 
 func (dm *DistributedMessage) values() []interface{} {
-	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.ActiveAt, dm.CreatedAt}
+	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
 }
 
 type DistributedMessage struct {
@@ -64,11 +64,10 @@ type DistributedMessage struct {
 	Category       string
 	Data           string
 	Status         string
-	ActiveAt       time.Time
 	CreatedAt      time.Time
 }
 
-func createDistributeMessage(ctx context.Context, messageId, parentId, userId, recipientId, category, data string, activeAt time.Time) (*DistributedMessage, error) {
+func createDistributeMessage(ctx context.Context, messageId, parentId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.ClientId, recipientId),
@@ -78,7 +77,6 @@ func createDistributeMessage(ctx context.Context, messageId, parentId, userId, r
 		Category:       category,
 		Data:           data,
 		Status:         MessageStatusSent,
-		ActiveAt:       activeAt,
 		CreatedAt:      time.Now(),
 	}
 	shard, err := shardId(dm.ConversationId, dm.RecipientId)
@@ -116,7 +114,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 				if set[messageId] {
 					continue
 				}
-				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data, user.ActiveAt)
+				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
 				if err != nil {
 					session.TransactionError(ctx, err)
 				}
@@ -124,7 +122,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 					values.WriteString(",")
 				}
 				i += 1
-				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.ActiveAt))
+				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
 			}
 			message.LastDistributeAt = last
 		}
@@ -178,7 +176,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, id, message.Category, message.Data, time.Now())
+		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, id, message.Category, message.Data)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -186,12 +184,12 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 			values.WriteString(",")
 		}
 		i += 1
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.ActiveAt))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
 		values.WriteString(",")
-		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, "PLAIN_TEXT", data, dm.Status, dm.ActiveAt))
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
 	}
 
 	message.LastDistributeAt = time.Now()
@@ -211,10 +209,10 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	return nil
 }
 
-func PendingDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
+func PendingDistributedMessages(ctx context.Context, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
-	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY active_at DESC, created_at LIMIT $3", strings.Join(distributedMessagesCols, ","))
-	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, limit)
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE status=$1 ORDER BY created_at LIMIT $2", strings.Join(distributedMessagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStatusSent, limit)
 	if err != nil {
 		return messages, session.TransactionError(ctx, err)
 	}
@@ -226,6 +224,23 @@ func PendingDistributedMessages(ctx context.Context, shard string, limit int64) 
 		messages = append(messages, m)
 	}
 	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
+	return messages, nil
+}
+
+func PendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
+	var messages []*DistributedMessage
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 AND recipient_id IN (SELECT user_id FROM users WHERE active_at>=$3 ORDER BY active_at DESC LIMIT 500) ORDER BY created_at LIMIT $4", strings.Join(distributedMessagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, time.Now().Add(-60*time.Minute), limit)
+	if err != nil {
+		return messages, session.TransactionError(ctx, err)
+	}
+	for rows.Next() {
+		m, err := distributedMessageFromRow(rows)
+		if err != nil {
+			return messages, session.TransactionError(ctx, err)
+		}
+		messages = append(messages, m)
+	}
 	return messages, nil
 }
 
@@ -243,8 +258,8 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 }
 
 func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64, error) {
-	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE status=$1 LIMIT $2)")
-	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, limit)
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE status=$1 AND created_at<$2 LIMIT $3)")
+	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, time.Now().Add(-1*time.Hour), limit)
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}
@@ -253,6 +268,27 @@ func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64,
 		return 0, session.TransactionError(ctx, err)
 	}
 	return count, nil
+}
+
+func FindDistributedMessageRecipientId(ctx context.Context, id string) (string, error) {
+	query := "SELECT recipient_id FROM distributed_messages WHERE message_id=$1"
+	var recipient string
+	err := session.Database(ctx).QueryRowContext(ctx, query, id).Scan(&recipient)
+	if err == sql.ErrNoRows {
+		return "", nil
+	} else if err != nil {
+		return "", session.TransactionError(ctx, err)
+	}
+	return recipient, nil
+}
+
+func AckDistributedMessage(ctx context.Context, userId string) error {
+	query := "UPDATE users SET active_at=$1 WHERE user_id=$2"
+	_, err := session.Database(ctx).ExecContext(ctx, query, time.Now(), userId)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
 }
 
 func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
@@ -274,12 +310,12 @@ func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string
 
 func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	var m DistributedMessage
-	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.ActiveAt, &m.CreatedAt)
+	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
 	return &m, err
 }
 
-func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, shard, category, data, status string, t time.Time) string {
-	return fmt.Sprintf("('%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, shard, category, data, status, t.Format(time.RFC3339Nano))
+func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, shard, category, data, status string) string {
+	return fmt.Sprintf("('%s','%s','%s','%s','%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, shard, category, data, status)
 }
 
 func shardId(cid, uid string) (string, error) {
