@@ -342,7 +342,8 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 		return session.BlazeServerError(ctx, err)
 	}
 	t := time.Now()
-	_, err = models.CreateMessage(ctx, packet.PacketId, config.ClientId, "APP_CARD", base64.StdEncoding.EncodeToString(card), t, t)
+	u := &models.User{UserId: config.ClientId, ActiveAt: time.Now()}
+	_, err = models.CreateMessage(ctx, u, packet.PacketId, "APP_CARD", base64.StdEncoding.EncodeToString(card), t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
@@ -423,7 +424,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 			}
 		}
 	}
-	if _, err := models.CreateMessage(ctx, message.MessageId, message.UserId, message.Category, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
+	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
 		return err
 	}
 	return nil
