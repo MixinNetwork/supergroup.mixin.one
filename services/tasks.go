@@ -91,7 +91,7 @@ func cleanUpDistributedMessages(ctx context.Context) {
 func loopPendingDistributeMessages(ctx context.Context, mc *MessageContext) {
 	shardChan := make(chan bool, config.MessageShardSize)
 	pendingChan := make(chan bool, 1)
-	limit := int64(20)
+	limit := int64(30)
 	for i := int64(0); i < config.MessageShardSize; i++ {
 		shard := shardId(config.MessageShardModifier, i)
 		go pendingActiveDistributedMessages(ctx, shard, shardChan, limit, mc)

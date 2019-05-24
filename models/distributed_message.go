@@ -230,7 +230,7 @@ func PendingDistributedMessages(ctx context.Context, limit int64) ([]*Distribute
 func PendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
 	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 AND recipient_id IN (SELECT user_id FROM users WHERE active_at>=$3 ORDER BY active_at DESC LIMIT 500) ORDER BY created_at LIMIT $4", strings.Join(distributedMessagesCols, ","))
-	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, time.Now().Add(-60*time.Minute), limit)
+	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, time.Now().Add(-30*time.Minute), limit)
 	if err != nil {
 		return messages, session.TransactionError(ctx, err)
 	}
