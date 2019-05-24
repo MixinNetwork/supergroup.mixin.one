@@ -66,6 +66,7 @@ type MessageContext struct {
 	DistributeDone chan bool
 	ReadBuffer     chan MessageView
 	WriteBuffer    chan []byte
+	RecipientId    map[string]time.Time
 }
 
 func (service *MessageService) Run(ctx context.Context) error {
@@ -99,6 +100,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		DistributeDone: make(chan bool, 1),
 		ReadBuffer:     make(chan MessageView, 102400),
 		WriteBuffer:    make(chan []byte, 102400),
+		RecipientId:    make(map[string]time.Time, 0),
 	}
 
 	go writePump(ctx, conn, mc)
@@ -276,6 +278,36 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 	transaction := mc.Transactions.retrive(message.Id)
 	if transaction != nil {
 		return transaction(message)
+	}
+
+	if message.Action == "ACKNOWLEDGE_MESSAGE_RECEIPT" {
+		data, err := json.Marshal(message.Data)
+		if err != nil {
+			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT", err)
+			return nil
+		}
+		var msg MessageView
+		err = json.Unmarshal(data, &msg)
+		if err != nil {
+			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT json.Unmarshal", err)
+			return nil
+		}
+		id, err := models.FindDistributedMessageRecipientId(ctx, msg.MessageId)
+		if err != nil {
+			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT json.Unmarshal", err)
+			return nil
+		}
+		if id == "" {
+			return nil
+		}
+		if mc.RecipientId[id].Before(time.Now().Add(-30 * time.Minute)) {
+			err = models.AckDistributedMessage(ctx, id)
+			if err != nil {
+				session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT AckDistributedMessage", err)
+			}
+			mc.RecipientId[id] = time.Now()
+		}
+		return nil
 	}
 
 	if message.Action != "CREATE_MESSAGE" {

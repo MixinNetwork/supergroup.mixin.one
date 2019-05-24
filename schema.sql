@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
 CREATE INDEX IF NOT EXISTS users_subscribedx ON users(subscribed_at);
+CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -38,12 +39,12 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   category              VARCHAR(512) NOT NULL,
   data                  TEXT NOT NULL,
   status                VARCHAR(512) NOT NULL,
-  active_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_active_descx ON distributed_messages(shard, status, active_at DESC, created_at);
-CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
+CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
+CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
+CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 
 
 CREATE TABLE IF NOT EXISTS properties (

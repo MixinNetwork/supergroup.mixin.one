@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
 CREATE INDEX IF NOT EXISTS users_subscribedx ON users(subscribed_at);
+CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 `
 
 type User struct {
@@ -248,7 +249,7 @@ func (user *User) Payment(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)), user.ActiveAt)
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)))
 		if err != nil {
 			return err
 		}

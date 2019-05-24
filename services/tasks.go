@@ -90,12 +90,15 @@ func cleanUpDistributedMessages(ctx context.Context) {
 
 func loopPendingDistributeMessages(ctx context.Context, mc *MessageContext) {
 	shardChan := make(chan bool, config.MessageShardSize)
+	pendingChan := make(chan bool, 1)
 	limit := int64(20)
 	for i := int64(0); i < config.MessageShardSize; i++ {
 		shard := shardId(config.MessageShardModifier, i)
-		go pendingDistributedMessages(ctx, shard, shardChan, limit, mc)
+		go pendingActiveDistributedMessages(ctx, shard, shardChan, limit, mc)
 	}
+	go pendingDistributedMessages(ctx, pendingChan, limit, mc)
 	if <-mc.DistributeDone {
+		pendingChan <- true
 		for i := int64(0); i < config.MessageShardSize; i++ {
 			shardChan <- true
 		}
@@ -103,13 +106,45 @@ func loopPendingDistributeMessages(ctx context.Context, mc *MessageContext) {
 	return
 }
 
-func pendingDistributedMessages(ctx context.Context, shard string, shardChan chan bool, limit int64, mc *MessageContext) {
+func pendingActiveDistributedMessages(ctx context.Context, shard string, shardChan chan bool, limit int64, mc *MessageContext) {
 	for {
 		select {
 		case <-shardChan:
 			return
 		default:
-			messages, err := models.PendingDistributedMessages(ctx, shard, limit)
+			messages, err := models.PendingActiveDistributedMessages(ctx, shard, limit)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingActiveDistributedMessages ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			if len(messages) < 1 {
+				time.Sleep(2 * time.Second)
+				continue
+			}
+			err = sendDistributedMessges(ctx, mc, messages)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingActiveDistributedMessages sendDistributedMessges ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			err = models.UpdateMessagesStatus(ctx, messages)
+			if err != nil {
+				session.Logger(ctx).Errorf("PendingActiveDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+		}
+	}
+}
+
+func pendingDistributedMessages(ctx context.Context, pendingChan chan bool, limit int64, mc *MessageContext) {
+	for {
+		select {
+		case <-pendingChan:
+			return
+		default:
+			messages, err := models.PendingDistributedMessages(ctx, limit)
 			if err != nil {
 				session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
 				time.Sleep(100 * time.Millisecond)
