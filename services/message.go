@@ -226,12 +226,8 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 	case mc.WriteBuffer <- blazeMessage:
 	}
 
-	alive := keepAlivePeriod
-	if action == "CREATE_PLAIN_MESSAGES" {
-		alive = time.Minute
-	}
 	select {
-	case <-time.After(alive):
+	case <-time.After(keepAlivePeriod):
 		mc.Transactions.retrive(id)
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
