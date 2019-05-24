@@ -68,6 +68,10 @@ func CreateMessage(ctx context.Context, messageId, userId, category, data string
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+	_, err = session.Database(ctx).ExecContext(ctx, "UPDATE users SET active_at=$1 WHERE user_id=$2", time.Now(), userId)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
 	return message, nil
 }
 

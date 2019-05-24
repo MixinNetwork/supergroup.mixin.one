@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
 	avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
 	trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
 	state             VARCHAR(128) NOT NULL,
+	active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 	subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
@@ -49,16 +50,17 @@ type User struct {
 	AvatarURL      string
 	TraceId        string
 	State          string
+	ActiveAt       time.Time
 	SubscribedAt   time.Time
 
 	isNew               bool
 	AuthenticationToken string
 }
 
-var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "avatar_url", "trace_id", "state", "subscribed_at"}
+var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "avatar_url", "trace_id", "state", "active_at", "subscribed_at"}
 
 func (u *User) values() []interface{} {
-	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AvatarURL, u.TraceId, u.State, u.SubscribedAt}
+	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AvatarURL, u.TraceId, u.State, u.ActiveAt, u.SubscribedAt}
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
@@ -100,6 +102,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			IdentityNumber: identity,
 			TraceId:        bot.UuidNewV4().String(),
 			State:          PaymentStatePending,
+			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
 		if number.FromString(config.PaymentAmount).Exhausted() {
@@ -245,7 +248,7 @@ func (user *User) Payment(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)))
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)), user.ActiveAt)
 		if err != nil {
 			return err
 		}
@@ -367,7 +370,7 @@ func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error)
 
 func userFromRow(row durable.Row) (*User, error) {
 	var u User
-	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.SubscribedAt)
+	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt)
 	return &u, err
 }
 
