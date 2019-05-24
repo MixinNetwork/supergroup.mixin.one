@@ -47,13 +47,13 @@ type Message struct {
 	LastDistributeAt time.Time
 }
 
-func CreateMessage(ctx context.Context, messageId, userId, category, data string, createdAt, updatedAt time.Time) (*Message, error) {
+func CreateMessage(ctx context.Context, user *User, messageId, category, data string, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
 		return nil, nil
 	}
 	message := &Message{
 		MessageId:        messageId,
-		UserId:           userId,
+		UserId:           user.UserId,
 		Category:         category,
 		Data:             data,
 		CreatedAt:        createdAt,
@@ -67,6 +67,12 @@ func CreateMessage(ctx context.Context, messageId, userId, category, data string
 	_, err := session.Database(ctx).ExecContext(ctx, query, message.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
+	}
+	if user.ActiveAt.Add(60 * time.Second).After(time.Now()) {
+		_, err = session.Database(ctx).ExecContext(ctx, "UPDATE users SET active_at=$1 WHERE user_id=$2", time.Now(), user.UserId)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
 	}
 	return message, nil
 }

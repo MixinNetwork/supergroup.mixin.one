@@ -23,11 +23,12 @@ func TestMessageCRUD(t *testing.T) {
 	defer teardownTestContext(ctx)
 
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
+	user := &User{UserId: id, ActiveAt: time.Now()}
 	data := base64.StdEncoding.EncodeToString([]byte("hello"))
-	message, err := CreateMessage(ctx, id, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
+	message, err := CreateMessage(ctx, user, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
-	message, err = CreateMessage(ctx, id, uid, "PLAIN_IMAGE", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, user, uid, "PLAIN_IMAGE", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	assert.Equal("PLAIN_IMAGE", message.Category)
@@ -36,7 +37,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 1)
 
-	message, err = CreateMessage(ctx, bot.UuidNewV4().String(), uid, "PLAIN_TEXT", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, &User{UserId: bot.UuidNewV4().String(), ActiveAt: time.Now()}, bot.UuidNewV4().String(), "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	assert.Equal("PLAIN_TEXT", message.Category)
@@ -51,7 +52,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
+	user, err = createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
 	users, err := subscribedUsers(ctx, message.LastDistributeAt, 100)
 	assert.Nil(err)
 	assert.Len(users, 0)
@@ -95,7 +96,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int64(0), count)
 
-	message, err = CreateMessage(ctx, id, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, user, uid, "PLAIN_TEXT", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	err = message.Leapfrog(ctx, "ONLY TEST")

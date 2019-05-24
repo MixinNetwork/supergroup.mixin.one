@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
   trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
   state             VARCHAR(128) NOT NULL,
+  active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
@@ -37,10 +38,11 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   category              VARCHAR(512) NOT NULL,
   data                  TEXT NOT NULL,
   status                VARCHAR(512) NOT NULL,
+  active_at             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_createdx ON distributed_messages(shard, status, created_at);
+CREATE INDEX IF NOT EXISTS message_shard_status_activex ON distributed_messages(shard, status, active_at, created_at);
 CREATE INDEX IF NOT EXISTS message_status ON distributed_messages(status);
 
 
