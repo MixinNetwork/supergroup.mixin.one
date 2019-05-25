@@ -23,6 +23,8 @@ import (
 const (
 	PaymentStatePending = "pending"
 	PaymentStatePaid    = "paid"
+
+	UserActivePeriod = 5 * time.Minute
 )
 
 const users_DDL = `
@@ -180,6 +182,12 @@ func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*
 	}
 	if err != nil || !token.Valid {
 		return nil, nil
+	}
+	if user.ActiveAt.Before(time.Now().Add(-1 * UserActivePeriod)) {
+		err = PingUserActiveAt(ctx, user.UserId)
+		if err != nil {
+			session.Logger(ctx).Error("handleMessage PingUserActiveAt", err)
+		}
 	}
 	return user, nil
 }
@@ -345,6 +353,15 @@ func FindUser(ctx context.Context, userId string) (*User, error) {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return user, nil
+}
+
+func PingUserActiveAt(ctx context.Context, userId string) error {
+	query := "UPDATE users SET active_at=$1 WHERE user_id=$2"
+	_, err := session.Database(ctx).ExecContext(ctx, query, time.Now(), userId)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
 }
 
 func findUsersByIdentityNumber(ctx context.Context, identity int64) ([]*User, error) {

@@ -303,10 +303,10 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 		if id == "" {
 			return nil
 		}
-		if mc.RecipientId[id].Before(time.Now().Add(-10 * time.Minute)) {
-			err = models.AckDistributedMessage(ctx, id)
+		if mc.RecipientId[id].Before(time.Now().Add(-1 * models.UserActivePeriod)) {
+			err = models.PingUserActiveAt(ctx, id)
 			if err != nil {
-				session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT AckDistributedMessage", err)
+				session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT PingUserActiveAt", err)
 			}
 			mc.RecipientId[id] = time.Now()
 		}
@@ -439,6 +439,12 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	}
 	if user == nil || user.State != models.PaymentStatePaid {
 		return sendHelpMessge(ctx, user, mc, message)
+	}
+	if user.ActiveAt.Before(time.Now().Add(-1 * models.UserActivePeriod)) {
+		err = models.PingUserActiveAt(ctx, user.UserId)
+		if err != nil {
+			session.Logger(ctx).Error("handleMessage PingUserActiveAt", err)
+		}
 	}
 	if user.SubscribedAt.IsZero() {
 		return sendTextMessage(ctx, mc, message.ConversationId, config.MessageTipsUnsubscribe)
