@@ -10,6 +10,7 @@ import (
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
@@ -46,6 +47,11 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 	for _, a := range list {
 		if number.FromString(a.Balance).Cmp(number.FromString("0.0001")) < 0 {
 			continue
+		}
+		if config.PriceAssetsEnable {
+			if number.FromString(a.PriceUSD).Cmp(number.Zero()) <= 0 {
+				continue
+			}
 		}
 		assets = append(assets, &Asset{
 			AssetId:  a.AssetId,

@@ -80,6 +80,11 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 	if err != nil {
 		return nil, err
 	}
+	if config.PriceAssetsEnable {
+		if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
+			return nil, session.BadDataError(ctx)
+		}
+	}
 	u, _ := bot.UserMe(ctx, current.AccessToken)
 	if u != nil {
 		name := strings.TrimSpace(u.FullName)
