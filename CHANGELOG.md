@@ -7,8 +7,8 @@
 ```
 alter table users add column active_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
 CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
-CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shar+d, status, recipient_id, created_at);
-CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, crea+ted_at);
+CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
+CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
 CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 DROP INDEX IF EXISTS message_status;
 ```
