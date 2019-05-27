@@ -1,6 +1,8 @@
 package models
 
 import (
+	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -95,10 +97,23 @@ func TestPacketCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(packet)
 	assert.Equal(PacketStateRefunded, packet.State)
-	packet, err = ReadPacketWithRelation(ctx, packet.PacketId)
+	packet, err = testReadPacketWithRelation(ctx, packet.PacketId)
 	assert.Nil(err)
 	assert.NotNil(packet)
-	packet, err = ReadPacketWithRelation(ctx, bot.UuidNewV4().String())
+	packet, err = testReadPacketWithRelation(ctx, bot.UuidNewV4().String())
 	assert.Nil(err)
 	assert.Nil(packet)
+}
+
+func testReadPacketWithRelation(ctx context.Context, packetId string) (*Packet, error) {
+	var packet *Packet
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
+		return err
+	})
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return packet, err
 }

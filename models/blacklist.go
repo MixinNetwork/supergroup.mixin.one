@@ -30,14 +30,15 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	if config.Operators[userId] {
 		return nil, nil
 	}
-	user, err = FindUser(ctx, userId)
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	} else if user == nil {
-		return nil, nil
-	}
 
 	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		user, err = findUserById(ctx, tx, userId)
+		if err != nil {
+			return err
+		} else if user == nil {
+			userId = ""
+			return nil
+		}
 		_, err := tx.ExecContext(ctx, "INSERT INTO blacklists (user_id) VALUES ($1)", user.UserId)
 		if err != nil {
 			return err
@@ -47,6 +48,9 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
+	}
+	if userId == "" {
+		return nil, nil
 	}
 	return &Blacklist{UserId: userId}, nil
 }

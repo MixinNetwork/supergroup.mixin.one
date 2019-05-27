@@ -47,13 +47,6 @@ CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(statu
 CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 
 
-CREATE TABLE IF NOT EXISTS properties (
-  key         VARCHAR(512) PRIMARY KEY,
-  value       VARCHAR(8192) NOT NULL,
-  updated_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-
 CREATE TABLE IF NOT EXISTS packets (
   packet_id         VARCHAR(36) PRIMARY KEY CHECK (packet_id ~* '^[0-9a-f-]{36,36}$'),
   user_id           VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),

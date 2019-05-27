@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"sort"
 	"strings"
 	"time"
 
@@ -167,7 +166,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		return session.TransactionError(ctx, err)
 	}
 	var values bytes.Buffer
-	i := 0
+	var i int
 	for _, id := range ids {
 		if id == message.UserId {
 			continue
@@ -223,7 +222,6 @@ func PendingDistributedMessages(ctx context.Context, limit int64) ([]*Distribute
 		}
 		messages = append(messages, m)
 	}
-	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	return messages, nil
 }
 

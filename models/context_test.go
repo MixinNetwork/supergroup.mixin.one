@@ -22,7 +22,6 @@ const (
 	dropPacketsDDL             = `DROP TABLE IF EXISTS packets;`
 	dropAssetsDDL              = `DROP TABLE IF EXISTS assets;`
 	dropBlacklistsDDL          = `DROP TABLE IF EXISTS blacklists;`
-	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
 	dropDistributedMessagesDDL = `DROP TABLE IF EXISTS distributed_messages;`
 	dropMessagesDDL            = `DROP TABLE IF EXISTS messages;`
 	dropUsersDDL               = `DROP TABLE IF EXISTS users;`
@@ -39,7 +38,6 @@ func teardownTestContext(ctx context.Context) {
 		dropUsersDDL,
 		dropMessagesDDL,
 		dropDistributedMessagesDDL,
-		dropPropertiesDDL,
 		dropBlacklistsDDL,
 		dropAssetsDDL,
 		dropParticipantsDDL,
@@ -70,7 +68,6 @@ func setupTestContext() context.Context {
 		blacklist_DDL,
 		packets_DDL,
 		participants_DDL,
-		properties_DDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {

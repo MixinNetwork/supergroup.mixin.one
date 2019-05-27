@@ -434,19 +434,6 @@ func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, erro
 	return p, nil
 }
 
-func ReadPacketWithRelation(ctx context.Context, packetId string) (*Packet, error) {
-	var packet *Packet
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		var err error
-		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
-		return err
-	})
-	if err != nil {
-		return nil, session.TransactionError(ctx, err)
-	}
-	return packet, err
-}
-
 func packetFromRow(row durable.Row) (*Packet, error) {
 	var p Packet
 	err := row.Scan(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
