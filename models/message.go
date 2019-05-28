@@ -2,6 +2,9 @@ package models
 
 import (
 	"context"
+	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -13,6 +16,8 @@ import (
 const (
 	MessageStatePending = "pending"
 	MessageStateSuccess = "success"
+
+	MessageCategoryMessageRecall = "MESSAGE_RECALL"
 )
 
 const messages_DDL = `
@@ -34,6 +39,12 @@ var messagesCols = []string{"message_id", "user_id", "category", "data", "create
 
 func (m *Message) values() []interface{} {
 	return []interface{}{m.MessageId, m.UserId, m.Category, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
+}
+
+func messageFromRow(row durable.Row) (*Message, error) {
+	var m Message
+	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
+	return &m, err
 }
 
 type Message struct {
@@ -62,6 +73,24 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, data st
 		LastDistributeAt: genesisStartedAt(),
 	}
 
+	if category == MessageCategoryMessageRecall {
+		bytes, err := base64.StdEncoding.DecodeString(data)
+		if err != nil {
+			return nil, session.BadDataError(ctx)
+		}
+		var recallMessage RecallMessage
+		err = json.Unmarshal(bytes, &recallMessage)
+		if err != nil {
+			return nil, session.BadDataError(ctx)
+		}
+		m, err := FindMessage(ctx, recallMessage.MessageId)
+		if err != nil || m == nil {
+			return nil, err
+		}
+		if m.UserId != user.UserId {
+			return nil, session.ForbiddenError(ctx)
+		}
+	}
 	params, positions := compileTableQuery(messagesCols)
 	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", params, positions)
 	_, err := session.Database(ctx).ExecContext(ctx, query, message.values()...)
@@ -88,8 +117,18 @@ func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	return messages, nil
 }
 
-func messageFromRow(row durable.Row) (*Message, error) {
-	var m Message
-	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
-	return &m, err
+func FindMessage(ctx context.Context, id string) (*Message, error) {
+	query := fmt.Sprintf("SELECT %s FROM messages WHERE message_id=$1", strings.Join(messagesCols, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, id)
+	message, err := messageFromRow(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return message, nil
+}
+
+type RecallMessage struct {
+	MessageId string `json:"message_id"`
 }
