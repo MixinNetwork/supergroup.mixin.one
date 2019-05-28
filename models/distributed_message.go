@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
@@ -87,6 +88,17 @@ func createDistributeMessage(ctx context.Context, messageId, parentId, userId, r
 }
 
 func (message *Message) Distribute(ctx context.Context) error {
+	var recallMessage RecallMessage
+	if message.Category == MessageCategoryMessageRecall {
+		data, err := base64.StdEncoding.DecodeString(message.Data)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+		err = json.Unmarshal(data, &recallMessage)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+	}
 	for {
 		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit)
 		if err != nil {
@@ -112,6 +124,16 @@ func (message *Message) Distribute(ctx context.Context) error {
 				messageId := UniqueConversationId(user.UserId, message.MessageId)
 				if set[messageId] {
 					continue
+				}
+				if message.Category == MessageCategoryMessageRecall {
+					r := RecallMessage{
+						MessageId: UniqueConversationId(user.UserId, recallMessage.MessageId),
+					}
+					data, err := json.Marshal(r)
+					if err != nil {
+						return session.BadDataError(ctx)
+					}
+					message.Data = base64.StdEncoding.EncodeToString(data)
 				}
 				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
 				if err != nil {

@@ -176,6 +176,9 @@ func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []
 		if message.UserId == config.ClientId {
 			message.UserId = ""
 		}
+		if message.Category == models.MessageCategoryMessageRecall {
+			message.UserId = ""
+		}
 		body = append(body, map[string]interface{}{
 			"conversation_id":   message.ConversationId,
 			"recipient_id":      message.RecipientId,
