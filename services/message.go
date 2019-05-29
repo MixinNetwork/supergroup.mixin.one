@@ -38,6 +38,7 @@ type MessageView struct {
 	ConversationId string    `json:"conversation_id"`
 	UserId         string    `json:"user_id"`
 	MessageId      string    `json:"message_id"`
+	QuoteMessageId string    `json:"quote_message_id"`
 	Category       string    `json:"category"`
 	Data           string    `json:"data"`
 	Status         string    `json:"status"`
@@ -297,7 +298,7 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 		}
 		id, err := models.FindDistributedMessageRecipientId(ctx, msg.MessageId)
 		if err != nil {
-			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT json.Unmarshal", err)
+			session.Logger(ctx).Error("ACKNOWLEDGE_MESSAGE_RECEIPT FindDistributedMessageRecipientId", err)
 			return nil
 		}
 		if id == "" {
@@ -374,7 +375,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 	}
 	t := time.Now()
 	u := &models.User{UserId: config.ClientId, ActiveAt: time.Now()}
-	_, err = models.CreateMessage(ctx, u, packet.PacketId, "APP_CARD", base64.StdEncoding.EncodeToString(card), t, t)
+	_, err = models.CreateMessage(ctx, u, packet.PacketId, "APP_CARD", "", base64.StdEncoding.EncodeToString(card), t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
@@ -461,7 +462,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 			}
 		}
 	}
-	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
+	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
 		return err
 	}
 	return nil
