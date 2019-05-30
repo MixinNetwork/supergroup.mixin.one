@@ -1,4 +1,3 @@
-config/*
 deploy.sh
 nginx.conf
 tasks
