@@ -4,7 +4,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 
 ## Prepare
 
-1. `cd config` and copy `config.gocfg` to `config.go`
+1. copy `config.tpl.yaml` to `config.yaml`
 2. Replace configurations in `config.go`, we use PostgreSQL as our database.
 3. `cd web` and exec `npm install`
 4. Replace domain, api address and clientId in `webpack.config.js`
@@ -12,6 +12,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 ## Run
 
 #### Server Side
+
 1. `./supergroup.mixin.one` handle http request
 2. `./supergroup.mixin.one -service message` handle messages
 
