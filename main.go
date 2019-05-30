@@ -19,7 +19,14 @@ func main() {
 	service := flag.String("service", "http", "run a service")
 	flag.Parse()
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.DatebaseUser, config.DatabasePassword, config.DatabaseHost, config.DatabasePort, config.DatabaseName)
+	config.LoadConfig()
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		config.Get().Database.DatebaseUser,
+		config.Get().Database.DatabasePassword,
+		config.Get().Database.DatabaseHost,
+		config.Get().Database.DatabasePort,
+		config.Get().Database.DatabaseName)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
@@ -48,7 +55,6 @@ func main() {
 				log.Println(err)
 			}
 		}()
-
-		http.ListenAndServe(fmt.Sprintf(":%d", config.HTTPListenPort+2000), http.DefaultServeMux)
+		http.ListenAndServe(fmt.Sprintf(":%d", config.Get().Service.HTTPListenPort+2000), http.DefaultServeMux)
 	}
 }

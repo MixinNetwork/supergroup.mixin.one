@@ -24,10 +24,10 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	if err != nil {
 		return nil, session.ForbiddenError(ctx)
 	}
-	if !config.Operators[user.UserId] {
+	if !config.Get().System.Operators[user.UserId] {
 		return nil, nil
 	}
-	if config.Operators[userId] {
+	if config.Get().System.Operators[userId] {
 		return nil, nil
 	}
 

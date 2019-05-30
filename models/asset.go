@@ -48,7 +48,7 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 		if number.FromString(a.Balance).Cmp(number.FromString("0.0001")) < 0 {
 			continue
 		}
-		if config.PriceAssetsEnable {
+		if config.Get().System.PriceAssetsEnable {
 			if number.FromString(a.PriceUSD).Cmp(number.Zero()) <= 0 {
 				continue
 			}

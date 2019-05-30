@@ -70,7 +70,7 @@ type DistributedMessage struct {
 func createDistributeMessage(ctx context.Context, messageId, parentId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
-		ConversationId: UniqueConversationId(config.ClientId, recipientId),
+		ConversationId: UniqueConversationId(config.Get().Mixin.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,
 		ParentId:       parentId,
@@ -176,7 +176,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 
 func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	ids := make([]string, 0)
-	for key, _ := range config.Operators {
+	for key, _ := range config.Get().System.Operators {
 		ids = append(ids, key)
 	}
 	messageIds := make([]string, len(ids))
@@ -338,11 +338,11 @@ func shardId(cid, uid string) (string, error) {
 	io.WriteString(h, minId)
 	io.WriteString(h, maxId)
 
-	b := new(big.Int).SetInt64(config.MessageShardSize)
+	b := new(big.Int).SetInt64(config.Get().System.MessageShardSize)
 	c := new(big.Int).SetBytes(h.Sum(nil))
 	m := new(big.Int).Mod(c, b)
 	h = md5.New()
-	h.Write([]byte(config.MessageShardModifier))
+	h.Write([]byte(config.Get().System.MessageShardModifier))
 	h.Write(m.Bytes())
 	s := h.Sum(nil)
 	s[6] = (s[6] & 0x0f) | 0x30
