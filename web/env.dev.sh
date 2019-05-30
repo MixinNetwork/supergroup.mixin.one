@@ -1,0 +1,6 @@
+export NODE_ENV="development"
+export SUPERGROUP_WEB_ROOT="http://localhost:8080"
+export SUPERGROUP_API_ROOT="http://localhost:7001"
+export SUPERGROUP_CLIENT_ID="67a87828-18f5-46a1-b6cc-c72a97a77c43"
+export SUPERGROUP_APP_NAME="Mixin Super Group"
+export SUPERGROUP_LOCALE="zh-CN"

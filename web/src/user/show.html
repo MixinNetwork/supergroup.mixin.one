@@ -2,23 +2,33 @@
   <div class="members">
   </div>
   <div class="actions">
-    <div class="action subscribe">
-      <a href="javascript:;" class="btn">
-        {{t 'user.subscribe'}}
+      <a href="javascript:;" class="action subscribe btn">
+		<div class="action-icon"></div> 
+        <span class="action-name" >{{t 'user.subscribe'}}</span>
       </a>
-    </div>
-    <div class="action unsubscribe">
-      <a href="javascript:;" class="btn">
-        {{t 'user.unsubscribe'}}
+      <a href="javascript:;" class="action unsubscribe btn">
+		<div class="action-icon"></div>
+       <span class="action-name" >{{t 'user.unsubscribe'}}</span>
       </a>
-    </div>
     <a href="/subscribers" class="action btn subscriber" data-navigo>
-      {{t 'user.browser'}}
-    </a>
+		<div class="action-icon" ></div>
+      	<span class="action-name" >{{t 'user.browser'}}</span>
+  	</a>
     {{#if isMixin}}
     <a href="/prepare" class="action btn red-packet" data-navigo>
-      {{t 'user.red.packet'}}
+		<div class="action-icon" ></div>
+      <span class="action-name" >{{t 'user.red.packet'}}</span>
     </a>
     {{/if}}
+  </div>
+  <div class="actions">
+    <a href="https://elite-wallet.kumiclub.com" class="action btn elite-wallet" data-navigo>
+		<div class="action-icon" src="/"></div>
+      	<span class="action-name" >{{t 'user.wallet'}}</span>
+    </a>
+    <a href="https://gbi.news" class="action btn gbi-news" data-navigo>
+		<div class="action-icon" ></div>
+      	<span class="action-name" >GBI.news</span>
+    </a>
   </div>
 </main>
