@@ -11,6 +11,7 @@ import (
 
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/gofrs/uuid"
 )
 
 const (
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS messages (
 	message_id            VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	user_id	              VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	category              VARCHAR(512) NOT NULL,
+	quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
 	data                  TEXT NOT NULL,
 	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 	updated_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -35,15 +37,15 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS messages_state_updatedx ON messages(state, updated_at);
 `
 
-var messagesCols = []string{"message_id", "user_id", "category", "data", "created_at", "updated_at", "state", "last_distribute_at"}
+var messagesCols = []string{"message_id", "user_id", "category", "quote_message_id", "data", "created_at", "updated_at", "state", "last_distribute_at"}
 
 func (m *Message) values() []interface{} {
-	return []interface{}{m.MessageId, m.UserId, m.Category, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
+	return []interface{}{m.MessageId, m.UserId, m.Category, m.QuoteMessageId, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
 }
 
 func messageFromRow(row durable.Row) (*Message, error) {
 	var m Message
-	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
+	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.QuoteMessageId, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
 	return &m, err
 }
 
@@ -51,6 +53,7 @@ type Message struct {
 	MessageId        string
 	UserId           string
 	Category         string
+	QuoteMessageId   string
 	Data             string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
@@ -58,7 +61,7 @@ type Message struct {
 	LastDistributeAt time.Time
 }
 
-func CreateMessage(ctx context.Context, user *User, messageId, category, data string, createdAt, updatedAt time.Time) (*Message, error) {
+func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
 		return nil, nil
 	}
@@ -73,6 +76,18 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, data st
 		LastDistributeAt: genesisStartedAt(),
 	}
 
+	if quoteMessageId != "" {
+		if id, _ := uuid.FromString(quoteMessageId); id.String() == quoteMessageId {
+			message.QuoteMessageId = quoteMessageId
+			dm, err := FindDistributedMessage(ctx, quoteMessageId)
+			if err != nil {
+				return nil, err
+			}
+			if dm != nil {
+				message.QuoteMessageId = dm.ParentId
+			}
+		}
+	}
 	if category == MessageCategoryMessageRecall {
 		bytes, err := base64.StdEncoding.DecodeString(data)
 		if err != nil {

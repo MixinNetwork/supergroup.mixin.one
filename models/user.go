@@ -257,7 +257,7 @@ func (user *User) Payment(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.WelcomeMessage)))
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.WelcomeMessage)))
 		if err != nil {
 			return err
 		}

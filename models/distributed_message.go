@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 	recipient_id          VARCHAR(36) NOT NULL CHECK (recipient_id ~* '^[0-9a-f-]{36,36}$'),
 	user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	parent_id             VARCHAR(36) NOT NULL CHECK (parent_id ~* '^[0-9a-f-]{36,36}$'),
+	quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
 	shard                 VARCHAR(36) NOT NULL,
 	category              VARCHAR(512) NOT NULL,
 	data                  TEXT NOT NULL,
@@ -48,10 +49,10 @@ CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
 `
 
-var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "shard", "category", "data", "status", "created_at"}
+var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
 
 func (dm *DistributedMessage) values() []interface{} {
-	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
+	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
 }
 
 type DistributedMessage struct {
@@ -60,6 +61,7 @@ type DistributedMessage struct {
 	RecipientId    string
 	UserId         string
 	ParentId       string
+	QuoteMessageId string
 	Shard          string
 	Category       string
 	Data           string
@@ -67,13 +69,14 @@ type DistributedMessage struct {
 	CreatedAt      time.Time
 }
 
-func createDistributeMessage(ctx context.Context, messageId, parentId, userId, recipientId, category, data string) (*DistributedMessage, error) {
+func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.Get().Mixin.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,
 		ParentId:       parentId,
+		QuoteMessageId: quoteMessageId,
 		Category:       category,
 		Data:           data,
 		Status:         MessageStatusSent,
@@ -97,6 +100,14 @@ func (message *Message) Distribute(ctx context.Context) error {
 		err = json.Unmarshal(data, &recallMessage)
 		if err != nil {
 			return session.BadDataError(ctx)
+		}
+	}
+	var quote *Message
+	if message.QuoteMessageId != "" {
+		var err error
+		quote, err = FindMessage(ctx, message.QuoteMessageId)
+		if err != nil {
+			return err
 		}
 	}
 	for {
@@ -125,6 +136,13 @@ func (message *Message) Distribute(ctx context.Context) error {
 				if set[messageId] {
 					continue
 				}
+				quoteMessageId := ""
+				if message.QuoteMessageId != "" && quote != nil {
+					quoteMessageId = UniqueConversationId(user.UserId, quote.MessageId)
+					if quote.UserId == user.UserId {
+						quoteMessageId = quote.MessageId
+					}
+				}
 				if message.Category == MessageCategoryMessageRecall {
 					r := RecallMessage{
 						MessageId: UniqueConversationId(user.UserId, recallMessage.MessageId),
@@ -135,7 +153,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 					}
 					message.Data = base64.StdEncoding.EncodeToString(data)
 				}
-				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, user.UserId, message.Category, message.Data)
+				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, quoteMessageId, message.UserId, user.UserId, message.Category, message.Data)
 				if err != nil {
 					session.TransactionError(ctx, err)
 				}
@@ -143,7 +161,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 					values.WriteString(",")
 				}
 				i += 1
-				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
+				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 			}
 			message.LastDistributeAt = last
 		}
@@ -197,7 +215,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, message.UserId, id, message.Category, message.Data)
+		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -205,12 +223,12 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 			values.WriteString(",")
 		}
 		i += 1
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, dm.Category, dm.Data, dm.Status))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
 		values.WriteString(",")
-		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
 	}
 
 	message.LastDistributeAt = time.Now()
@@ -302,6 +320,18 @@ func FindDistributedMessageRecipientId(ctx context.Context, id string) (string, 
 	return recipient, nil
 }
 
+func FindDistributedMessage(ctx context.Context, id string) (*DistributedMessage, error) {
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE message_id=$1", strings.Join(distributedMessagesCols, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, id)
+	dm, err := distributedMessageFromRow(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return dm, nil
+}
+
 func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
 	set := make(map[string]bool)
 	query := fmt.Sprintf("SELECT message_id FROM distributed_messages WHERE message_id IN ('%s')", strings.Join(ids, "','"))
@@ -321,12 +351,12 @@ func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string
 
 func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	var m DistributedMessage
-	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
+	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
 	return &m, err
 }
 
-func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, shard, category, data, status string) string {
-	return fmt.Sprintf("('%s','%s','%s','%s','%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, shard, category, data, status)
+func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string) string {
+	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status)
 }
 
 func shardId(cid, uid string) (string, error) {

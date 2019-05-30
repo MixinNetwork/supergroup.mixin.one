@@ -183,6 +183,7 @@ func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []
 			"conversation_id":   message.ConversationId,
 			"recipient_id":      message.RecipientId,
 			"message_id":        message.MessageId,
+			"quote_message_id":  message.QuoteMessageId,
 			"category":          message.Category,
 			"data":              message.Data,
 			"representative_id": message.UserId,
