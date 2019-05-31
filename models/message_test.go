@@ -59,6 +59,8 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Len(messages, 2)
 
 	user, err = createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
+	assert.Nil(err)
+	assert.NotNil(user)
 	users, err := subscribedUsers(ctx, message.LastDistributeAt, 100)
 	assert.Nil(err)
 	assert.Len(users, 0)

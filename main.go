@@ -17,10 +17,10 @@ import (
 
 func main() {
 	service := flag.String("service", "http", "run a service")
+	dir := flag.String("dir", "./", "config.yaml dir")
 	flag.Parse()
 
-	config.LoadConfig()
-
+	config.LoadConfig(*dir)
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		config.Get().Database.DatebaseUser,
 		config.Get().Database.DatabasePassword,
