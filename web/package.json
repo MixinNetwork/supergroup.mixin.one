@@ -34,9 +34,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "source env.dev.sh; webpack -w --mode development",
-    "build": "source env.dev.sh; webpack --mode development",
-    "dist": "source env.prod.sh; webpack -p --mode production"
+    "watch": ". ./env.dev.sh; webpack -w --mode development",
+    "build": ". ./env.dev.sh; webpack --mode development",
+    "dist": ". ./env.prod.sh; webpack -p --mode production"
   },
   "keywords": [],
   "author": "Cedric Fung",
