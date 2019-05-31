@@ -5,7 +5,7 @@ After=systemd-user-sessions.service
 After=network-online.target
 
 [Service]
-ExecStart=/your/path/to/start/group.sh
+ExecStart=/your/path/to/start/group -service http -dir /home/web/bin/
 WorkingDirectory=/your/path/to/group
 Type=forking
 User=ubuntu

@@ -1,0 +1,18 @@
+[Unit]
+Description=Super Group Service
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+ExecStart=/your/path/to/start/group -service message -dir /home/web/bin/
+WorkingDirectory=/your/path/to/group
+Type=forking
+User=ubuntu
+Group=ubuntu
+Restart=always
+RestartSec=30
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
