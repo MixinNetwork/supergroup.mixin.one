@@ -54,7 +54,7 @@ type Config struct {
 	}
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
-		ClientSecret    string `yaml:"client_iecret"`
+		ClientSecret    string `yaml:"client_secret"`
 		SessionAssetPIN string `yaml:"session_asset_pin"`
 		PinToken        string `yaml:"pin_token"`
 		SessionId       string `yaml:"session_id"`
