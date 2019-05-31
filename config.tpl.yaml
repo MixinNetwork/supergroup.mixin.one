@@ -35,7 +35,7 @@ message_template:
   message_commands_info_resp: "当前订阅人数: %d"
 mixin:
   client_id        : "5fcd897e-e7b2-40d5-93cd-487e2d955556"
-  client_iecret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
+  client_secret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
   session_asset_pin : "133123"
   pin_token        : "fKfozH23iFLAhAeSsFeRkkhwGJo4RiJhg4mSX3rEPxpqCf01lNsESGGQ75oQZG+diTSyqd3dyI7vMrIdhhyyecbz61cxDoYAiLXpYW4AH+r94CfT73159l1z/15KCiXEfFTXD4akO0QK0J+QWlZVrz0YmVUSewZj9imv/+NdurQ="
   session_id       : "8f42db23-d8df-4063-aeda-c322279da2c2"
