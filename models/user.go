@@ -67,7 +67,7 @@ func (u *User) values() []interface{} {
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
-	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.ClientId, config.ClientSecret, authorizationCode, "")
+	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.Get().Mixin.ClientId, config.Get().Mixin.ClientSecret, authorizationCode, "")
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
-		if number.FromString(config.PaymentAmount).Exhausted() {
+		if number.FromString(config.Get().System.PaymentAmount).Exhausted() {
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
 			err = createConversation(ctx, "CONTACT", userId)
@@ -142,7 +142,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 }
 
 func createConversation(ctx context.Context, category, participantId string) error {
-	conversationId := bot.UniqueConversationId(config.ClientId, participantId)
+	conversationId := bot.UniqueConversationId(config.Get().Mixin.ClientId, participantId)
 	participant := bot.Participant{
 		UserId: participantId,
 		Role:   "",
@@ -150,7 +150,7 @@ func createConversation(ctx context.Context, category, participantId string) err
 	participants := []bot.Participant{
 		participant,
 	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.ClientId, config.SessionId, config.SessionKey)
+	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey)
 	return err
 }
 
@@ -242,9 +242,9 @@ func (user *User) Payment(ctx context.Context) error {
 	t := time.Now()
 	message := &Message{
 		MessageId: bot.UuidNewV4().String(),
-		UserId:    config.ClientId,
+		UserId:    config.Get().Mixin.ClientId,
 		Category:  "PLAIN_TEXT",
-		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.MessageTipsJoin, user.FullName))),
+		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
 		CreatedAt: t,
 		UpdatedAt: t,
 		State:     MessageStatePending,
@@ -257,7 +257,7 @@ func (user *User) Payment(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.WelcomeMessage)))
+		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.WelcomeMessage)))
 		if err != nil {
 			return err
 		}
@@ -299,7 +299,7 @@ func SubscribersCount(ctx context.Context) (int64, error) {
 }
 
 func (user *User) DeleteUser(ctx context.Context, id string) error {
-	if !config.Operators[user.UserId] {
+	if !config.Get().System.Operators[user.UserId] {
 		return nil
 	}
 	_, err := session.Database(ctx).ExecContext(ctx, fmt.Sprintf("DELETE FROM users WHERE user_id=$1"), id)
@@ -310,7 +310,7 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (user *User) GetRole() string {
-	if config.Operators[user.UserId] {
+	if config.Get().System.Operators[user.UserId] {
 		return "admin"
 	}
 	return "user"

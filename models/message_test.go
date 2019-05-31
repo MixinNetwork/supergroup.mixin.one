@@ -124,8 +124,8 @@ func testReadMessage(ctx context.Context, id string) (*Message, error) {
 func testReadDistributedMessages(ctx context.Context) ([]*DistributedMessage, error) {
 	limit := int64(64)
 	dms := make([]*DistributedMessage, 0)
-	for i := int64(0); i < config.MessageShardSize; i++ {
-		shard := testShardId(config.MessageShardModifier, i)
+	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
+		shard := testShardId(config.Get().System.MessageShardModifier, i)
 		messages, err := PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			return dms, err

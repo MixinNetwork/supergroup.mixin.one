@@ -26,5 +26,5 @@ func StartServer(database *durable.Database) error {
 	handler = middlewares.Log(handler, logger, "http")
 	handler = handlers.ProxyHeaders(handler)
 
-	return gracehttp.Serve(&http.Server{Addr: fmt.Sprintf(":%d", config.HTTPListenPort), Handler: handler})
+	return gracehttp.Serve(&http.Server{Addr: fmt.Sprintf(":%d", config.Get().Service.HTTPListenPort), Handler: handler})
 }

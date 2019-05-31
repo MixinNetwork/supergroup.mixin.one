@@ -81,7 +81,7 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 	if err != nil {
 		return nil, err
 	}
-	if config.PriceAssetsEnable {
+	if config.Get().System.PriceAssetsEnable {
 		if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
 			return nil, session.BadDataError(ctx)
 		}
@@ -242,7 +242,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 				if err != nil {
 					return err
 				}
-				dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.GroupOpenedRedPacket, current.FullName))))
+				dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.GroupOpenedRedPacket, current.FullName))))
 				if err != nil {
 					return err
 				}
@@ -323,7 +323,7 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 		TraceId:     traceId,
 		Memo:        "",
 	}
-	err = bot.CreateTransfer(ctx, in, config.ClientId, config.SessionId, config.SessionKey, config.SessionAssetPIN, config.PinToken)
+	err = bot.CreateTransfer(ctx, in, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey, config.Get().Mixin.SessionAssetPIN, config.Get().Mixin.PinToken)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}

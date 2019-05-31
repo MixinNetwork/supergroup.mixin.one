@@ -36,8 +36,8 @@ func loopPendingMessage(ctx context.Context) {
 			continue
 		}
 		for _, message := range messages {
-			if !config.Operators[message.UserId] {
-				if config.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
+			if !config.Get().System.Operators[message.UserId] {
+				if config.Get().System.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
 					data, err := base64.StdEncoding.DecodeString(message.Data)
 					if err != nil {
 						session.Logger(ctx).Errorf("DetectLink ERROR: %+v", err)
@@ -50,7 +50,7 @@ func loopPendingMessage(ctx context.Context) {
 						continue
 					}
 				}
-				if config.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
+				if config.Get().System.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
 					if b, reason := validateMessage(ctx, message); !b {
 						if err := message.Leapfrog(ctx, reason); err != nil {
 							time.Sleep(500 * time.Millisecond)
@@ -89,17 +89,17 @@ func cleanUpDistributedMessages(ctx context.Context) {
 }
 
 func loopPendingDistributeMessages(ctx context.Context, mc *MessageContext) {
-	shardChan := make(chan bool, config.MessageShardSize)
+	shardChan := make(chan bool, config.Get().System.MessageShardSize)
 	pendingChan := make(chan bool, 1)
 	limit := int64(30)
-	for i := int64(0); i < config.MessageShardSize; i++ {
-		shard := shardId(config.MessageShardModifier, i)
+	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
+		shard := shardId(config.Get().System.MessageShardModifier, i)
 		go pendingActiveDistributedMessages(ctx, shard, shardChan, limit, mc)
 	}
 	go pendingDistributedMessages(ctx, pendingChan, limit, mc)
 	if <-mc.DistributeDone {
 		pendingChan <- true
-		for i := int64(0); i < config.MessageShardSize; i++ {
+		for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
 			shardChan <- true
 		}
 	}
@@ -173,7 +173,7 @@ func pendingDistributedMessages(ctx context.Context, pendingChan chan bool, limi
 func sendDistributedMessges(ctx context.Context, mc *MessageContext, messages []*models.DistributedMessage) error {
 	var body []map[string]interface{}
 	for _, message := range messages {
-		if message.UserId == config.ClientId {
+		if message.UserId == config.Get().Mixin.ClientId {
 			message.UserId = ""
 		}
 		if message.Category == models.MessageCategoryMessageRecall {
@@ -245,7 +245,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, "message.Data Unmarshal error"
 	}
-	attachment, err := bot.AttachemntShow(ctx, config.ClientId, config.SessionId, config.SessionKey, a.AttachmentId)
+	attachment, err := bot.AttachemntShow(ctx, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey, a.AttachmentId)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
