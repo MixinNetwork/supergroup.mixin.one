@@ -3,9 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"log"
-	"os"
 	"path"
-	"path/filepath"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -64,17 +62,13 @@ type Config struct {
 
 var conf *Config
 
-func LoadConfig() *Config {
-	var data []byte
-	ex, err := os.Executable()
+func LoadConfig(dir string) {
+	data, err := ioutil.ReadFile(path.Join(dir, ConfigFile))
 	if err != nil {
-		panic(err)
+		log.Panicln(err)
 	}
-	exPath := filepath.Dir(ex)
-
 	conf = &Config{}
-	data, err = ioutil.ReadFile(path.Join(exPath, ConfigFile))
-	err = yaml.Unmarshal([]byte(data), conf)
+	err = yaml.Unmarshal(data, conf)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
@@ -82,12 +76,8 @@ func LoadConfig() *Config {
 	for _, op := range conf.System.OperatorList {
 		conf.System.Operators[op] = true
 	}
-	return conf
 }
 
 func Get() *Config {
-	if conf == nil {
-		conf = LoadConfig()
-	}
 	return conf
 }
