@@ -39,7 +39,7 @@ mixin:
   session_asset_pin : "133123"
   pin_token        : "fKfozH23iFLAhAeSsFeRkkhwGJo4RiJhg4mSX3rEPxpqCf01lNsESGGQ75oQZG+diTSyqd3dyI7vMrIdhhyyecbz61cxDoYAiLXpYW4AH+r94CfT73159l1z/15KCiXEfFTXD4akO0QK0J+QWlZVrz0YmVUSewZj9imv/+NdurQ="
   session_id       : "8f42db23-d8df-4063-aeda-c322279da2c2"
-  session_key: >
+  session_key: |
     -----BEGIN RSA PRIVATE KEY-----
     MIICXQIBAAKBgQCS2vbuIWPSEygHzkCDORmq9n4kN1lv5Qur9UD8ske3Yx0ZK+Bu
     0ojJXPysOWcQwReBhsYQzsBSUfVTb+nhHueAlHvYcxgpTT048/0UrLHycuX9xTI1
