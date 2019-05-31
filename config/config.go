@@ -17,14 +17,14 @@ type Config struct {
 		Environment      string `yaml:"enviroment"`
 		HTTPListenPort   int    `yaml:"port"`
 		HTTPResourceHost string `yaml:"host"`
-	}
+	} `yaml:"service"`
 	Database struct {
 		DatebaseUser     string `yaml:"username"`
 		DatabasePassword string `yaml:"password"`
 		DatabaseHost     string `yaml:"host"`
 		DatabasePort     string `yaml:"port"`
 		DatabaseName     string `yaml:"database_name"`
-	}
+	} `yaml:"database"`
 	System struct {
 		MessageShardModifier string   `yaml:"message_shard_modifier"`
 		MessageShardSize     int64    `yaml:"message_shard_size"`
@@ -35,7 +35,7 @@ type Config struct {
 		DetectLinkEnabled    bool   `yaml:"detect_link"`
 		PaymentAssetId       string `yaml:"payment_asset_id"`
 		PaymentAmount        string `yaml:"payment_amount"`
-	}
+	} `yaml:"system"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
 		GroupRedPacket          string `yaml:"group_redpacket"`
@@ -49,7 +49,7 @@ type Config struct {
 		MessageTipsUnsubscribe  string `yaml:"message_tips_unsubscribe"`
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
-	}
+	} `yaml:"message_template"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
 		ClientSecret    string `yaml:"client_secret"`
@@ -57,7 +57,7 @@ type Config struct {
 		PinToken        string `yaml:"pin_token"`
 		SessionId       string `yaml:"session_id"`
 		SessionKey      string `yaml:"session_key"`
-	}
+	} `yaml:"mixin"`
 }
 
 var conf *Config
