@@ -409,3 +409,10 @@ func compileTableQuery(fields []string) (string, string) {
 	}
 	return params.String(), positions.String()
 }
+
+func (u *User) GetFullName() string {
+	if u.FullName != "" {
+		return u.FullName
+	}
+	return "Null"
+}

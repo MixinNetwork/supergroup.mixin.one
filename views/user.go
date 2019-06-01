@@ -30,7 +30,7 @@ func buildUserView(user *models.User) UserView {
 		Type:           "user",
 		UserId:         user.UserId,
 		IdentityNumber: fmt.Sprint(user.IdentityNumber),
-		FullName:       user.FullName,
+		FullName:       user.GetFullName(),
 		AvatarURL:      user.AvatarURL,
 		SubscribedAt:   user.SubscribedAt.Format(time.RFC3339Nano),
 		Role:           user.GetRole(),
