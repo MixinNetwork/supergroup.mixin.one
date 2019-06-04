@@ -10,3 +10,4 @@ env.dev.sh
 env.prod.sh
 
 !config/config.go
+.DS_Store
