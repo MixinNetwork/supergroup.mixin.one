@@ -5,7 +5,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 ## Prepare
 
 1. copy `config.tpl.yaml` to `config.yaml`
-2. Replace configurations in `config.go`, we use PostgreSQL as our database.
+2. Replace configurations in `config.yaml`, we use PostgreSQL as our database.
 3. `cd web` and exec `npm install`
 4. copy `env.dev.tpl.sh` to `env.dev.sh` and copy `env.prod.tpl.sh` to `env.prod.sh`
 5. Replace all fields in `env.dev.sh` and `env.prod.sh`
