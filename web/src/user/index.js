@@ -102,7 +102,7 @@ User.prototype = {
         }
       }
       $('body').attr('class', 'user layout');
-      $('#layout-container').html(self.templateSubscribers({subscribers: resp.data}));
+      $('#layout-container').html(self.templateSubscribers({admin: role == 'admin', subscribers: resp.data}));
       if (resp.data.length == 200) {
         $('.action.more').show();
         $('.action.more').on('click', function (e) {

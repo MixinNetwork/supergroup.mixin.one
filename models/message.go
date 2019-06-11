@@ -144,6 +144,23 @@ func FindMessage(ctx context.Context, id string) (*Message, error) {
 	return message, nil
 }
 
+func ReadLastestMessages(ctx context.Context, limit int64) ([]*Message, error) {
+	var messages []*Message
+	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 ORDER BY updated_at DESC LIMIT $2", strings.Join(messagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStateSuccess, limit)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	for rows.Next() {
+		m, err := messageFromRow(rows)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		messages = append(messages, m)
+	}
+	return messages, nil
+}
+
 type RecallMessage struct {
 	MessageId string `json:"message_id"`
 }

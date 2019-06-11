@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -55,6 +56,14 @@ func TestUserCRUD(t *testing.T) {
 	count, err := SubscribersCount(ctx)
 	assert.Nil(err)
 	assert.Equal(int64(0), count)
+
+	uid := bot.UuidNewV4().String()
+	data := base64.StdEncoding.EncodeToString([]byte("hello"))
+	message, err := CreateMessage(ctx, user, uid, "PLAIN_TEXT", "", data, time.Now(), time.Now())
+	assert.Nil(err)
+	assert.NotNil(message)
+	err = message.Distribute(ctx)
+	assert.Nil(err)
 
 	err = user.Payment(ctx)
 	assert.Nil(err)

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -125,8 +126,29 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	user.AuthenticationToken = authenticationToken
 
 	if user.isNew {
-		params, positions := compileTableQuery(usersCols)
-		_, err = session.Database(ctx).ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			if user.State == PaymentStatePaid {
+				t := time.Now()
+				message := &Message{
+					MessageId: bot.UuidNewV4().String(),
+					UserId:    config.Get().Mixin.ClientId,
+					Category:  "PLAIN_TEXT",
+					Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
+					CreatedAt: t,
+					UpdatedAt: t,
+					State:     MessageStatePending,
+				}
+				params, positions := compileTableQuery(messagesCols)
+				query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+				_, err := tx.ExecContext(ctx, query, message.values()...)
+				if err != nil {
+					return err
+				}
+			}
+			params, positions := compileTableQuery(usersCols)
+			_, err := tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+			return err
+		})
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
@@ -250,20 +272,57 @@ func (user *User) Payment(ctx context.Context) error {
 		State:     MessageStatePending,
 	}
 	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
+
+	messages, err := ReadLastestMessages(ctx, 10)
+	if err != nil {
+		return err
+	}
+
+	var values bytes.Buffer
+	for i, msg := range messages {
+		if msg.Category == MessageCategoryMessageRecall {
+			var recallMessage RecallMessage
+			data, err := base64.StdEncoding.DecodeString(msg.Data)
+			if err != nil {
+				return session.BadDataError(ctx)
+			}
+			err = json.Unmarshal(data, &recallMessage)
+			if err != nil {
+				return session.BadDataError(ctx)
+			}
+
+			r := RecallMessage{
+				MessageId: UniqueConversationId(user.UserId, recallMessage.MessageId),
+			}
+			data, err = json.Marshal(r)
+			if err != nil {
+				return session.BadDataError(ctx)
+			}
+			msg.Data = base64.StdEncoding.EncodeToString(data)
+		}
+
+		messageId := UniqueConversationId(user.UserId, msg.MessageId)
+		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
+		if err != nil {
+			session.TransactionError(ctx, err)
+		}
+		if i > 0 {
+			values.WriteString(",")
+		}
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
+	}
 	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		v := values.String()
+		if v != "" {
+			dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
+			_, err := tx.ExecContext(ctx, dquery)
+			if err != nil {
+				return err
+			}
+		}
 		params, positions := compileTableQuery(messagesCols)
 		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
 		_, err := tx.ExecContext(ctx, query, message.values()...)
-		if err != nil {
-			return err
-		}
-		dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.WelcomeMessage)))
-		if err != nil {
-			return err
-		}
-		dparams, dpositions := compileTableQuery(distributedMessagesCols)
-		dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", dparams, dpositions)
-		_, err = tx.ExecContext(ctx, dquery, dm.values()...)
 		if err != nil {
 			return err
 		}
