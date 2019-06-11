@@ -278,6 +278,7 @@ func (user *User) Payment(ctx context.Context) error {
 		return err
 	}
 
+	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	var values bytes.Buffer
 	for i, msg := range messages {
 		if msg.Category == MessageCategoryMessageRecall {
