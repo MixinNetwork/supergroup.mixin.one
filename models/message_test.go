@@ -115,6 +115,10 @@ func TestMessageCRUD(t *testing.T) {
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)
 	assert.Len(dms, 0)
+
+	messages, err = ReadLastestMessages(ctx, 10)
+	assert.Nil(err)
+	assert.Len(messages, 2)
 }
 
 func testReadMessage(ctx context.Context, id string) (*Message, error) {
