@@ -126,8 +126,29 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	user.AuthenticationToken = authenticationToken
 
 	if user.isNew {
-		params, positions := compileTableQuery(usersCols)
-		_, err = session.Database(ctx).ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			if user.State == PaymentStatePaid {
+				t := time.Now()
+				message := &Message{
+					MessageId: bot.UuidNewV4().String(),
+					UserId:    config.Get().Mixin.ClientId,
+					Category:  "PLAIN_TEXT",
+					Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
+					CreatedAt: t,
+					UpdatedAt: t,
+					State:     MessageStatePending,
+				}
+				params, positions := compileTableQuery(messagesCols)
+				query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+				_, err := tx.ExecContext(ctx, query, message.values()...)
+				if err != nil {
+					return err
+				}
+			}
+			params, positions := compileTableQuery(usersCols)
+			_, err := tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+			return err
+		})
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
