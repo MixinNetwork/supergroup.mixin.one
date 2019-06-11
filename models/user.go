@@ -280,8 +280,8 @@ func (user *User) Payment(ctx context.Context) error {
 
 	var values bytes.Buffer
 	for i, msg := range messages {
-		var recallMessage RecallMessage
 		if msg.Category == MessageCategoryMessageRecall {
+			var recallMessage RecallMessage
 			data, err := base64.StdEncoding.DecodeString(msg.Data)
 			if err != nil {
 				return session.BadDataError(ctx)
@@ -312,19 +312,19 @@ func (user *User) Payment(ctx context.Context) error {
 		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 	}
 	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		v := values.String()
+		if v != "" {
+			dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
+			_, err := tx.ExecContext(ctx, dquery)
+			if err != nil {
+				return err
+			}
+		}
 		params, positions := compileTableQuery(messagesCols)
 		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
 		_, err := tx.ExecContext(ctx, query, message.values()...)
 		if err != nil {
 			return err
-		}
-		v := values.String()
-		if v != "" {
-			dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-			_, err = tx.ExecContext(ctx, dquery)
-			if err != nil {
-				return err
-			}
 		}
 		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
 		return err
