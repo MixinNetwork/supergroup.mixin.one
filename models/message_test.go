@@ -116,7 +116,10 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 0)
 
-	messages, err = ReadLastestMessages(ctx, 10)
+	messages, err = readLastestMessages(ctx, 10)
+	assert.Nil(err)
+	assert.Len(messages, 2)
+	messages, err = LastestMessageWithUser(ctx, 10)
 	assert.Nil(err)
 	assert.Len(messages, 2)
 }
