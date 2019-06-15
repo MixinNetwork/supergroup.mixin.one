@@ -110,6 +110,12 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			isNew:          true,
 		}
 		if number.FromString(config.Get().System.PaymentAmount).Exhausted() {
+			item, err := readBlacklist(ctx, user.UserId)
+			if err != nil {
+				return nil, session.TransactionError(ctx, err)
+			} else if item != nil {
+				return nil, session.ForbiddenError(ctx)
+			}
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
 			err = createConversation(ctx, "CONTACT", userId)
