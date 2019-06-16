@@ -13,7 +13,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 
 ## update if your repo is setup before 2019 May 28
 ```
-psql -h YOUR_HOST -U YOUR_USERNAME -d YOUR_DATABASE -a -f 001.shema.sql 
+psql -h YOUR_HOST -U YOUR_USERNAME -d YOUR_DATABASE -a -f schema.append001.sql
 ```
 ## Run
 
