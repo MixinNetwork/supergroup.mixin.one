@@ -104,7 +104,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if err != nil || m == nil {
 			return nil, err
 		}
-		if m.UserId != user.UserId || !user.isAdmin() {
+		if m.UserId != user.UserId && !user.isAdmin() {
 			return nil, session.ForbiddenError(ctx)
 		}
 		if user.isAdmin() {
