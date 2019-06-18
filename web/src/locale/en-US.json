@@ -29,12 +29,14 @@
     "subscribe": "Subscribe",
     "unsubscribe": "Unsubscribe",
     "browser": "Members",
+    "messages": "Messages",
     "red.packet": "Lucky Coin",
     "wallet": "Wallet",
     "loading": "Loading"
   },
   "operator": {
     "action.remove": "Remove from the group",
-    "action.block": "Add to blacklist"
+    "action.block": "Add to blacklist",
+    "message.remove": "Remove the message"
   }
 }

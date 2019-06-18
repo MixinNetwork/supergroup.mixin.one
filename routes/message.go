@@ -19,7 +19,7 @@ func registerMesseages(router *httptreemux.TreeMux) {
 	impl := messageImpl{}
 
 	router.GET("/messages", impl.index)
-	router.GET("/messages/:id/recall", impl.recall)
+	router.POST("/messages/:id/recall", impl.recall)
 }
 
 func (impl *messageImpl) index(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -37,10 +37,12 @@ func (impl *messageImpl) recall(w http.ResponseWriter, r *http.Request, params m
 	data, err := json.Marshal(map[string]string{"message_id": params["id"]})
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
+		return
 	}
 	str := base64.StdEncoding.EncodeToString(data)
 	t := time.Now()
-	_, err = models.CreateMessage(r.Context(), middlewares.CurrentUser(r), params["id"], models.MessageCategoryMessageRecall, "", str, t, t)
+	id := models.UniqueConversationId(params["id"], middlewares.CurrentUser(r).UserId)
+	_, err = models.CreateMessage(r.Context(), middlewares.CurrentUser(r), id, models.MessageCategoryMessageRecall, "", str, t, t)
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {

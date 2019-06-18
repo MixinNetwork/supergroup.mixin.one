@@ -164,6 +164,12 @@ func LastestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
+		if m.Category == "PLAIN_TEXT" {
+			data, _ := base64.StdEncoding.DecodeString(m.Data)
+			m.Data = string(data)
+		} else {
+			m.Data = ""
+		}
 		messages = append(messages, &m)
 	}
 	return messages, nil

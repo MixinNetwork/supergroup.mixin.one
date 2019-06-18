@@ -29,12 +29,14 @@
     "subscribe": "订阅群组消息",
     "unsubscribe": "取消订阅群组",
     "browser": "浏览群组成员",
+    "messages": "历史消息",
     "red.packet": "发红包",
     "wallet": "小钱包",
     "loading": "加载更多"
   },
   "operator": {
     "action.remove": "移除群组",
-    "action.block": "加入黑名单"
+    "action.block": "加入黑名单",
+    "message.remove": "删除消息"
   }
 }

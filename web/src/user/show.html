@@ -14,6 +14,12 @@
       <div class="action-icon"></div>
       <span class="action-name">{{t 'user.browser'}}</span>
     </a>
+    {{#if isAdmin}}
+    <a href="/messages" class="action btn messages" data-navigo>
+      <div class="action-icon"></div>
+      <span class="action-name">{{t 'user.messages'}}</span>
+    </a>
+    {{/if}}
     {{#if isMixin}}
     <a href="/prepare" class="action btn red-packet" data-navigo>
       <div class="action-icon"></div>
