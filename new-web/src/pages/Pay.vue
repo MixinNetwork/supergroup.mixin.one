@@ -16,6 +16,7 @@
       <van-cell
         :title="$t('pay.price_label', {price: selectedAsset ? selectedAsset.price: '...', unit: selectedAsset ? selectedAsset.text : '...'})"
         >
+        <span>约 ¥19.9</span>
       </van-cell>
       <div slot="footer">
         <van-cell>
@@ -28,6 +29,10 @@
     </van-panel>
     <br/>
     <van-panel :title="$t('pay.method_wechat')">
+      <van-cell
+        :title="$t('pay.price_label', {price: '19.9', unit: '元'})"
+        >
+      </van-cell>
       <div slot="footer">
         <van-cell>
           <van-button style="width: 100%" type="primary" @click="payCrypto">{{$t('pay.pay_wechat')}}</van-button>
@@ -53,8 +58,8 @@ export default {
       showPicker: false,
       selectedAsset: null,
       assets: [
-        { text: 'XIN', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.02' },
-        { text: 'PRS', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.02' },
+        { text: 'XIN', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
+        { text: 'PRS', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
       ]
     }
   },

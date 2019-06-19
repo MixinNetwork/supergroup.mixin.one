@@ -65,6 +65,7 @@ export default {
     padding: 4px 0;
     color: #333;
     text-align: center;
+    font-size: 12px;
   }
 }
 </style>
