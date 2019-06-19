@@ -48,6 +48,11 @@ User.prototype = {
         } else {
           $('.unsubscribe').show();
         }
+        if (data.prohibited) {
+          $('.unprohibited').show();
+        } else {
+          $('.prohibited').show();
+        }
         $('.subscribe').on('click', function (e) {
           e.preventDefault();
           if ($('.subscribe').hasClass('disabled')) {
@@ -77,6 +82,37 @@ User.prototype = {
             $('.unsubscribe').hide();
             $('.subscribe').show();
           });
+        });
+
+        $('.prohibited').on('click', function (e) {
+          e.preventDefault();
+          if ($('.prohibited').hasClass('disabled')) {
+            return;
+          }
+          $('.prohibited').addClass('disabled');
+          self.api.property.create(function (resp) {
+            if (resp.error) {
+              return;
+            }
+            $('.prohibited').removeClass('disabled');
+            $('.prohibited').hide();
+            $('.unprohibited').show();
+          }, true);
+        });
+        $('.unprohibited').on('click', function (e) {
+          e.preventDefault();
+          if ($('.unprohibited').hasClass('disabled')) {
+            return;
+          }
+          $('.unprohibited').addClass('disabled');
+          self.api.property.create(function (resp) {
+            if (resp.error) {
+              return;
+            }
+            $('.unprohibited').removeClass('disabled');
+            $('.unprohibited').hide();
+            $('.prohibited').show();
+          }, false);
         });
       });
     });

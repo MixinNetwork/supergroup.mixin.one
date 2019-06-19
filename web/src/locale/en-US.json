@@ -28,6 +28,8 @@
     "payment.action": "Pay 0.02 XIN to join the group",
     "subscribe": "Subscribe",
     "unsubscribe": "Unsubscribe",
+    "prohibited": "Prohibited",
+    "unprohibited": "Unprohibited",
     "browser": "Members",
     "messages": "Messages",
     "red.packet": "Lucky Coin",

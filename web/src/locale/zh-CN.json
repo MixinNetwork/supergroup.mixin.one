@@ -28,6 +28,8 @@
     "payment.action": "支付 0.02 XIN 加入群组",
     "subscribe": "订阅群组消息",
     "unsubscribe": "取消订阅群组",
+    "prohibited": "全部禁言",
+    "unprohibited": "取消全部禁言",
     "browser": "浏览群组成员",
     "messages": "历史消息",
     "red.packet": "发红包",

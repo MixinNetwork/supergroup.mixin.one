@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
@@ -64,6 +65,15 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
+		p, err := ReadProperty(ctx, ProhibitedMessage)
+		if err != nil {
+			return nil, err
+		}
+		if p.Value == "true" {
+			return nil, nil
+		}
+	}
 	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
 		return nil, nil
 	}

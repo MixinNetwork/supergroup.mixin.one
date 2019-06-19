@@ -389,6 +389,16 @@ func (user *User) isAdmin() bool {
 	return false
 }
 
+func (user *User) Prohibited(ctx context.Context) bool {
+	if user.isAdmin() {
+		p, _ := ReadProperty(ctx, ProhibitedMessage)
+		if p != nil && p.Value == "true" {
+			return true
+		}
+	}
+	return false
+}
+
 func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
 	var users []*User
 	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)

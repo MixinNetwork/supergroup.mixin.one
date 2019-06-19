@@ -15,6 +15,7 @@ func RegisterRoutes(router *httptreemux.TreeMux) {
 	registerUsers(router)
 	registerPackets(router)
 	registerMesseages(router)
+	registerProperties(router)
 }
 
 func root(w http.ResponseWriter, r *http.Request, params map[string]string) {
