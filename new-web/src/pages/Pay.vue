@@ -5,17 +5,14 @@
     </van-panel>
     <br/>
     <van-panel :title="$t('pay.method_crypto')">
-      <van-cell
+      <row-select 
+        :index="0"
         :title="$t('pay.select_assets')"
-        >
-        <van-field
-          readonly
-          clickable
-          :value="selectedAsset ? selectedAsset.text: ''"
-          placeholder="Tap to Select"
-          @click="showPicker = true"
-        />
-      </van-cell>
+        :columns="assets"
+        placeholder="Tap to Select"
+        @change="onChangeAsset">
+        <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
+      </row-select>
       <van-cell
         :title="$t('pay.price_label', {price: selectedAsset ? selectedAsset.price: '...', unit: selectedAsset ? selectedAsset.text : '...'})"
         >
@@ -37,21 +34,13 @@
         </van-cell>
       </div>
     </van-panel>
-    <van-popup v-model="showPicker" position="bottom">
-      <van-picker
-        show-toolbar
-        :columns="assets"
-        :default-index="0"
-        @cancel="showPicker = false"
-        @change="onChangeAsset"
-        @confirm="onConfirmAsset"
-      />
-    </van-popup>
   </div>
 </template>
 
 <script>
 import NavBar from '@/components/Nav'
+import RowSelect from '@/components/RowSelect'
+import Row from '@/components/Nav'
 import { CLIENT_ID } from '@/constants'
 import uuid from 'uuid'
 export default {
@@ -70,7 +59,7 @@ export default {
     }
   },
   components: {
-    NavBar
+    NavBar, RowSelect
   },
   methods: {
     payCrypto () {
@@ -78,11 +67,8 @@ export default {
       let trace_id = uuid.v4()
       window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
     },
-    onChangeAsset (picker, value, ix) {
-    },
-    onConfirmAsset (value, ix) {
+    onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]
-      this.showPicker = false
     },
     waitForPayment () {
       let meInfo = this.GLOBAL.api.account.me()
