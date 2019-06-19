@@ -1,3 +1,13 @@
+# 2019-06-19
+
+支持全部禁言, 只允许管理员发言
+
+CREATE TABLE IF NOT EXISTS properties (
+  name               VARCHAR(512) PRIMARY KEY,
+  value              VARCHAR(1024) NOT NULL,
+  created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 # 2019-05-29
 
 大群支持引用一小时内的消息
