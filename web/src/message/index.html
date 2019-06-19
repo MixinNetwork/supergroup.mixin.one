@@ -1,0 +1,29 @@
+<div class="messages container">
+  <ul>
+    {{#each messages}}
+    <li data-id="{{message_id}}" data-name="{{full_name}}" data-category="{{category}}" data-body="{{short_data}}" class="message">
+      <div>
+        {{full_name}} / {{created_at}}
+      </div>
+      <div class="body">
+        {{category}}: {{short_data}}
+      </div>
+    </li>
+    {{/each}}
+  </ul>
+</div>
+
+<div class="modal-container">
+  <div class="modal-body">
+    <div class="header">
+      <span class="icon-close"></span>
+    </div>
+    <div class="fullname"></div>
+    <div class="modal-name"></div>
+    <div class="actions">
+      <a href="javascript:;" class="btn action kick">
+        {{t 'operator.message.remove'}}
+      </a>
+    </div>
+  </div>
+</div>

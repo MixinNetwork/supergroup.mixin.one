@@ -39,7 +39,8 @@ User.prototype = {
 
         $('body').attr('class', 'user layout');
         $('#layout-container').html(self.templateShow({
-          isMixin: !!MixinUtils.environment()
+          isMixin: !!MixinUtils.environment(),
+          isAdmin: self.api.account.role() === 'admin'
         }));
         $('.members').html(window.i18n.t('user.participants.count') + resp.data.users_count);
         if (data.subscribed_at === "0001-01-01T00:00:00Z") {
@@ -154,7 +155,6 @@ User.prototype = {
           $('.action.kick').data('id', $(that).data('id'));
           $('.action.block').data('id', $(that).data('id'));
           $('.modal-container').show();
-
         });
         $('.action.kick').on('click', function () {
           var that = this;

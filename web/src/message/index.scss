@@ -1,0 +1,73 @@
+@import '../constant.scss';
+
+.message.layout {
+  .container {
+    max-width: 48rem;
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .message {
+    border-bottom: 1px solid #CCC;
+    box-sizing: border-box;
+    padding: .5rem;
+  }
+  .body {
+    word-break: break-word;
+  }
+}
+
+.modal-container {
+  background: rgba(0, 0, 0, 0.3);
+  display: none;
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  img {
+    border-radius: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+  }
+  .modal-body {
+    box-sizing: border-box;
+    background: white;
+    text-align: center;
+    margin: 6rem auto 0;
+    padding: 1rem;
+    width: 80%;
+  }
+  .modal-name {
+    margin: .2rem 0 0;
+  }
+  .header {
+    text-align: right;
+    font-size: 1.6rem;
+    cursor: pointer;
+    margin-bottom: .6rem;
+  }
+  .actions {
+    margin-bottom: 1rem;
+  }
+  a.btn {
+    margin-top: 1rem;
+    color: white;
+    display: inline-block;
+    background-color: #46b8da;
+    box-sizing: border-box;
+    padding: .5rem 1rem;
+    width: 100%;
+    &:hover {
+      background-color: #3cb1d4;
+    }
+  }
+}

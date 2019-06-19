@@ -85,6 +85,12 @@
       }
     }
 
+    .action.messages {
+      .action-icon {
+        background-image: url(../images/messages-circle.png);
+      }
+    }
+
     .action.red-packet {
       .action-icon {
         background-image: url(../images/luckymoney-circle.png);

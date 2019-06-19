@@ -3,6 +3,7 @@ import Noty from 'noty';
 import Account from './account.js';
 import Website from './website.js';
 import Packet from './packet.js';
+import Message from './message.js';
 
 function API(router, root) {
   this.router = router;
@@ -10,6 +11,7 @@ function API(router, root) {
   this.account = new Account(this);
   this.website = new Website(this);
   this.packet = new Packet(this);
+  this.message = new Message(this);
   this.Error404 = require('../404.html');
   this.ErrorGeneral = require('../error.html');
 }

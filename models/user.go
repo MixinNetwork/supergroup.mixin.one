@@ -279,7 +279,7 @@ func (user *User) Payment(ctx context.Context) error {
 	}
 	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
 
-	messages, err := ReadLastestMessages(ctx, 10)
+	messages, err := readLastestMessages(ctx, 10)
 	if err != nil {
 		return err
 	}
@@ -380,6 +380,13 @@ func (user *User) GetRole() string {
 		return "admin"
 	}
 	return "user"
+}
+
+func (user *User) isAdmin() bool {
+	if config.Get().System.Operators[user.UserId] {
+		return true
+	}
+	return false
 }
 
 func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
