@@ -7,6 +7,7 @@ import Locale from './locale';
 import Auth from './auth';
 import User from './user';
 import Packet from './packet';
+import Message from './message';
 
 const PartialLoading = require('./loading.html');
 const Error404 = require('./404.html');
@@ -49,6 +50,9 @@ router.on({
   },
   '/packets/:id': function (params) {
     new Packet(router, api).show(params['id']);
+  },
+  '/messages': function () {
+    new Message(router, api).index();
   }
 }).notFound(function () {
   $('#layout-container').html(Error404());

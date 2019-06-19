@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
@@ -59,9 +60,20 @@ type Message struct {
 	UpdatedAt        time.Time
 	State            string
 	LastDistributeAt time.Time
+
+	FullName sql.NullString
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
+		p, err := ReadProperty(ctx, ProhibitedMessage)
+		if err != nil {
+			return nil, err
+		}
+		if p.Value == "true" {
+			return nil, nil
+		}
+	}
 	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
 		return nil, nil
 	}
@@ -102,8 +114,11 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if err != nil || m == nil {
 			return nil, err
 		}
-		if m.UserId != user.UserId {
+		if m.UserId != user.UserId && !user.isAdmin() {
 			return nil, session.ForbiddenError(ctx)
+		}
+		if user.isAdmin() {
+			message.UserId = m.UserId
 		}
 	}
 	params, positions := compileTableQuery(messagesCols)
@@ -144,13 +159,41 @@ func FindMessage(ctx context.Context, id string) (*Message, error) {
 	return message, nil
 }
 
-func ReadLastestMessages(ctx context.Context, limit int64) ([]*Message, error) {
+func LastestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error) {
+	query := "SELECT messages.message_id,messages.category,messages.data,messages.created_at,users.full_name FROM messages LEFT JOIN users ON messages.user_id=users.user_id ORDER BY updated_at DESC LIMIT $1"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	defer rows.Close()
+
+	var messages []*Message
+	for rows.Next() {
+		var m Message
+		err := rows.Scan(&m.MessageId, &m.Category, &m.Data, &m.CreatedAt, &m.FullName)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		if m.Category == "PLAIN_TEXT" {
+			data, _ := base64.StdEncoding.DecodeString(m.Data)
+			m.Data = string(data)
+		} else {
+			m.Data = ""
+		}
+		messages = append(messages, &m)
+	}
+	return messages, nil
+}
+
+func readLastestMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	var messages []*Message
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 ORDER BY updated_at DESC LIMIT $2", strings.Join(messagesCols, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStateSuccess, limit)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		m, err := messageFromRow(rows)
 		if err != nil {

@@ -90,3 +90,9 @@ CREATE TABLE IF NOT EXISTS assets (
 CREATE TABLE IF NOT EXISTS blacklists (
   user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$')
 );
+
+CREATE TABLE IF NOT EXISTS properties (
+  name               VARCHAR(512) PRIMARY KEY,
+  value              VARCHAR(1024) NOT NULL,
+  created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);

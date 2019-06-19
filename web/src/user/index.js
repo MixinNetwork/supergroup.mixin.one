@@ -39,13 +39,19 @@ User.prototype = {
 
         $('body').attr('class', 'user layout');
         $('#layout-container').html(self.templateShow({
-          isMixin: !!MixinUtils.environment()
+          isMixin: !!MixinUtils.environment(),
+          isAdmin: self.api.account.role() === 'admin'
         }));
         $('.members').html(window.i18n.t('user.participants.count') + resp.data.users_count);
         if (data.subscribed_at === "0001-01-01T00:00:00Z") {
           $('.subscribe').show();
         } else {
           $('.unsubscribe').show();
+        }
+        if (data.prohibited) {
+          $('.unprohibited').show();
+        } else {
+          $('.prohibited').show();
         }
         $('.subscribe').on('click', function (e) {
           e.preventDefault();
@@ -76,6 +82,37 @@ User.prototype = {
             $('.unsubscribe').hide();
             $('.subscribe').show();
           });
+        });
+
+        $('.prohibited').on('click', function (e) {
+          e.preventDefault();
+          if ($('.prohibited').hasClass('disabled')) {
+            return;
+          }
+          $('.prohibited').addClass('disabled');
+          self.api.property.create(function (resp) {
+            if (resp.error) {
+              return;
+            }
+            $('.prohibited').removeClass('disabled');
+            $('.prohibited').hide();
+            $('.unprohibited').show();
+          }, true);
+        });
+        $('.unprohibited').on('click', function (e) {
+          e.preventDefault();
+          if ($('.unprohibited').hasClass('disabled')) {
+            return;
+          }
+          $('.unprohibited').addClass('disabled');
+          self.api.property.create(function (resp) {
+            if (resp.error) {
+              return;
+            }
+            $('.unprohibited').removeClass('disabled');
+            $('.unprohibited').hide();
+            $('.prohibited').show();
+          }, false);
         });
       });
     });
@@ -154,7 +191,6 @@ User.prototype = {
           $('.action.kick').data('id', $(that).data('id'));
           $('.action.block').data('id', $(that).data('id'));
           $('.modal-container').show();
-
         });
         $('.action.kick').on('click', function () {
           var that = this;
