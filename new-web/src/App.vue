@@ -1,28 +1,55 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { ACTIONS } from '@/store/keys'
+import { mapActions } from 'vuex'
+import { CLIENT_ID, OAUTH_CALLBACK_URL } from '@/constants'
 
 export default {
-  name: 'app',
+  name: 'App',
   components: {
-    HelloWorld
+  },
+  data() {
+    return {
+    }
+  },
+  mounted() {
+    this.GLOBAL.api.net.on(401, (payload)=>{
+      // console.log(payload)
+      let url = `https://mixin.one/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=${OAUTH_CALLBACK_URL}` 
+      window.location.replace(url)
+    })
+  },
+  methods: {
   }
 }
 </script>
 
 <style>
+html, body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  font-size: 14px;
+}
+a {
+}
+
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  background: #f8f8f8;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  padding: 0;
+  padding-top: 60px;
+  height: 100%;
+}
+.van-cell.van-field {
+  padding: 0;
 }
 </style>

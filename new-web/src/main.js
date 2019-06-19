@@ -1,8 +1,20 @@
 import Vue from 'vue'
-import App from './App.vue'
+import App from './App'
+import store from '@/store'
+import router from './route'
+import i18n from './i18n'
+import global from './global'
+
+import '@/plugins/vant'
+import '@/plugins/infinite-loading'
 
 Vue.config.productionTip = false
-
+Vue.prototype.GLOBAL = global
+// console.log(global)
 new Vue({
-  render: h => h(App),
+  components: {App},
+  router,
+  store,
+  i18n,
+  template: '<App/>'
 }).$mount('#app')

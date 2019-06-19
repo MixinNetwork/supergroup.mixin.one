@@ -1,0 +1,41 @@
+{
+  "comm": {
+    "withdraw": "提现",
+    "deposit": "充值",
+    "estimated_assets": "资产估值",
+    "copy_success": "复制成功",
+    "back": "返回",
+    "more": "更多",
+    "balance": "余额",
+    "save": "保存",
+    "delete": "删除",
+    "create": "创建",
+    "nomore": "没有更多了",
+    "complete": "完成",
+    "verified_pin": "完成验证 PIN 了？",
+    "no": "否",
+    "yes": "是的"
+  },
+  "errors": {
+    "more_than_available": "超过可用数量"
+  },
+  "home": {
+    "title": "大群主页",
+    "welcome": "欢迎来到本群",
+    "welcome_desc": "本群当前人数：{count} 人。",
+    "pane_operations": "群操作",
+    "pane_features": "扩展功能"
+  },
+  "pay": {
+    "title": "入群支付",
+    "pay_wechat": "微信支付",
+    "pay_crypto": "Mixin 支付",
+    "pay_foxone": "Fox.ONE 支付",
+    "welcome": "欢迎来到本群",
+    "welcome_desc": "根据本群的要求，你需要先支付，才能加入群聊。",
+    "method_crypto": "使用数字货币支付",
+    "select_assets": "选择数字货币",
+    "method_wechat": "使用微信支付",
+    "price_label": "价格：{price} {unit}"
+  }
+}
