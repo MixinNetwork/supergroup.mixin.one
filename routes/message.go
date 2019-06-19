@@ -27,7 +27,7 @@ func (impl *messageImpl) index(w http.ResponseWriter, r *http.Request, _ map[str
 	if user.GetRole() != "admin" {
 		views.RenderErrorResponse(w, r, session.ForbiddenError(r.Context()))
 	} else if messages, err := models.LastestMessageWithUser(r.Context(), 200); err != nil {
-		views.RenderErrorResponse(w, r, session.ForbiddenError(r.Context()))
+		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderMessages(w, r, messages)
 	}
