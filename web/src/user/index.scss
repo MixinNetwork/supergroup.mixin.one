@@ -82,6 +82,18 @@
       }
     }
 
+    .action.unprohibited {
+      .action-icon {
+        background-image: url(../images/unprohibited.png);
+      }
+    }
+
+    .action.prohibited {
+      .action-icon {
+        background-image: url(../images/prohibited.png);
+      }
+    }
+
     .action.subscriber {
       .action-icon {
         background-image: url(../images/users-circle.png);
