@@ -47,7 +47,10 @@
       align-items: center;
       float: left;
       outline: none;
-      &.subscribe, &.unsubscribe {
+      &.subscribe,
+      &.unsubscribe,
+      &.prohibited,
+      &.unprohibited {
         display: none;
       }
       .action-icon {
@@ -67,13 +70,13 @@
       }
     }
 
-    .action.unsubscribe {
+    .action.unsubscribe, .action.unprohibited {
       .action-icon {
         background-image: url(../images/notification-off-circle.png);
       }
     }
 
-    .action.subscribe {
+    .action.subscribe, .action.prohibited {
       .action-icon {
         background-image: url(../images/notification-circle.png);
       }

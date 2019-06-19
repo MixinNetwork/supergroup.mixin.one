@@ -26,15 +26,16 @@ type Config struct {
 		DatabaseName     string `yaml:"database_name"`
 	} `yaml:"database"`
 	System struct {
-		MessageShardModifier string   `yaml:"message_shard_modifier"`
-		MessageShardSize     int64    `yaml:"message_shard_size"`
-		PriceAssetsEnable    bool     `yaml:"price_asset_enable"`
-		OperatorList         []string `yaml:"operator_list"`
-		Operators            map[string]bool
-		DetectImageEnabled   bool   `yaml:"detect_image"`
-		DetectLinkEnabled    bool   `yaml:"detect_link"`
-		PaymentAssetId       string `yaml:"payment_asset_id"`
-		PaymentAmount        string `yaml:"payment_amount"`
+		MessageShardModifier     string   `yaml:"message_shard_modifier"`
+		MessageShardSize         int64    `yaml:"message_shard_size"`
+		PriceAssetsEnable        bool     `yaml:"price_asset_enable"`
+		OperatorList             []string `yaml:"operator_list"`
+		Operators                map[string]bool
+		DetectImageEnabled       bool   `yaml:"detect_image"`
+		DetectLinkEnabled        bool   `yaml:"detect_link"`
+		ProhibitedMessageEnabled bool   `yaml:"prohibited_message"`
+		PaymentAssetId           string `yaml:"payment_asset_id"`
+		PaymentAmount            string `yaml:"payment_amount"`
 	} `yaml:"system"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`

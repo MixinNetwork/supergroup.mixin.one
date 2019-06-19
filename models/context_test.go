@@ -18,6 +18,7 @@ const (
 )
 
 const (
+	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
 	dropParticipantsDDL        = `DROP TABLE IF EXISTS participants;`
 	dropPacketsDDL             = `DROP TABLE IF EXISTS packets;`
 	dropAssetsDDL              = `DROP TABLE IF EXISTS assets;`
@@ -69,6 +70,7 @@ func setupTestContext() context.Context {
 		blacklist_DDL,
 		packets_DDL,
 		participants_DDL,
+		properties_DDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {

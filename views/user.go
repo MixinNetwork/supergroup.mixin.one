@@ -23,6 +23,7 @@ type AccountView struct {
 	AuthenticationToken string `json:"authentication_token"`
 	TraceId             string `json:"trace_id"`
 	State               string `json:"state"`
+	Prohibited          bool   `json:"prohibited"`
 }
 
 func buildUserView(user *models.User) UserView {
@@ -55,6 +56,7 @@ func RenderAccount(w http.ResponseWriter, r *http.Request, user *models.User) {
 		AuthenticationToken: user.AuthenticationToken,
 		TraceId:             user.TraceId,
 		State:               user.State,
+		Prohibited:          user.Prohibited(r.Context()),
 	}
 	RenderDataResponse(w, r, userView)
 }
