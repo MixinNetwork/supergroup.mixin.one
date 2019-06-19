@@ -79,9 +79,15 @@
       }
     }
 
-    .action.subscriber, .action.messages {
+    .action.subscriber {
       .action-icon {
         background-image: url(../images/users-circle.png);
+      }
+    }
+
+    .action.messages {
+      .action-icon {
+        background-image: url(../images/messages-circle.png);
       }
     }
 
