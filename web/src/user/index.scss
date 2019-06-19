@@ -70,13 +70,13 @@
       }
     }
 
-    .action.unsubscribe, .action.unprohibited {
+    .action.unsubscribe {
       .action-icon {
         background-image: url(../images/notification-off-circle.png);
       }
     }
 
-    .action.subscribe, .action.prohibited {
+    .action.subscribe {
       .action-icon {
         background-image: url(../images/notification-circle.png);
       }
