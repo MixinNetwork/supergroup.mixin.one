@@ -31,6 +31,7 @@ export default {
         // { icon: require('../assets/images/notification-circle.png'), label: 'Subscribe', url: '' },
         // { icon: require('../assets/images/notification-off-circle.png'), label: 'Unsubscribe', url: '' },
         { icon: require('../assets/images/users-circle.png'), label: 'Members', url: '/members' },
+        { icon: require('../assets/images/messages-circle.png'), label: 'Messages', url: '/messages' },
       ],
       CommunityItems: [
         { icon: require('../assets/images/luckymoney-circle.png'), label: 'Lucky Coin', url: '/luckycoin' },
@@ -54,6 +55,9 @@ export default {
         }
       }
       return true
+    },
+    isProhibited () {
+      return this.meInfo && this.meInfo.data.prohibited
     }
   },
   components: {
@@ -68,6 +72,14 @@ export default {
         this.$router.replace('/pay')
         return
       }
+      this.updateProhibitedState()
+      this.updateSubscribeState()
+    } catch (err) {
+      console.log('error', err)
+    }
+  },
+  methods: {
+    updateSubscribeState() {
       if (!this.isSubscribed) {
         this.builtinItems.unshift({
           icon: require('../assets/images/notification-circle.png'), label: 'Subscribe',
@@ -87,11 +99,28 @@ export default {
           }
         })
       }
-    } catch (err) {
-      console.log('error', err)
+    },
+    updateProhibitedState() {
+      if (!this.isProhibited) {
+        this.builtinItems.unshift({
+          icon: require('../assets/images/prohibited.png'), label: 'Prohibited',
+          click: async (evt) => {
+            evt.preventDefault()
+            await this.GLOBAL.api.property.create(true)
+            window.location.reload()
+          }
+        })
+      } else {
+        this.builtinItems.unshift({
+          icon: require('../assets/images/unprohibited.png'), label: 'UnProhibited',
+          click: async (evt) => {
+            evt.preventDefault()
+            await this.GLOBAL.api.property.create(false)
+            window.location.reload()
+          }
+        })
+      }
     }
-  },
-  methods: {
   }
 }
 </script>
