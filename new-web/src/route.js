@@ -5,6 +5,8 @@ import TestAuth from './pages/TestAuth'
 import Pay from './pages/Pay'
 import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/Packet'
+import Members from './pages/Members'
+import Messages from './pages/Messages'
 
 Vue.use(VueRouter)
 
@@ -13,6 +15,8 @@ const routes = [
   { path: '/pay', component: Pay },
   { path: '/packets/prepare', component: PreparePacket },
   { path: '/packets/:id', component: Packet },
+  { path: '/members/', component: Members },
+  { path: '/messages/', component: Messages },
   { path: '/auth', component: TestAuth }
 ]
 

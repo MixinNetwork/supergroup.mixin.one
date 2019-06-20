@@ -29,8 +29,8 @@ export default {
         // builtin
         // { icon: require('../assets/images/notification-circle.png'), label: 'Subscribe', url: '' },
         // { icon: require('../assets/images/notification-off-circle.png'), label: 'Unsubscribe', url: '' },
-        { icon: require('../assets/images/users-circle.png'), label: 'Members', url: '/members' },
-        { icon: require('../assets/images/messages-circle.png'), label: 'Messages', url: '/messages' },
+        { icon: require('../assets/images/users-circle.png'), label: 'Members', url: '/#/members' },
+        { icon: require('../assets/images/messages-circle.png'), label: 'Messages', url: '/#/messages' },
       ],
       CommunityItems: [
         { icon: require('../assets/images/luckymoney-circle.png'), label: 'Lucky Coin', url: '/#/packets/prepare' },
