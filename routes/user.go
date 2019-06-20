@@ -29,8 +29,8 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.POST("/users/:id/block", impl.block)
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
-	router.GET("/amount", impl.amount)
 	router.GET("/users/:id", impl.show)
+	router.GET("/amount", impl.amount)
 }
 
 func (impl *usersImpl) authenticate(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -71,14 +71,6 @@ func (impl *usersImpl) subscribers(w http.ResponseWriter, r *http.Request, _ map
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderUsersView(w, r, users)
-	}
-}
-
-func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-	if amount, err := models.SubscribersCount(r.Context()); err != nil {
-		views.RenderErrorResponse(w, r, err)
-	} else {
-		views.RenderDataResponse(w, r, map[string]int64{"users_count": amount})
 	}
 }
 
@@ -123,5 +115,13 @@ func (impl *usersImpl) show(w http.ResponseWriter, r *http.Request, params map[s
 		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderUserView(w, r, user)
+	}
+}
+
+func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	if s, err := models.ReadStatistic(r.Context(), middlewares.CurrentUser(r)); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderDataResponse(w, r, s)
 	}
 }
