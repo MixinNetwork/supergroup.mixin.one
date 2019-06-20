@@ -3,13 +3,16 @@ import VueRouter from 'vue-router'
 import Home from './pages/Home'
 import TestAuth from './pages/TestAuth'
 import Pay from './pages/Pay'
+import PreparePacket from './pages/PreparePacket'
+import Packet from './pages/Packet'
 
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/', component: Home },
   { path: '/pay', component: Pay },
-  // { path: '/assets/:id', component: Asset },
+  { path: '/packets/prepare', component: PreparePacket },
+  { path: '/packets/:id', component: Packet },
   // { path: '/transactions/:id', component: Transaction },
   // { path: '/deposit', component: Deposit },
   // { path: '/withdraw', component: Withdraw },

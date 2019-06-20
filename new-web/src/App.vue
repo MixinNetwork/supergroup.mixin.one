@@ -46,7 +46,6 @@ a {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   padding: 0;
-  padding-top: 60px;
   height: 100%;
 }
 .van-cell.van-field {

@@ -37,5 +37,25 @@
     "select_assets": "选择数字货币",
     "method_wechat": "使用微信支付",
     "price_label": "价格：{price} {unit}"
+  },
+  "prepare_packet": {
+    "title": "准备红包",
+    "welcome": "把你的幸运带给群友",
+    "welcome_desc": "选择一个币，然后支付。",
+    "select_assets": "选择",
+    "placeholder_amount": "至少 0.0001",
+    "placeholder_shares": "最多不超过 {count} 人",
+    "placeholder_memo": "最多不超过 36 个字符",
+    "amount": "金额",
+    "shares": "红包数",
+    "memo": "祝福",
+    "default_memo": "沧海桑田，唯有 {symbol} 长久相伴",
+    "pay": "支付红包"
+  },
+  "packet": {
+    "opened": "打开 %{opened_count}/%{total_count} 了个红包",
+    "open": "打开红包",
+    "paid": "红包已进入你的钱包",
+    "completed": "都被抢光了，如果还有剩余，会原路退回。"
   }
 }

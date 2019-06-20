@@ -37,5 +37,25 @@
     "select_assets": "Select Assets",
     "method_wechat": "Pay with WeChat",
     "price_label": "Price: {price} {unit}"
+  },
+  "prepare_packet": {
+    "title": "Prepare Lucky Coin",
+    "welcome": "Share your luck with the group",
+    "welcome_desc": "Choose assets and share",
+    "select_assets": "Select Assets",
+    "placeholder_amount": "Min: 0.0001",
+    "placeholder_shares": "Max: {count} people",
+    "placeholder_memo": "Max: 36 charactors",
+    "amount": "Amount",
+    "shares": "People",
+    "memo": "Memo",
+    "default_memo": "Long {symbol}, short the world",
+    "pay": "Pay and Share"
+  },
+  "packet": {
+    "opened": "Opened %{opened_count}/%{total_count} lucky coin",
+    "open": "Open lucky coin",
+    "paid": "The lucky coin has sent to your wallet",
+    "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender."
   }
 }
