@@ -56,7 +56,7 @@ export default {
       return true
     },
     isProhibited () {
-      return this.meInfo && this.meInfo.data.prohibited
+      return this.websiteInfo && this.websiteInfo.data.prohibited
     }
   },
   components: {

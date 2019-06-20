@@ -74,7 +74,7 @@ export default {
         this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
       }
       this.coversationId = prepareInfo.data.conversation.coversation_id
-      this.participantsCount = prepareInfo.data.participants_count
+      this.participantsCount = prepareInfo.data.conversation.participants_count
     }
   },
   computed: {
