@@ -15,11 +15,10 @@ import (
 type packetsImpl struct{}
 
 type packetRequest struct {
-	ConversationId string `json:"conversation_id"`
-	AssetId        string `json:"asset_id"`
-	Amount         string `json:"amount"`
-	TotalCount     int64  `json:"total_count"`
-	Greeting       string `json:"greeting"`
+	AssetId    string `json:"asset_id"`
+	Amount     string `json:"amount"`
+	TotalCount int64  `json:"total_count"`
+	Greeting   string `json:"greeting"`
 }
 
 func registerPackets(router *httptreemux.TreeMux) {

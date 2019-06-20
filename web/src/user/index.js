@@ -32,7 +32,7 @@ User.prototype = {
         return;
       }
 
-      self.api.website.amount(function (resp) {
+      self.api.website.statistics(function (resp) {
         if (resp.error) {
           return;
         }
@@ -48,7 +48,7 @@ User.prototype = {
         } else {
           $('.unsubscribe').show();
         }
-        if (data.prohibited) {
+        if (resp.data.prohibited) {
           $('.unprohibited').show();
         } else {
           $('.prohibited').show();

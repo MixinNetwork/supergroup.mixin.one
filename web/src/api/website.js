@@ -3,8 +3,8 @@ function Website(api) {
 }
 
 Website.prototype = {
-  amount: function (callback) {
-    this.api.request('GET', '/amount', undefined, function(resp) {
+  statistics: function (callback) {
+    this.api.request('GET', '/statistics', undefined, function(resp) {
       return callback(resp);
     });
   }
