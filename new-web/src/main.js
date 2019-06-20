@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import App from './App'
-import store from '@/store'
 import router from './route'
 import i18n from './i18n'
 import global from './global'
@@ -14,7 +13,6 @@ Vue.prototype.GLOBAL = global
 new Vue({
   components: {App},
   router,
-  store,
   i18n,
   template: '<App/>'
 }).$mount('#app')

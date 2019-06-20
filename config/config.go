@@ -79,6 +79,8 @@ type Config struct {
 }
 
 type ExportedConfig struct {
+	MixinClientId        	 string `json:"mixin_client_id"`
+	HTTPResourceHost 		 string `json:"host"`
 	AutoEstimate 		     bool   `json:"auto_estimate"`
 	AutoEstimateCurrency     string `json:"auto_estimate_currency"`
 	AutoEstimateBase         string `json:"auto_estimate_base"`
@@ -110,10 +112,13 @@ func Get() *Config {
 
 func GetExported () ExportedConfig {
 	var exc ExportedConfig
+	exc.MixinClientId = conf.Mixin.ClientId
+	exc.HTTPResourceHost = conf.Service.HTTPResourceHost
 	exc.AutoEstimate = conf.System.AutoEstimate
 	exc.AutoEstimateCurrency = conf.System.AutoEstimateCurrency
 	exc.AutoEstimateBase = conf.System.AutoEstimateBase
 	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
 	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
+	
 	return exc
 }

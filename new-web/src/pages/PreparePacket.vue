@@ -11,12 +11,12 @@
         <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
       </row-select>
       <van-cell>
-        <van-field v-model="form.amount" :label="$t('prepare_packet.amount')" :placeholder="$t('prepare_packet.placeholder_amount')">
+        <van-field type="number" v-model="form.amount" :label="$t('prepare_packet.amount')" :placeholder="$t('prepare_packet.placeholder_amount')">
           <span slot="right-icon">{{selectedAsset ? selectedAsset.symbol : ''}}</span>
         </van-field>
       </van-cell>
       <van-cell>
-        <van-field v-model="form.shares" :label="$t('prepare_packet.shares')" :placeholder="$t('prepare_packet.placeholder_shares', {count: participantsCount})">
+        <van-field type="number" v-model="form.shares" :label="$t('prepare_packet.shares')" :placeholder="$t('prepare_packet.placeholder_shares', {count: participantsCount})">
         </van-field>
       </van-cell>
       <van-cell>
@@ -37,7 +37,6 @@
 import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
 import Row from '@/components/Nav'
-import { CLIENT_ID } from '@/constants'
 import uuid from 'uuid'
 import {Toast} from 'vant'
 export default {
@@ -104,6 +103,7 @@ export default {
       setTimeout(() => { 
         this.waitForPayment(pkt.packet_id)
       }, 2000)
+      const CLIENT_ID = window.localStorage.getItem('cfg_client_id')
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
       window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
     },

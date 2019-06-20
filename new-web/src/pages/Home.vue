@@ -64,6 +64,7 @@ export default {
   },
   async mounted () {
     try {
+      this.GLOBAL.api.website.config()
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()
       console.log(this.meInfo)

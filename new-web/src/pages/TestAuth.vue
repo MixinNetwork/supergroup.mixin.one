@@ -3,7 +3,6 @@
 </template>
 
 <script>
-import OAuth from '@/utils/oauth_pkce'
 import { Toast } from 'vant'
 
 export default {
