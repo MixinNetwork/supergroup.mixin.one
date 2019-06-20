@@ -345,8 +345,20 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if user == nil || err != nil {
 		return err
 	}
-	if user.TraceId == transfer.TraceId && transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
-		return user.Payment(ctx)
+	if user.TraceId == transfer.TraceId {
+		if config.Get().System.AutoEstimate {
+			// @TODO
+			return nil
+		} else {
+			if transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
+				return user.Payment(ctx)
+			}
+			for _, asset := range config.Get().System.AccpetPaymentAssetList {
+				if transfer.Amount == asset.Amount && transfer.AssetId == asset.AssetId {
+					return user.Payment(ctx)
+				}
+			}
+		}
 	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
 	} else if packet.State == models.PacketStatePaid {

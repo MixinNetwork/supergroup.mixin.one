@@ -56,6 +56,7 @@ export default {
   data () {
     return {
       config: null,
+      meInfo: null,
       selectedAsset: null,
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
@@ -65,8 +66,6 @@ export default {
       currentCryptoPrice: 0,
       currentEstimatedPrice: 0,
       assets: [
-        { text: 'XIN', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
-        { text: 'PRS', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
       ]
     }
   },
@@ -92,6 +91,7 @@ export default {
         this.cnyRatio = currencyInfo.data.currencies
         // console.log(this.currencyTickers)
       })
+    this.meInfo = await this.GLOBAL.api.account.me()
     setTimeout(this.updatePrice, 2000)
   },
   computed: {
@@ -100,14 +100,15 @@ export default {
         if (this.autoEstimateCurrency === 'cny') return '¥'
         if (this.autoEstimateCurrency === 'usd') return '$'
       }
-      return this.autoEstimateCurrency.toUpperCase()
+      return ''
     }
   },
   methods: {
     payCrypto () {
-      setTimeout(() => { this.waitForPayment(); }, 2000)
-      let trace_id = uuid.v4()
-      window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
+      let traceId = this.meInfo.data.trace_id
+      setTimeout(async () => { await this.waitForPayment(); }, 2000)
+      // window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
+      console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
     },
     async onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]
@@ -128,17 +129,17 @@ export default {
         this.currentEstimatedPrice = '-'
       }
     },
-    waitForPayment () {
-      let meInfo = this.GLOBAL.api.account.me()
+    async waitForPayment () {
+      let meInfo = await this.GLOBAL.api.account.me()
       if (meInfo.error) {
-        setTimeout(() => { this.waitForPayment(); }, 1000)
+        setTimeout(async () => { await this.waitForPayment(); }, 2000)
         return;
       }
       if (meInfo.data.state === 'paid') {
         this.$router.replace('/');
         return;
       }
-      setTimeout(() => { this.waitForPayment(); }, 1000)
+      setTimeout(async () => { await this.waitForPayment(); }, 2000)
     },
     async getCryptoEsitmatedUsdt (symbol) {
       if (this.cryptoEsitmatedUsdMap.hasOwnProperty(symbol)) {
