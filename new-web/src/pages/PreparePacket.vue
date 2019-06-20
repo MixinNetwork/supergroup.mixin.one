@@ -105,7 +105,7 @@ export default {
         this.waitForPayment(pkt.packet_id)
       }, 2000)
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
-      window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.selectedAsset.price}&trace=${pkt.packet_id}&memo=${pkt.greeting}`);
+      window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
     },
     onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]
