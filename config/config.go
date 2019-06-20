@@ -11,6 +11,12 @@ import (
 const ConfigFile = "config.yaml"
 const BuildVersion = "BUILD_VERSION"
 
+type PaymentAsset struct {
+	Symbol string `yaml:"symbol" json:"symbol"`
+	AssetId string `yaml:"asset_id" json:"asset_id"`
+	Amount string `yaml:"amount" json:"amount"`
+}
+
 type Config struct {
 	Service struct {
 		Name             string `yaml:"name"`
@@ -36,6 +42,11 @@ type Config struct {
 		ProhibitedMessageEnabled bool   `yaml:"prohibited_message"`
 		PaymentAssetId           string `yaml:"payment_asset_id"`
 		PaymentAmount            string `yaml:"payment_amount"`
+		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
+		AccpetWeChatPayment      bool `yaml:"accept_wechat_payment"`
+		WeChatAppId 			 string `yaml:"wechat_app_id"`
+		WeChatMchId 			 string `yaml:"wechat_mch_id"`
+		WeChatMchKey			 string `yaml:"wechat_mch_key"`
 	} `yaml:"system"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
@@ -61,6 +72,11 @@ type Config struct {
 	} `yaml:"mixin"`
 }
 
+type ExportedConfig struct {
+	AccpetPaymentAssetList   []PaymentAsset `json:"accept_asset_list"`
+	AccpetWeChatPayment      bool `json:"accept_wechat_payment"`
+}
+
 var conf *Config
 
 func LoadConfig(dir string) {
@@ -81,4 +97,11 @@ func LoadConfig(dir string) {
 
 func Get() *Config {
 	return conf
+}
+
+func GetExported () ExportedConfig {
+	var exc ExportedConfig
+	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
+	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
+	return exc
 }

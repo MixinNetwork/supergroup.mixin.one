@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -31,6 +32,7 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/users/:id", impl.show)
 	router.GET("/amount", impl.amount)
+	router.GET("/config", impl.getConfig)
 }
 
 func (impl *usersImpl) authenticate(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -124,4 +126,8 @@ func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[stri
 	} else {
 		views.RenderDataResponse(w, r, s)
 	}
+}
+
+func (impl *usersImpl) getConfig(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	views.RenderDataResponse(w, r, config.GetExported())
 }
