@@ -14,9 +14,9 @@
         <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
       </row-select>
       <van-cell
-        :title="$t('pay.price_label', {price: selectedAsset ? selectedAsset.price: '...', unit: selectedAsset ? selectedAsset.text : '...'})"
+        :title="$t('pay.price_label', {price: currentCryptoPrice, unit: selectedAsset ? selectedAsset.text : '...'})"
         >
-        <span>约 ¥19.9</span>
+        <span>≈{{currencySymbol}}{{currentEstimatedPrice.toLocaleString()}}</span>
       </van-cell>
       <div slot="footer">
         <van-cell>
@@ -30,7 +30,7 @@
     <br/>
     <van-panel :title="$t('pay.method_wechat')">
       <van-cell
-        :title="$t('pay.price_label', {price: '19.9', unit: '元'})"
+        :title="$t('pay.price_label', {price: '19.9', unit: $t('currency.' + autoEstimateCurrency)})"
         >
       </van-cell>
       <div slot="footer">
@@ -55,8 +55,15 @@ export default {
   },
   data () {
     return {
-      showPicker: false,
+      config: null,
       selectedAsset: null,
+      autoEstimate: false,
+      autoEstimateCurrency: 'usd',
+      cryptoEsitmatedUsdMap: {},
+      currencyTickers: [],
+      cnyRatio: {},
+      currentCryptoPrice: 0,
+      currentEstimatedPrice: 0,
       assets: [
         { text: 'XIN', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
         { text: 'PRS', assetId: 'c94ac88f-4671-3976-b60a-09064f1811e8', price: '0.0119' },
@@ -66,14 +73,60 @@ export default {
   components: {
     NavBar, RowSelect
   },
+  async mounted () {
+    let config = await this.GLOBAL.api.website.config()
+    this.assets = config.data.accept_asset_list.map((x) => {
+      x.text = x.symbol
+      return x
+    })
+    this.selectedAsset = this.assets[0]
+    this.autoEstimate = config.data.auto_estimate
+    this.autoEstimateCurrency = config.data.auto_estimate_currency
+    this.autoEstimateBase = config.data.auto_estimate_base
+    this.GLOBAL.api.fox.currency()
+      .then((currencyInfo) => {
+        this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
+          map[obj.from] = obj.price;
+          return map;
+        }, {})
+        this.cnyRatio = currencyInfo.data.currencies
+        // console.log(this.currencyTickers)
+      })
+    setTimeout(this.updatePrice, 2000)
+  },
+  computed: {
+    currencySymbol() {
+      if (this.autoEstimate) {
+        if (this.autoEstimateCurrency === 'cny') return '¥'
+        if (this.autoEstimateCurrency === 'usd') return '$'
+      }
+      return this.autoEstimateCurrency.toUpperCase()
+    }
+  },
   methods: {
     payCrypto () {
       setTimeout(() => { this.waitForPayment(); }, 2000)
       let trace_id = uuid.v4()
       window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
     },
-    onChangeAsset (ix) {
+    async onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]
+      await this.updatePrice()
+    },
+    async updatePrice () {
+      if (this.selectedAsset.amount === 'auto') {
+        let base = this.autoEstimateBase / parseFloat(this.cnyRatio.usdt)
+        let priceUsdt = await this.getCryptoEsitmatedUsdt(this.selectedAsset.symbol)
+        this.currentCryptoPrice = (base / priceUsdt).toFixed(8)
+        if (this.autoEstimateCurrency === 'usd') {
+          this.currentEstimatedPrice = base
+        } else {
+          this.currentEstimatedPrice = base * this.cnyRatio.usdt
+        }
+      } else {
+        this.currentCryptoPrice = parseFloat(this.selectedAsset.amount).toFixed(8)
+        this.currentEstimatedPrice = '-'
+      }
     },
     waitForPayment () {
       let meInfo = this.GLOBAL.api.account.me()
@@ -86,7 +139,20 @@ export default {
         return;
       }
       setTimeout(() => { this.waitForPayment(); }, 1000)
-    }
+    },
+    async getCryptoEsitmatedUsdt (symbol) {
+      if (this.cryptoEsitmatedUsdMap.hasOwnProperty(symbol)) {
+        return this.cryptoEsitmatedUsdMap[symbol]
+      }
+      // only support fetching from big.one
+      const pairName = symbol + '-' + 'USDT'
+      let resp = await this.GLOBAL.api.fox.b1Ticker(pairName)
+      if (resp && resp.data) {
+        this.cryptoEsitmatedUsdMap[symbol] = resp.data.close
+        return resp.data.close
+      }
+      return -1
+    },
   }
 }
 </script>

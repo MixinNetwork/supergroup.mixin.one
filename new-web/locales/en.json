@@ -16,6 +16,10 @@
     "no": "No",
     "yes": "Yes"
   },
+  "currency": {
+    "usd": "USD",
+    "cny": "CNY"
+  },
   "errors": {
     "more_than_available": "More than available"
   },

@@ -16,6 +16,10 @@
     "no": "否",
     "yes": "是的"
   },
+  "currency": {
+    "usd": "美元",
+    "cny": "人民币"
+  },
   "errors": {
     "more_than_available": "超过可用数量"
   },
