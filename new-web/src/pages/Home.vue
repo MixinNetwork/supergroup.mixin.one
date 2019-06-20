@@ -4,14 +4,13 @@
     <van-panel :title="$t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
     </van-panel>
     <br/>
-    <van-panel :title="$t('home.pane_operations')" >
-      <cell-table title="Built-in" :items="builtinItems"></cell-table>
-    </van-panel>
-    <br/>
     <van-panel :title="$t('home.pane_features')" >
       <cell-table title="Community" :items="CommunityItems"></cell-table>
     </van-panel>
-    </div>
+    <br/>
+    <van-panel :title="$t('home.pane_operations')" >
+      <cell-table title="Built-in" :items="builtinItems"></cell-table>
+    </van-panel>
   </div>
 </template>
 
@@ -105,7 +104,7 @@ export default {
     updateProhibitedState() {
       if (!this.isProhibited) {
         this.builtinItems.unshift({
-          icon: require('../assets/images/prohibited.png'), label: 'Prohibited',
+          icon: require('../assets/images/prohibited.png'), label: 'Mute Others',
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.property.create(true)
@@ -114,7 +113,7 @@ export default {
         })
       } else {
         this.builtinItems.unshift({
-          icon: require('../assets/images/unprohibited.png'), label: 'UnProhibited',
+          icon: require('../assets/images/unprohibited.png'), label: 'Unmute Others',
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.property.create(false)

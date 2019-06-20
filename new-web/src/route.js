@@ -13,14 +13,6 @@ const routes = [
   { path: '/pay', component: Pay },
   { path: '/packets/prepare', component: PreparePacket },
   { path: '/packets/:id', component: Packet },
-  // { path: '/transactions/:id', component: Transaction },
-  // { path: '/deposit', component: Deposit },
-  // { path: '/withdraw', component: Withdraw },
-  // { path: '/deposit/:assetId', component: Deposit },
-  // { path: '/withdraw/:assetId', component: Withdraw },
-  // { path: '/addresses/:assetId', component: AddressList },
-  // { path: '/addresses/:assetId/create', component: EditAddress },
-  // { path: '/addresses/:assetId/:id', component: EditAddress },
   { path: '/auth', component: TestAuth }
 ]
 

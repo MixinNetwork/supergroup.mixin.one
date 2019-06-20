@@ -47,7 +47,7 @@ export default {
   padding: 20px 10px 2px 10px;
 }
 .table-row {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 .item {
   display: flex;
