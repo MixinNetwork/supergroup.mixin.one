@@ -22,13 +22,13 @@
         <van-cell>
           <van-button style="width: 100%" type="info" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
         </van-cell>
-        <van-cell>
+        <!-- <van-cell>
           <van-button style="width: 100%" type="warning" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_foxone')}}</van-button>
-        </van-cell>
+        </van-cell> -->
       </div>
     </van-panel>
     <br/>
-    <van-panel :title="$t('pay.method_wechat')">
+    <van-panel v-if="acceptWechatPayment" :title="$t('pay.method_wechat')">
       <van-cell
         :title="$t('pay.price_label', {price: '19.9', unit: $t('currency.' + autoEstimateCurrency)})"
         >
@@ -60,6 +60,7 @@ export default {
       selectedAsset: null,
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
+      acceptWechatPayment: false,
       cryptoEsitmatedUsdMap: {},
       currencyTickers: [],
       cnyRatio: {},
@@ -82,6 +83,7 @@ export default {
     this.autoEstimate = config.data.auto_estimate
     this.autoEstimateCurrency = config.data.auto_estimate_currency
     this.autoEstimateBase = config.data.auto_estimate_base
+    this.acceptWechatPayment = config.data.accept_wechat_payment
     this.GLOBAL.api.fox.currency()
       .then((currencyInfo) => {
         this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
@@ -107,8 +109,8 @@ export default {
     payCrypto () {
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 2000)
-      // window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
-      console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
+      window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.assetId}&amount=${this.selectedAsset.price}&trace=${trace_id}&memo=PAY_TO_JOIN`);
+      // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
     },
     async onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]

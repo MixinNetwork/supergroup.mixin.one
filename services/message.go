@@ -355,6 +355,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 					return user.Payment(ctx)
 				}
 			} else if (config.Get().System.AutoEstimate) {
+				// @TODO
 				// if abs(float(config.Get().System.AutoEstimateBase) - models.EstimateUsd(transfer.Amount)) < 0.1 && transfer.AssetId == asset.AssetId {
 				// 	return user.Payment(ctx)
 				// }
