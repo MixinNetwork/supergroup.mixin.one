@@ -17,6 +17,19 @@ type PaymentAsset struct {
 	Amount string `yaml:"amount" json:"amount"`
 }
 
+type Shortcut struct {
+	Icon    string `yaml:"icon" json:"icon"`
+	LabelEn string `yaml:"label_en" json:"label_en"`
+	LabelZh string `yaml:"label_zh" json:"label_zh"`
+	Url     string `yaml:"url" json:"url"`
+}
+
+type ShortcutGroup struct {
+	LabelEn string `yaml:"label_en" json:"label_en"`
+	LabelZh string `yaml:"label_zh" json:"label_zh"`
+	Items   []Shortcut `yaml:"shortcuts" json:"shortcuts"`
+}
+
 type Config struct {
 	Service struct {
 		Name             string `yaml:"name"`
@@ -49,6 +62,9 @@ type Config struct {
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
 		AccpetWeChatPayment      bool `yaml:"accept_wechat_payment"`
 	} `yaml:"system"`
+	Appearance struct {
+		HomeShortcutGroups 		 []ShortcutGroup `yaml:"home_shortcut_groups"`
+	} `yaml:"appearance"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
 		GroupRedPacket          string `yaml:"group_redpacket"`
@@ -76,6 +92,7 @@ type Config struct {
 		SessionId       string `yaml:"session_id"`
 		SessionKey      string `yaml:"session_key"`
 	} `yaml:"mixin"`
+
 }
 
 type ExportedConfig struct {
@@ -86,6 +103,7 @@ type ExportedConfig struct {
 	AutoEstimateBase         string `json:"auto_estimate_base"`
 	AccpetPaymentAssetList   []PaymentAsset `json:"accept_asset_list"`
 	AccpetWeChatPayment      bool `json:"accept_wechat_payment"`
+	HomeShortcutGroups 		 []ShortcutGroup `json:"home_shortcut_groups"`
 }
 
 var conf *Config
@@ -119,6 +137,6 @@ func GetExported () ExportedConfig {
 	exc.AutoEstimateBase = conf.System.AutoEstimateBase
 	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
 	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
-	
+	exc.HomeShortcutGroups = conf.Appearance.HomeShortcutGroups
 	return exc
 }

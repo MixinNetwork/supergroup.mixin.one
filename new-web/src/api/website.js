@@ -11,6 +11,7 @@ const Website = {
       window.localStorage.setItem('cfg_client_id', resp.data.mixin_client_id);
       window.localStorage.setItem('cfg_host', resp.data.host);
     }
+    return resp
   }
 };
 

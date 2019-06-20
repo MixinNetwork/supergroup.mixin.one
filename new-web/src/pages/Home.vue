@@ -1,15 +1,17 @@
 <template>
   <div class="home home-page page">
-    <nav-bar :title="$t('home.title')" :hasTopRight="false"></nav-bar>
+    <!-- <nav-bar :title="$t('home.title')" :hasTopRight="false"></nav-bar> -->
     <van-panel :title="$t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
     </van-panel>
     <br/>
-    <van-panel :title="$t('home.pane_features')" >
-      <cell-table title="Community" :items="CommunityItems"></cell-table>
-    </van-panel>
-    <br/>
+    <template v-for="group in shortcutsGroups">
+      <van-panel :title="group.label">
+        <cell-table :items="group.shortcuts"></cell-table>
+      </van-panel>
+      <br/>
+    </template>
     <van-panel :title="$t('home.pane_operations')" >
-      <cell-table title="Built-in" :items="builtinItems"></cell-table>
+      <cell-table :items="builtinItems"></cell-table>
     </van-panel>
   </div>
 </template>
@@ -27,23 +29,13 @@ export default {
       websiteInfo: null,
       builtinItems: [
         // builtin
+        { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/#/packets/prepare' },
+        { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/#/members' },
+        { icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages' },
         // { icon: require('../assets/images/notification-circle.png'), label: 'Subscribe', url: '' },
         // { icon: require('../assets/images/notification-off-circle.png'), label: 'Unsubscribe', url: '' },
-        { icon: require('../assets/images/users-circle.png'), label: 'Members', url: '/#/members' },
-        { icon: require('../assets/images/messages-circle.png'), label: 'Messages', url: '/#/messages' },
       ],
-      CommunityItems: [
-        { icon: require('../assets/images/luckymoney-circle.png'), label: 'Lucky Coin', url: '/#/packets/prepare' },
-        { icon: require('../assets/images/dapp-wallet.png'), label: 'Wallet', url: 'https://elite-wallet.kumiclub.com' },
-        { icon: require('../assets/images/dapp-download.png'), label: 'Download', url: 'https://www.fox.one/en/download' },
-        { icon: require('../assets/images/dapp-f1.png'), label: 'F1 Mining', url: 'https://mixin-node-bot.kumiclub.com' },
-        { icon: require('../assets/images/dapp-gbi.news.png'), label: 'GBI.news', url: 'https://gbi.news' },
-        // { icon: require('../assets/images/dapp-airdrop.png'), label: 'Airdrop', url: 'https://abc' },
-        // { icon: require('../assets/images/dapp-diceos.png'), label: 'Dice', url: 'https://abc' },
-        // { icon: require('../assets/images/dapp-lottery.png'), label: 'Lottery', url: 'https://abc' },
-        // { icon: require('../assets/images/dapp-smart-trade.png'), label: 'Smart Trade', url: 'https://abc' },
-        // { icon: require('../assets/images/dapp-foxone-luckycoin.png'), label: 'F1 Lucky Coin', url: 'https://abc' },
-      ]
+      shortcutsGroups: []
     }
   },
   computed: {
@@ -57,6 +49,9 @@ export default {
     },
     isProhibited () {
       return this.websiteInfo && this.websiteInfo.data.prohibited
+    },
+    isZh() {
+      return this.$i18n.locale.indexOf('zh') !== -1
     }
   },
   components: {
@@ -64,10 +59,18 @@ export default {
   },
   async mounted () {
     try {
-      this.GLOBAL.api.website.config()
+      this.GLOBAL.api.website.config().then((conf) => {
+        this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
+          x.label = this.isZh ? x.label_zh: x.label_en
+          x.shortcuts = x.shortcuts.map((z) => {
+            z.label = this.isZh ? z.label_zh: z.label_en
+            return z
+          })
+          return x
+        })
+      })
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()
-      console.log(this.meInfo)
       if (this.meInfo.data.state === 'pending') {
         this.$router.replace('/pay')
         return
@@ -83,8 +86,8 @@ export default {
   methods: {
     updateSubscribeState() {
       if (!this.isSubscribed) {
-        this.builtinItems.unshift({
-          icon: require('../assets/images/notification-circle.png'), label: 'Subscribe',
+        this.builtinItems.push({
+          icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.account.subscribe()
@@ -92,8 +95,8 @@ export default {
           }
         })
       } else {
-        this.builtinItems.unshift({
-          icon: require('../assets/images/notification-off-circle.png'), label: 'Unsubscribe',
+        this.builtinItems.push({
+          icon: require('../assets/images/notification-off-circle.png'), label: this.$t('home.op_unsubscribe'),
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.account.unsubscribe()
@@ -104,8 +107,8 @@ export default {
     },
     updateProhibitedState() {
       if (!this.isProhibited) {
-        this.builtinItems.unshift({
-          icon: require('../assets/images/prohibited.png'), label: 'Mute Others',
+        this.builtinItems.push({
+          icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_mute'),
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.property.create(true)
@@ -113,8 +116,8 @@ export default {
           }
         })
       } else {
-        this.builtinItems.unshift({
-          icon: require('../assets/images/unprohibited.png'), label: 'Unmute Others',
+        this.builtinItems.push({
+          icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_unmute'),
           click: async (evt) => {
             evt.preventDefault()
             await this.GLOBAL.api.property.create(false)
@@ -129,7 +132,7 @@ export default {
 
 <style lang="scss" scoped>
 .home-page {
-  padding-top: 60px;
+  // padding-top: 60px;
 }
 </style>
 

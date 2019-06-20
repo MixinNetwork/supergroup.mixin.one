@@ -28,7 +28,14 @@
     "welcome": "Welcome",
     "welcome_desc": "Group Statistic: {count} members.",
     "pane_operations": "Group Operations",
-    "pane_features": "Features"
+    "pane_features": "Features",
+    "op_luckycoin": "Lucky Coin",
+    "op_subscribe": "Subscribe",
+    "op_unsubscribe": "Unsubscribe",
+    "op_mute": "Mute Others",
+    "op_unmute": "Unmute Others",
+    "op_members": "Members",
+    "op_messages": "Messages"
   },
   "pay": {
     "title": "Pay to Join",

@@ -34,6 +34,15 @@ system:
       asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c" # CNB
       amount: "1000.00"
   accept_wechat_payment: false
+appearance:
+  home_shortcut_groups:
+    - label_en: "3-Party Services"
+      label_zh: "第三方提供的服务"
+      shortcuts: 
+        - icon: "..."
+          label_en: "Service Name"
+          label_zh: "服务名称"
+          url: https://..
 message_template:
   welcome_message        : "欢迎加入 Mixin 中文群"
   group_redpacket        : "中文群红包"

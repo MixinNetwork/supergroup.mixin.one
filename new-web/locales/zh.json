@@ -28,7 +28,14 @@
     "welcome": "欢迎来到本群",
     "welcome_desc": "本群当前人数：{count} 人。",
     "pane_operations": "群操作",
-    "pane_features": "扩展功能"
+    "pane_features": "扩展功能",
+    "op_luckycoin": "红包",
+    "op_subscribe": "订阅",
+    "op_unsubscribe": "取消订阅",
+    "op_mute": "禁止自由发言",
+    "op_unmute": "允许自由发言",
+    "op_members": "成员",
+    "op_messages": "消息管理"
   },
   "pay": {
     "title": "入群支付",
