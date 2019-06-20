@@ -4,7 +4,7 @@ function Website(api) {
 
 Website.prototype = {
   statistics: function (callback) {
-    this.api.request('GET', '/statistics', undefined, function(resp) {
+    this.api.request('GET', '/amount', undefined, function(resp) {
       return callback(resp);
     });
   }

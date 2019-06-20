@@ -30,7 +30,7 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/users/:id", impl.show)
-	router.GET("/statistics", impl.statistics)
+	router.GET("/amount", impl.amount)
 }
 
 func (impl *usersImpl) authenticate(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -118,7 +118,7 @@ func (impl *usersImpl) show(w http.ResponseWriter, r *http.Request, params map[s
 	}
 }
 
-func (impl *usersImpl) statistics(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	if s, err := models.ReadStatistic(r.Context(), middlewares.CurrentUser(r)); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
