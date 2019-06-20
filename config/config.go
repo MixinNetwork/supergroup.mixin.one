@@ -42,11 +42,11 @@ type Config struct {
 		ProhibitedMessageEnabled bool   `yaml:"prohibited_message"`
 		PaymentAssetId           string `yaml:"payment_asset_id"`
 		PaymentAmount            string `yaml:"payment_amount"`
+		AutoEstimate 		     bool   `yaml:"auto_estimate"`
+		AutoEstimateCurrency     string `yaml:"auto_estimate_currency"`
+		AutoEstimateBase         string `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
 		AccpetWeChatPayment      bool `yaml:"accept_wechat_payment"`
-		WeChatAppId 			 string `yaml:"wechat_app_id"`
-		WeChatMchId 			 string `yaml:"wechat_mch_id"`
-		WeChatMchKey			 string `yaml:"wechat_mch_key"`
 	} `yaml:"system"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
@@ -62,6 +62,11 @@ type Config struct {
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 	} `yaml:"message_template"`
+	Wechat struct {
+		AppId 			 string `yaml:"app_id"`
+		MchId 			 string `yaml:"mch_id"`
+		MchKey			 string `yaml:"mch_key"`
+	} `yaml:"wechat"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
 		ClientSecret    string `yaml:"client_secret"`
@@ -73,6 +78,9 @@ type Config struct {
 }
 
 type ExportedConfig struct {
+	AutoEstimate 		     bool   `json:"auto_estimate"`
+	AutoEstimateCurrency     string `json:"auto_estimate_currency"`
+	AutoEstimateBase         string `json:"auto_estimate_base"`
 	AccpetPaymentAssetList   []PaymentAsset `json:"accept_asset_list"`
 	AccpetWeChatPayment      bool `json:"accept_wechat_payment"`
 }
@@ -101,6 +109,9 @@ func Get() *Config {
 
 func GetExported () ExportedConfig {
 	var exc ExportedConfig
+	exc.AutoEstimate = conf.System.AutoEstimate
+	exc.AutoEstimateCurrency = conf.System.AutoEstimateCurrency
+	exc.AutoEstimateBase = conf.System.AutoEstimateBase
 	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
 	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
 	return exc
