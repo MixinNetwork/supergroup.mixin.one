@@ -70,7 +70,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if err != nil {
 			return nil, err
 		}
-		if p.Value == "true" {
+		if p != nil && p.Value == "true" {
 			return nil, nil
 		}
 	}
