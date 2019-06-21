@@ -59,7 +59,7 @@ func pendingDistributedMessages(ctx context.Context, limit int64) {
 			continue
 		}
 		if len(messages) < 1 {
-			time.Sleep(2 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 		err = sendDistributedMessges(ctx, "messages_in_order", messages)
