@@ -14,7 +14,8 @@
     "complete": "Compelete",
     "verified_pin": "Already verified PIN?",
     "no": "No",
-    "yes": "Yes"
+    "yes": "Yes",
+    "cancel": "Cancel"
   },
   "currency": {
     "usd": "USD",
@@ -68,5 +69,13 @@
     "open": "Open lucky coin",
     "paid": "The lucky coin has sent to your wallet",
     "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender."
+  },
+  "messages": {
+    "title": "Messages"
+  },
+  "members": {
+    "title": "Members",
+    "kick": "Kick",
+    "block": "Block"
   }
 }

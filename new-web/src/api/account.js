@@ -13,7 +13,7 @@ const Account = {
     return await api.post('/unsubscribe', {}, {})
   },
 
-  subscribers: async function (t, q) {
+  subscribers: async function (t=0, q='') {
     return await api.get('/subscribers?offset=' + t + '&q=' + q, {})
   },
 

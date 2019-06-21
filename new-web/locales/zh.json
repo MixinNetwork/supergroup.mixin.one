@@ -14,7 +14,8 @@
     "complete": "完成",
     "verified_pin": "完成验证 PIN 了？",
     "no": "否",
-    "yes": "是的"
+    "yes": "是的",
+    "cancel": "取消"
   },
   "currency": {
     "usd": "美元",
@@ -68,5 +69,13 @@
     "open": "打开红包",
     "paid": "红包已进入你的钱包",
     "completed": "都被抢光了，如果还有剩余，会原路退回。"
+  },
+  "messages": {
+    "title": "消息管理"
+  },
+  "members": {
+    "title": "成员管理",
+    "kick": "踢出",
+    "block": "屏蔽"
   }
 }
