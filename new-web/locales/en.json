@@ -71,7 +71,8 @@
     "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender."
   },
   "messages": {
-    "title": "Messages"
+    "title": "Messages",
+    "recall": "Recall"
   },
   "members": {
     "title": "Members",

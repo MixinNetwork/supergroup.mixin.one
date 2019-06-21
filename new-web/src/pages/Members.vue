@@ -87,6 +87,7 @@ export default {
             Toast(result.error.toString())
             return
           }
+          window.location.reload()
         } else if (ix === 1) {
           Toast(this.$t('members.kick') + mem.full_name)
           let result = await this.GLOBAL.api.account.remove(mem.user_id)
@@ -94,6 +95,7 @@ export default {
             Toast(result.error.toString())
             return
           }
+          window.location.reload()
         }
       }
       this.showActionSheet = false

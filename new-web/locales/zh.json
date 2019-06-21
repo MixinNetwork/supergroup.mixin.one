@@ -71,7 +71,8 @@
     "completed": "都被抢光了，如果还有剩余，会原路退回。"
   },
   "messages": {
-    "title": "消息管理"
+    "title": "消息管理",
+    "recall": "撤回"
   },
   "members": {
     "title": "成员管理",
