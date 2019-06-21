@@ -1,4 +1,5 @@
 <template>
+  <loading :loading="loading" :fullscreen="true">
   <div class="prepare-packet-page">
     <div class="packet header">
       <div class="user avatar">
@@ -56,14 +57,20 @@
       </div>     
     </template> 
   </div>
+  </loading>
 </template>
 
 <script>
+import Loading from '@/components/Loading'
 import dayjs from 'dayjs'
 export default {
   name: "Packet",
+  components: {
+    Loading
+  },
   data () {
     return {
+      loading: false,
       pktData: null,
       isOpen: false,
       asset: {symbol: 'BTC'},
@@ -85,9 +92,11 @@ export default {
     }
   },
   async mounted () {
+    this.loading = true
     let pktId = this.$route.params.id
     let pktInfo = await this.GLOBAL.api.packet.show(pktId)
     if (pktInfo.error) {
+      this.loading = false
       return 
     }
     let pktData = pktInfo.data
@@ -114,11 +123,14 @@ export default {
     this.user = pktData.user
     this.asset = pktData.asset
     this.lottery = pktData.lottery
+    this.loading = false
   },
   methods: {
     async openPacket() {
+      this.loading = true
       let packetId = this.$route.params.id
       let claimInfo = await this.GLOBAL.api.packet.claim(packetId)
+      this.loading = false
       window.location.reload()
     }
   }

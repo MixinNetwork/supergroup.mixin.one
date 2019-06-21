@@ -1,30 +1,33 @@
 <template>
-  <div class="home home-page page">
-    <!-- <nav-bar :title="$t('home.title')" :hasTopRight="false"></nav-bar> -->
-    <van-panel :title="$t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
-    </van-panel>
-    <br/>
-    <template v-for="group in shortcutsGroups">
-      <van-panel :title="group.label">
-        <cell-table :items="group.shortcuts"></cell-table>
+  <loading :loading="loading" :fullscreen="true">
+    <div class="home home-page page">
+      <van-panel :title="$t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
       </van-panel>
       <br/>
-    </template>
-    <van-panel :title="$t('home.pane_operations')" >
-      <cell-table :items="builtinItems"></cell-table>
-    </van-panel>
-  </div>
+      <template v-for="group in shortcutsGroups">
+        <van-panel :title="group.label">
+          <cell-table :items="group.shortcuts"></cell-table>
+        </van-panel>
+        <br/>
+      </template>
+      <van-panel :title="$t('home.pane_operations')" >
+        <cell-table :items="builtinItems"></cell-table>
+      </van-panel>
+    </div>
+  </loading>
 </template>
 
 <script>
 import NavBar from '../components/Nav'
 import CellTable from '../components/CellTable'
+import Loading from '../components/Loading'
 import { mapState } from 'vuex'
 import AssetItem from '@/components/partial/AssetItem'
  
 export default {
   data () {
     return {
+      loading: false,
       meInfo: null,
       websiteInfo: null,
       builtinItems: [
@@ -55,10 +58,11 @@ export default {
     }
   },
   components: {
-    NavBar, CellTable
+    NavBar, CellTable, Loading
   },
   async mounted () {
     try {
+      this.loading = true
       this.GLOBAL.api.website.config().then((conf) => {
         this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
           x.label = this.isZh ? x.label_zh: x.label_en
@@ -68,6 +72,7 @@ export default {
           })
           return x
         })
+        this.loading = false
       })
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()

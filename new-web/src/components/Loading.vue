@@ -1,7 +1,8 @@
 <template>
   <div class="mask" :class="{'full-screen': fullscreen, 'is-loading': loading}">
-    <van-loading v-if="loading" type="spinner"  color="white"  class="loading"/>
+    <van-loading v-if="loading" color="#1989fa" class="loading"/>
     <slot />
+    <div v-if="loading" class="mask-shadow" :class="{'full-screen': fullscreen, 'is-loading': loading}"></div>
   </div>
 </template>
 
@@ -12,6 +13,21 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.mask-shadow {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.5);
+
+  &.is-loading {
+    pointer-events: none;
+  }
+
+  &.full-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
 .mask {
   position: relative;
   width: 100%;
@@ -35,7 +51,7 @@ export default {
     transform: translate(-50%, -50%);
     z-index: 1;
     padding: 10px;
-    background: rgba(0, 0, 0, 0.8);
+    // background: rgba(0, 0, 0, 0.8);
     border-radius: 3px;
   }
 }

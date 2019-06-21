@@ -1,29 +1,32 @@
 <template>
-  <div class="members-page">
-    <nav-bar :title="$t('members.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
-    <van-list
-      v-model="loading"
-      :finished="finished"
-      finished-text="~ END ~"
-      @load="onLoad"
-    >
-      <member-item :member="item" v-for="item in items" @member-click="memberClick"></member-item>
-    </van-list>
-    <van-action-sheet
-      :title="currentMember ? currentMember.full_name : ''"
-      v-model="showActionSheet"
-      :actions="actions"
-      :cancel-text="$t('comm.cancel')"
-      @select="onSelectAction"
-      @cancel="onCancelAction"
-    />
-  </div>
+  <loading :loading="maskLoading" :fullscreen="true">
+    <div class="members-page">
+      <nav-bar :title="$t('members.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="~ END ~"
+        @load="onLoad"
+      >
+        <member-item :member="item" v-for="item in items" @member-click="memberClick"></member-item>
+      </van-list>
+      <van-action-sheet
+        :title="currentMember ? currentMember.full_name : ''"
+        v-model="showActionSheet"
+        :actions="actions"
+        :cancel-text="$t('comm.cancel')"
+        @select="onSelectAction"
+        @cancel="onCancelAction"
+      />
+    </div>
+  </loading>
 </template>
 
 <script>
 import NavBar from '@/components/Nav'
 import dayjs from 'dayjs'
 import MemberItem from '@/components/partial/MemberItem'
+import Loading from '@/components/Loading'
 import { ActionSheet, Toast } from 'vant'
 
 export default {
@@ -33,6 +36,7 @@ export default {
   data () {
     return {
       showActionSheet: false,
+      maskLoading: false,
       currentMember: null,
       loading: false,
       finished: false,
@@ -44,7 +48,7 @@ export default {
     }
   },
   components: {
-    NavBar, MemberItem, 
+    NavBar, MemberItem, Loading,
     'van-action-sheet': ActionSheet,
   },
   async mounted () {
@@ -61,6 +65,7 @@ export default {
   },
   methods: {
     async onLoad() {
+      this.maskLoading = true
       this.loading = true
       let resp = await this.GLOBAL.api.account.subscribers(this.lastOffset)
       if (resp.data.length < 2) {
@@ -72,30 +77,34 @@ export default {
       })
       this.items = this.items.concat(resp.data)
       this.loading = false
+      this.maskLoading = false
     },
     memberClick (mem) {
-      this.currentMember = mem
-      this.showActionSheet = true
+      if (window.localStorage.getItem('role') === 'admin') {
+        this.currentMember = mem
+        this.showActionSheet = true
+      }
     },
     async onSelectAction (item, ix) {
       if (this.currentMember) {
         let mem = this.currentMember
+        this.maskLoading = true
         if (ix === 0) {
-          Toast(this.$t('members.kick') + mem.full_name)
           let result = await this.GLOBAL.api.account.remove(mem.user_id)
           if (result.error) {
-            Toast(result.error.toString())
+            this.maskLoading = false
             return
           }
           window.location.reload()
         } else if (ix === 1) {
-          Toast(this.$t('members.kick') + mem.full_name)
           let result = await this.GLOBAL.api.account.remove(mem.user_id)
           if (result.error) {
-            Toast(result.error.toString())
+            this.maskLoading = false
             return
           }
           window.location.reload()
+        } else {
+          this.maskLoading = false
         }
       }
       this.showActionSheet = false

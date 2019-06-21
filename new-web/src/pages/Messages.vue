@@ -1,29 +1,32 @@
 <template>
-  <div class="messages-page">
-    <nav-bar :title="$t('messages.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
-    <van-list
-      v-model="loading"
-      :finished="finished"
-      finished-text="~ END ~"
-      @load="onLoad"
-    >
-      <message-item :message="item" v-for="item in items" @message-click="messageClick"></message-item>
-    </van-list>
-    <van-action-sheet
-      :title="currentMessage ? currentMessage.full_name : ''"
-      v-model="showActionSheet"
-      :actions="actions"
-      :cancel-text="$t('comm.cancel')"
-      @select="onSelectAction"
-      @cancel="onCancelAction"
-    />
-  </div>
+  <loading :loading="maskLoading" :fullscreen="true">
+    <div class="messages-page">
+      <nav-bar :title="$t('messages.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="~ END ~"
+        @load="onLoad"
+      >
+        <message-item :message="item" v-for="item in items" @message-click="messageClick"></message-item>
+      </van-list>
+      <van-action-sheet
+        :title="currentMessage ? currentMessage.full_name : ''"
+        v-model="showActionSheet"
+        :actions="actions"
+        :cancel-text="$t('comm.cancel')"
+        @select="onSelectAction"
+        @cancel="onCancelAction"
+      />
+    </div>
+  </loading>
 </template>
 
 <script>
 import NavBar from '@/components/Nav'
 import dayjs from 'dayjs'
 import MessageItem from '@/components/partial/MessageItem'
+import Loading from '@/components/Loading'
 import { ActionSheet, Toast } from 'vant'
 
 export default {
@@ -33,6 +36,7 @@ export default {
   data () {
     return {
       showActionSheet: false,
+      maskLoading: false,
       currentMessage: null,
       loading: false,
       finished: false,
@@ -43,7 +47,7 @@ export default {
     }
   },
   components: {
-    NavBar, MessageItem, 
+    NavBar, MessageItem, Loading,
     'van-action-sheet': ActionSheet,
   },
   async mounted () {
@@ -54,8 +58,10 @@ export default {
   methods: {
     async onLoad() {
       this.loading = true
+      this.maskLoading = true
       let resp = await this.GLOBAL.api.message.index()
       this.loading = false
+      this.maskLoading = false
       this.finished = true
       console.log(resp.data)
       this.items = resp.data.map((x) => {
@@ -65,17 +71,19 @@ export default {
       })
     },
     messageClick (mem) {
-      this.currentMessage = mem
-      this.showActionSheet = true
+      if (window.localStorage.getItem('role') === 'admin') {
+        this.currentMessage = mem
+        this.showActionSheet = true
+      }
     },
     async onSelectAction (item, ix) {
       if (this.currentMessage) {
+        this.maskLoading = true
         let mem = this.currentMessage
         if (ix === 0) {
-          Toast(this.$t('messages.recall') + '...')
           let result = await this.GLOBAL.api.message.recall(mem.message_id)
           if (result.error) {
-            Toast(result.error.toString())
+            this.maskLoading = false
             return
           }
           window.location.reload()

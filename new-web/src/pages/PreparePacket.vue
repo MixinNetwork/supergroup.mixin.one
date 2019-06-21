@@ -1,53 +1,57 @@
 <template>
-  <div class="prepare-packet-page">
-    <nav-bar :title="$t('prepare_packet.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
-    <van-cell-group title="">
-      <row-select 
-        :index="0"
-        :title="$t('prepare_packet.select_assets')"
-        :columns="assets"
-        placeholder="Tap to Select"
-        @change="onChangeAsset">
-        <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
-      </row-select>
-      <van-cell>
-        <van-field type="number" v-model="form.amount" :label="$t('prepare_packet.amount')" :placeholder="$t('prepare_packet.placeholder_amount')">
-          <span slot="right-icon">{{selectedAsset ? selectedAsset.symbol : ''}}</span>
-        </van-field>
-      </van-cell>
-      <van-cell>
-        <van-field type="number" v-model="form.shares" :label="$t('prepare_packet.shares')" :placeholder="$t('prepare_packet.placeholder_shares', {count: participantsCount})">
-        </van-field>
-      </van-cell>
-      <van-cell>
-        <van-field v-model="form.memo" :label="$t('prepare_packet.memo')" :placeholder="$t('prepare_packet.placeholder_memo')">
-        </van-field>
-      </van-cell>
-    </van-cell-group>
-    <van-row style="padding: 20px">
-      <van-col span="24">
-        <van-button style="width: 100%" type="info" :disabled="!validated" @click="pay">{{$t('prepare_packet.pay')}}</van-button>
-      </van-col>
-    </van-row>
+  <loading :loading="loading" :fullscreen="true">
+    <div class="prepare-packet-page">
+      <nav-bar :title="$t('prepare_packet.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
+      <van-cell-group title="">
+        <row-select 
+          :index="0"
+          :title="$t('prepare_packet.select_assets')"
+          :columns="assets"
+          placeholder="Tap to Select"
+          @change="onChangeAsset">
+          <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
+        </row-select>
+        <van-cell>
+          <van-field type="number" v-model="form.amount" :label="$t('prepare_packet.amount')" :placeholder="$t('prepare_packet.placeholder_amount')">
+            <span slot="right-icon">{{selectedAsset ? selectedAsset.symbol : ''}}</span>
+          </van-field>
+        </van-cell>
+        <van-cell>
+          <van-field type="number" v-model="form.shares" :label="$t('prepare_packet.shares')" :placeholder="$t('prepare_packet.placeholder_shares', {count: participantsCount})">
+          </van-field>
+        </van-cell>
+        <van-cell>
+          <van-field v-model="form.memo" :label="$t('prepare_packet.memo')" :placeholder="$t('prepare_packet.placeholder_memo')">
+          </van-field>
+        </van-cell>
+      </van-cell-group>
+      <van-row style="padding: 20px">
+        <van-col span="24">
+          <van-button style="width: 100%" type="info" :disabled="!validated" @click="pay">{{$t('prepare_packet.pay')}}</van-button>
+        </van-col>
+      </van-row>
 
-  </div>
+    </div>
+  </loading>
 </template>
 
 <script>
 import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
 import Row from '@/components/Nav'
+import Loading from '@/components/Loading'
 import uuid from 'uuid'
 import {Toast} from 'vant'
 import { CLIENT_ID } from '@/constants'
 
 export default {
-  name: 'Pay',
+  name: 'Prepare-Packet',
   props: {
     msg: String
   },
   data () {
     return {
+      loading: false,
       coversationId: '',
       participantsCount: 0,
       assets: [],
@@ -60,11 +64,11 @@ export default {
     }
   },
   components: {
-    NavBar, RowSelect
+    NavBar, RowSelect, Loading
   },
   async mounted () {
+    this.loading = true
     let prepareInfo = await this.GLOBAL.api.packet.prepare()
-    console.log(prepareInfo)
     if (prepareInfo) {
       this.assets = prepareInfo.data.assets.map((x) => {
         x.text = `${x.symbol} (${x.balance})`
@@ -77,6 +81,7 @@ export default {
       this.coversationId = prepareInfo.data.conversation.coversation_id
       this.participantsCount = prepareInfo.data.conversation.participants_count
     }
+    this.loading = false
   },
   computed: {
     validated () {
@@ -95,11 +100,15 @@ export default {
         conversation_id: uuid.v4(),
         asset_id: this.selectedAsset.asset_id
       }
+
+      this.loading = true
       let createResp = await this.GLOBAL.api.packet.create(payload)
       if (createResp.error) {
+        this.loading = false
         Toast('Error')
         return 
       }
+
       console.log(createResp)
       let pkt = createResp.data
       setTimeout(() => { 
@@ -126,6 +135,7 @@ export default {
         case 'PAID':
         case 'EXPIRED':
         case 'REFUNDED':
+          this.loading = false
           this.$router.replace('/packets/' + packetId)
           break;
       }
