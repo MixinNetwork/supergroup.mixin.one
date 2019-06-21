@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -345,8 +346,11 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if user == nil || err != nil {
 		return err
 	}
-	if user.TraceId == transfer.TraceId && transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
-		return user.Payment(ctx)
+	if user.TraceId == transfer.TraceId {
+		payments := config.Get().Payments
+		if !number.FromString(transfer.Amount).Exhausted() && payments[transfer.AssetId] == transfer.Amount {
+			return user.Payment(ctx)
+		}
 	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
 	} else if packet.State == models.PacketStatePaid {

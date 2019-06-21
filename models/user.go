@@ -109,7 +109,14 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
-		if number.FromString(config.Get().System.PaymentAmount).Exhausted() {
+		exhausted := true
+		for _, v := range config.Get().Payments {
+			if !number.FromString(v).Exhausted() {
+				exhausted = false
+				break
+			}
+		}
+		if exhausted {
 			item, err := readBlacklist(ctx, user.UserId)
 			if err != nil {
 				return nil, session.TransactionError(ctx, err)

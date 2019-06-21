@@ -31,12 +31,11 @@ type Config struct {
 		PriceAssetsEnable        bool     `yaml:"price_asset_enable"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		DetectImageEnabled       bool   `yaml:"detect_image"`
-		DetectLinkEnabled        bool   `yaml:"detect_link"`
-		ProhibitedMessageEnabled bool   `yaml:"prohibited_message"`
-		PaymentAssetId           string `yaml:"payment_asset_id"`
-		PaymentAmount            string `yaml:"payment_amount"`
+		DetectImageEnabled       bool `yaml:"detect_image"`
+		DetectLinkEnabled        bool `yaml:"detect_link"`
+		ProhibitedMessageEnabled bool `yaml:"prohibited_message"`
 	} `yaml:"system"`
+	Payments        map[string]string `yaml:"payments"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
 		GroupRedPacket          string `yaml:"group_redpacket"`
