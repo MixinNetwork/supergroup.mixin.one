@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import {CLIENT_ID, OAUTH_CALLBACK_URL} from '@/constants'
 export default {
   name: 'App',
   components: {
@@ -15,8 +16,6 @@ export default {
   },
   mounted() {
     this.GLOBAL.api.net.on(401, (payload)=>{
-      const CLIENT_ID = window.localStorage.getItem('cfg_client_id')
-      const OAUTH_CALLBACK_URL = window.localStorage.getItem('cfg_host' + '/#/auth')
       let url = `https://mixin.one/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=${encodeURIComponent(OAUTH_CALLBACK_URL)}` 
       window.location.replace(url)
     })

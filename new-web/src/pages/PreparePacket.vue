@@ -39,6 +39,8 @@ import RowSelect from '@/components/RowSelect'
 import Row from '@/components/Nav'
 import uuid from 'uuid'
 import {Toast} from 'vant'
+import { CLIENT_ID } from '@/constants'
+
 export default {
   name: 'Pay',
   props: {
@@ -103,7 +105,6 @@ export default {
       setTimeout(() => { 
         this.waitForPayment(pkt.packet_id)
       }, 2000)
-      const CLIENT_ID = window.localStorage.getItem('cfg_client_id')
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
       window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
     },

@@ -47,6 +47,8 @@ import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
 import Row from '@/components/Nav'
 import uuid from 'uuid'
+import { CLIENT_ID } from '@/constants'
+
 export default {
   name: 'Pay',
   props: {
@@ -107,7 +109,6 @@ export default {
   methods: {
     payCrypto () {
       let traceId = this.meInfo.data.trace_id
-      const CLIENT_ID = window.localStorage.getItem('cfg_client_id')
       setTimeout(async () => { await this.waitForPayment(); }, 2000)
       window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
