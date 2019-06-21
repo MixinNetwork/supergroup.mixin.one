@@ -71,6 +71,7 @@ type MessageContext struct {
 }
 
 func (service *MessageService) Run(ctx context.Context) error {
+	go distribute(ctx)
 	go loopPendingMessage(ctx)
 	go cleanUpDistributedMessages(ctx)
 	go handlePendingParticipants(ctx)
@@ -112,7 +113,6 @@ func (service *MessageService) loop(ctx context.Context) error {
 		return session.BlazeServerError(ctx, err)
 	}
 
-	go loopPendingDistributeMessages(ctx, mc)
 	for {
 		select {
 		case <-mc.ReadDone:
