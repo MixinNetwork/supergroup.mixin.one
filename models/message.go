@@ -74,7 +74,10 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, nil
 		}
 	}
-	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
+	if len(data) > 5*1024 {
+		return nil, nil
+	}
+	if category == "PLAIN_AUDIO" && !config.Get().System.AudioMessageEnable {
 		return nil, nil
 	}
 	message := &Message{

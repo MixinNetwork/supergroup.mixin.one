@@ -12,9 +12,9 @@ const ConfigFile = "config.yaml"
 const BuildVersion = "BUILD_VERSION"
 
 type PaymentAsset struct {
-	Symbol string `yaml:"symbol" json:"symbol"`
+	Symbol  string `yaml:"symbol" json:"symbol"`
 	AssetId string `yaml:"asset_id" json:"asset_id"`
-	Amount string `yaml:"amount" json:"amount"`
+	Amount  string `yaml:"amount" json:"amount"`
 }
 
 type Shortcut struct {
@@ -25,8 +25,8 @@ type Shortcut struct {
 }
 
 type ShortcutGroup struct {
-	LabelEn string `yaml:"label_en" json:"label_en"`
-	LabelZh string `yaml:"label_zh" json:"label_zh"`
+	LabelEn string     `yaml:"label_en" json:"label_en"`
+	LabelZh string     `yaml:"label_zh" json:"label_zh"`
 	Items   []Shortcut `yaml:"shortcuts" json:"shortcuts"`
 }
 
@@ -48,22 +48,23 @@ type Config struct {
 		MessageShardModifier     string   `yaml:"message_shard_modifier"`
 		MessageShardSize         int64    `yaml:"message_shard_size"`
 		PriceAssetsEnable        bool     `yaml:"price_asset_enable"`
+		AudioMessageEnable       bool     `yaml:"audio_message_enable"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		DetectImageEnabled       bool   `yaml:"detect_image"`
-		DetectLinkEnabled        bool   `yaml:"detect_link"`
-		ProhibitedMessageEnabled bool   `yaml:"prohibited_message"`
-		PaymentAssetId           string `yaml:"payment_asset_id"`
-		PaymentAmount            string `yaml:"payment_amount"`
-		PayToJoin 		         bool   `yaml:"pay_to_join"`
-		AutoEstimate 		     bool   `yaml:"auto_estimate"`
-		AutoEstimateCurrency     string `yaml:"auto_estimate_currency"`
-		AutoEstimateBase         string `yaml:"auto_estimate_base"`
+		DetectImageEnabled       bool           `yaml:"detect_image"`
+		DetectLinkEnabled        bool           `yaml:"detect_link"`
+		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
+		PaymentAssetId           string         `yaml:"payment_asset_id"`
+		PaymentAmount            string         `yaml:"payment_amount"`
+		PayToJoin                bool           `yaml:"pay_to_join"`
+		AutoEstimate             bool           `yaml:"auto_estimate"`
+		AutoEstimateCurrency     string         `yaml:"auto_estimate_currency"`
+		AutoEstimateBase         string         `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
-		AccpetWeChatPayment      bool `yaml:"accept_wechat_payment"`
+		AccpetWeChatPayment      bool           `yaml:"accept_wechat_payment"`
 	} `yaml:"system"`
 	Appearance struct {
-		HomeShortcutGroups 		 []ShortcutGroup `yaml:"home_shortcut_groups"`
+		HomeShortcutGroups []ShortcutGroup `yaml:"home_shortcut_groups"`
 	} `yaml:"appearance"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
@@ -80,9 +81,9 @@ type Config struct {
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 	} `yaml:"message_template"`
 	Wechat struct {
-		AppId 			 string `yaml:"app_id"`
-		MchId 			 string `yaml:"mch_id"`
-		MchKey			 string `yaml:"mch_key"`
+		AppId  string `yaml:"app_id"`
+		MchId  string `yaml:"mch_id"`
+		MchKey string `yaml:"mch_key"`
 	} `yaml:"wechat"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
@@ -92,18 +93,17 @@ type Config struct {
 		SessionId       string `yaml:"session_id"`
 		SessionKey      string `yaml:"session_key"`
 	} `yaml:"mixin"`
-
 }
 
 type ExportedConfig struct {
-	MixinClientId        	 string `json:"mixin_client_id"`
-	HTTPResourceHost 		 string `json:"host"`
-	AutoEstimate 		     bool   `json:"auto_estimate"`
-	AutoEstimateCurrency     string `json:"auto_estimate_currency"`
-	AutoEstimateBase         string `json:"auto_estimate_base"`
-	AccpetPaymentAssetList   []PaymentAsset `json:"accept_asset_list"`
-	AccpetWeChatPayment      bool `json:"accept_wechat_payment"`
-	HomeShortcutGroups 		 []ShortcutGroup `json:"home_shortcut_groups"`
+	MixinClientId          string          `json:"mixin_client_id"`
+	HTTPResourceHost       string          `json:"host"`
+	AutoEstimate           bool            `json:"auto_estimate"`
+	AutoEstimateCurrency   string          `json:"auto_estimate_currency"`
+	AutoEstimateBase       string          `json:"auto_estimate_base"`
+	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
+	AccpetWeChatPayment    bool            `json:"accept_wechat_payment"`
+	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
 
 var conf *Config
@@ -128,7 +128,7 @@ func Get() *Config {
 	return conf
 }
 
-func GetExported () ExportedConfig {
+func GetExported() ExportedConfig {
 	var exc ExportedConfig
 	exc.MixinClientId = conf.Mixin.ClientId
 	exc.HTTPResourceHost = conf.Service.HTTPResourceHost
