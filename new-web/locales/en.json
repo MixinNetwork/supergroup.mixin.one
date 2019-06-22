@@ -78,5 +78,15 @@
     "title": "Members",
     "kick": "Kick",
     "block": "Block"
+  },
+  "wxpay": {
+    "title": "WeChat Payment",
+    "hint_title": "Scan the QrCode with WeChat",
+    "hint_desc": "Take a screenshot, and scan it in WeChat Scan.",
+    "help_title": "Instructions",
+    "help_line_1": "Step 1: Take a screenshot, it will be saved in your album.",
+    "help_line_2": "Step 2: Open WeChat",
+    "help_line_3": "Step 3: Tap the \"+\" button at top right, choose \"Scan\".",
+    "help_line_4": "Step 4: Tap the \"Album\" at top right, choose the screenshot."
   }
 }

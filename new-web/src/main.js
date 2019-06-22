@@ -5,6 +5,7 @@ import i18n from './i18n'
 import global from './global'
 
 import '@/plugins/vant'
+import '@/plugins/vue-qr'
 import '@/plugins/infinite-loading'
 
 Vue.config.productionTip = false

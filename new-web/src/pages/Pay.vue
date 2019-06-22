@@ -35,7 +35,7 @@
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="primary" @click="payCrypto">{{$t('pay.pay_wechat')}}</van-button>
+          <van-button style="width: 100%" type="primary" @click="payWechat">{{$t('pay.pay_wechat')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -157,6 +157,15 @@ export default {
       }
       return -1
     },
+    async payWechat () {
+      let orderInfo = await this.GLOBAL.api.account.create_wx_pay()
+      if (orderInfo.data && orderInfo.data.OrderId) {
+        this.$router.push('/pay/wx/' + orderInfo.data.OrderId + '?qr_url=' + encodeURIComponent(orderInfo.data.QrUrl))
+      } else {
+        Toast('Error.')
+      }
+      // this.meInfo = await this.GLOBAL.api.account.check_wx_pay('f64c815e-c98b-45fc-978e-ae6620bdfce0')
+    }
   }
 }
 </script>

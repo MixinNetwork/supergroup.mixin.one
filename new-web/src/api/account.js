@@ -38,6 +38,16 @@ const Account = {
     return resp
   },
 
+  create_wx_pay: async function () {
+    let resp = await api.post('/wxpay/create', {}, {})
+    return resp
+  },
+
+  check_wx_pay: async function (order_id) {
+    let resp = await api.get(`/wxpay/${order_id}`, {}, {})
+    return resp
+  },
+
   userId: function () {
     return window.localStorage.getItem('user_id');
   },

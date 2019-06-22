@@ -7,12 +7,14 @@ import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/Packet'
 import Members from './pages/Members'
 import Messages from './pages/Messages'
+import WechatPayment from './pages/WechatPayment'
 
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/', component: Home },
   { path: '/pay', component: Pay },
+  { path: '/pay/wx/:id', component: WechatPayment },
   { path: '/packets/prepare', component: PreparePacket },
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },

@@ -28,6 +28,8 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.POST("/unsubscribe", impl.unsubscribe)
 	router.POST("/users/:id/remove", impl.remove)
 	router.POST("/users/:id/block", impl.block)
+	router.POST("/wxpay/create", impl.createWxPay)
+	router.GET("/wxpay/:id", impl.checkWxPay)
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/users/:id", impl.show)
@@ -130,4 +132,23 @@ func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[stri
 
 func (impl *usersImpl) getConfig(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	views.RenderDataResponse(w, r, config.GetExported())
+}
+
+func (impl *usersImpl) createWxPay(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	user := middlewares.CurrentUser(r)
+	if s, err := models.CreateOrder(r.Context(), user.UserId, "wx", "19.9"); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderDataResponse(w, r, s)
+	}
+}
+
+func (impl *usersImpl) checkWxPay(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	user := middlewares.CurrentUser(r)
+	id := params["id"]
+	if s, err := models.GetOrder(r.Context(), user.UserId, id); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderDataResponse(w, r, s)
+	}
 }

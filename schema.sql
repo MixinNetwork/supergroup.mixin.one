@@ -96,3 +96,17 @@ CREATE TABLE IF NOT EXISTS properties (
   value              VARCHAR(1024) NOT NULL,
   created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS orders (
+	order_id	        VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
+	traceId	          BIGSERIAL,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	prepay_id 	      VARCHAR(36) DEFAULT '',
+	state             VARCHAR(32) NOT NULL,
+	amount            VARCHAR(128) NOT NULL,
+	channel           VARCHAR(32) NOT NULL,
+	transaction_id    VARCHAR(32) DEFAULT '',
+	qr_url    		    VARCHAR(64) DEFAULT '',
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	paid_at           TIMESTAMP WITH TIME ZONE
+);
