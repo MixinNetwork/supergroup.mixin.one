@@ -30,7 +30,7 @@
     <br/>
     <van-panel v-if="acceptWechatPayment" :title="$t('pay.method_wechat')">
       <van-cell
-        :title="$t('pay.price_label', {price: '19.9', unit: $t('currency.' + autoEstimateCurrency)})"
+        :title="$t('pay.price_label', {price: wechatPaymentAmount, unit: $t('currency.' + autoEstimateCurrency)})"
         >
       </van-cell>
       <div slot="footer">
@@ -62,6 +62,7 @@ export default {
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
       acceptWechatPayment: false,
+      wechatPaymentAmount: '100',
       cryptoEsitmatedUsdMap: {},
       currencyTickers: [],
       cnyRatio: {},
@@ -85,6 +86,7 @@ export default {
     this.autoEstimateCurrency = config.data.auto_estimate_currency
     this.autoEstimateBase = config.data.auto_estimate_base
     this.acceptWechatPayment = config.data.accept_wechat_payment
+    this.wechatPaymentAmount = config.data.wechat_payment_amount
     this.GLOBAL.api.fox.currency()
       .then((currencyInfo) => {
         this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {

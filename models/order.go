@@ -2,7 +2,7 @@ package models
 
 import (
 	"context"
-	"log"
+	"math"
 	"strconv"
 	"time"
 
@@ -46,6 +46,8 @@ type Order struct {
 	PaidAt        pq.NullTime
 }
 
+const WX_TN_PREFIX = "tn-"
+
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
 	query := "SELECT * FROM orders WHERE state='NOTPAID' ORDER BY created_at"
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
@@ -71,7 +73,7 @@ func CreateOrder(ctx context.Context, userId, channel, amount string) (*Order, e
 		TraceId:       0,
 		PrepayId:      "",
 		State:         "PENDING",
-		Amount:        "0.0",
+		Amount:        config.Get().System.WeChatPaymentAmount,
 		Channel:       "wx",
 		TransactionId: "",
 		QrUrl:         "",
@@ -87,11 +89,11 @@ func CreateOrder(ctx context.Context, userId, channel, amount string) (*Order, e
 	order, err = GetOrder(ctx, order.UserId, order.OrderId)
 	// create wx payment request
 	var wxp wxpay.Params
-	wxp, err = createWxPayment(order.TraceId)
+	client := CreateWxClient()
+	wxp, err = CreateWxPayment(client, order.TraceId, order.Amount)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("%v, %v\n", wxp, err)
 	order.QrUrl = wxp["code_url"]
 	order.State = "NOTPAID"
 	// update record
@@ -103,8 +105,33 @@ func CreateOrder(ctx context.Context, userId, channel, amount string) (*Order, e
 	return order, nil
 }
 
+func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string) (*Order, error) {
+	query := "UPDATE orders SET state=$1 WHERE trace_id=$2"
+	_, err := session.Database(ctx).ExecContext(ctx, query, state, traceId)
+	if err != nil {
+		return nil, err
+	}
+	return GetOrderByTraceId(ctx, traceId)
+}
+
+func GetOrderByTraceId(ctx context.Context, traceId int64) (*Order, error) {
+	query := "SELECT * FROM orders WHERE trace_id=$1 ORDER BY created_at LIMIT 1"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, traceId)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	for rows.Next() {
+		p, err := orderFromRow(rows)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		return p, nil
+	}
+	return nil, nil
+}
+
 func GetOrder(ctx context.Context, userId, orderId string) (*Order, error) {
-	query := "SELECT * FROM orders WHERE user_id=$1 and order_id=$2 ORDER BY created_at"
+	query := "SELECT * FROM orders WHERE user_id=$1 and order_id=$2 ORDER BY created_at LIMIT 1"
 	rows, err := session.Database(ctx).QueryContext(ctx, query, userId, orderId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -137,7 +164,7 @@ func orderFromRow(row durable.Row) (*Order, error) {
 	return &od, err
 }
 
-func createWxClient() *wxpay.Client {
+func CreateWxClient() *wxpay.Client {
 	cfg := config.Get()
 	account := wxpay.NewAccount(cfg.Wechat.AppId, cfg.Wechat.MchId, cfg.Wechat.MchKey, false)
 	client := wxpay.NewClient(account)
@@ -149,18 +176,24 @@ func createWxClient() *wxpay.Client {
 	return client
 }
 
-func createWxPayment(traceId int64) (wxpay.Params, error) {
-	client := createWxClient()
-	tradeNo := "tn-" + strconv.FormatInt(traceId, 10)
-	// Place wx order
+func CreateWxPayment(client *wxpay.Client, traceId int64, amount string) (wxpay.Params, error) {
+	fs, _ := strconv.ParseFloat(amount, 32)
+	tradeNo := WX_TN_PREFIX + strconv.FormatInt(traceId, 10)
 	params := make(wxpay.Params)
 	params.SetString("body", "test").
 		SetString("out_trade_no", tradeNo).
-		SetInt64("total_fee", 1).
+		SetInt64("total_fee", int64(math.Ceil(fs*100))).
 		SetString("spbill_create_ip", "127.0.0.1").
 		SetString("notify_url", "https://xue.cn/").
 		SetString("body", "学到-入群付费").
 		SetString("trade_type", "NATIVE")
 	p, err := client.UnifiedOrder(params)
 	return p, err
+}
+
+func FetchWxPayment(client *wxpay.Client, traceId int64) (wxpay.Params, error) {
+	tradeNo := WX_TN_PREFIX + strconv.FormatInt(traceId, 10)
+	params := make(wxpay.Params)
+	params.SetString("out_trade_no", tradeNo)
+	return client.OrderQuery(params)
 }

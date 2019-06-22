@@ -61,19 +61,19 @@ export default {
     async waitForPayment() {
       if (this.orderId) {
         let orderInfo = await this.GLOBAL.api.account.check_wx_pay(this.orderId)
-        console.log(orderInfo)
-        if (orderInfo.data && orderInfo.data.state === 'PAID') {
+        // console.log(orderInfo)
+        if (orderInfo.data && orderInfo.data.State === 'PAID') {
           this.$router.push('/')
           return
         } else {
           setTimeout(() => {
             this.waitForPayment()
-          }, 30000)
+          }, 3000)
         }
       } else {
         setTimeout(() => {
           this.waitForPayment()
-        }, 30000)
+        }, 3000)
       }
     }
   }

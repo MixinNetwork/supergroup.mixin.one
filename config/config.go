@@ -62,6 +62,7 @@ type Config struct {
 		AutoEstimateBase         string         `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
 		AccpetWeChatPayment      bool           `yaml:"accept_wechat_payment"`
+		WeChatPaymentAmount      string         `yaml:"wechat_payment_amount"`
 	} `yaml:"system"`
 	Appearance struct {
 		HomeShortcutGroups []ShortcutGroup `yaml:"home_shortcut_groups"`
@@ -103,6 +104,7 @@ type ExportedConfig struct {
 	AutoEstimateBase       string          `json:"auto_estimate_base"`
 	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
 	AccpetWeChatPayment    bool            `json:"accept_wechat_payment"`
+	WeChatPaymentAmount    string          `json:"wechat_payment_amount"`
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
 
@@ -137,6 +139,7 @@ func GetExported() ExportedConfig {
 	exc.AutoEstimateBase = conf.System.AutoEstimateBase
 	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
 	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
+	exc.WeChatPaymentAmount = conf.System.WeChatPaymentAmount
 	exc.HomeShortcutGroups = conf.Appearance.HomeShortcutGroups
 	return exc
 }

@@ -35,6 +35,7 @@ system:
       asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c" # CNB
       amount: "1000.00"
   accept_wechat_payment: false
+  wechat_payment_amount: "0.01"
 appearance:
   home_shortcut_groups:
     - label_en: "3-Party Services"
