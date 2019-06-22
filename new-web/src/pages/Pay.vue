@@ -110,7 +110,7 @@ export default {
     payCrypto () {
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 2000)
-      window.location.replace(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
+      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
     },
     async onChangeAsset (ix) {
@@ -139,7 +139,7 @@ export default {
         return;
       }
       if (meInfo.data.state === 'paid') {
-        this.$router.replace('/');
+        this.$router.push('/');
         return;
       }
       setTimeout(async () => { await this.waitForPayment(); }, 2000)

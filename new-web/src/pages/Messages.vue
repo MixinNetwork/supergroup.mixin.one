@@ -28,6 +28,7 @@ import dayjs from 'dayjs'
 import MessageItem from '@/components/partial/MessageItem'
 import Loading from '@/components/Loading'
 import { ActionSheet, Toast } from 'vant'
+import utils from '@/utils'
 
 export default {
   name: 'Messages',
@@ -86,7 +87,7 @@ export default {
             this.maskLoading = false
             return
           }
-          window.location.reload()
+          utils.reloadPage()
         }
       }
       this.showActionSheet = false

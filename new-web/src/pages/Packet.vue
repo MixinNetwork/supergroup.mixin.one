@@ -63,6 +63,8 @@
 <script>
 import Loading from '@/components/Loading'
 import dayjs from 'dayjs'
+import utils from '@/utils'
+
 export default {
   name: "Packet",
   components: {
@@ -131,7 +133,7 @@ export default {
       let packetId = this.$route.params.id
       let claimInfo = await this.GLOBAL.api.packet.claim(packetId)
       this.loading = false
-      window.location.reload()
+      utils.reloadPage()
     }
   }
 }

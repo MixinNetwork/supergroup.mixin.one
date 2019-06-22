@@ -12,12 +12,12 @@ export default {
     try {
       let resp = await this.GLOBAL.api.account.authenticate(code)
       if (resp.data.authentication_token) {
-        this.$router.replace('/')
+        this.$router.push('/')
       }
     } catch (err) {
       console.log(err)
       Toast('Failed to Authorize')
-      this.$router.replace('/')
+      this.$router.push('/')
     }
   }
 }

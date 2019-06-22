@@ -23,7 +23,8 @@ import CellTable from '../components/CellTable'
 import Loading from '../components/Loading'
 import { mapState } from 'vuex'
 import AssetItem from '@/components/partial/AssetItem'
- 
+import utils from '@/utils'
+
 export default {
   data () {
     return {
@@ -35,9 +36,40 @@ export default {
         { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/#/packets/prepare' },
         { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/#/members' },
         { icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages' },
-        // { icon: require('../assets/images/notification-circle.png'), label: 'Subscribe', url: '' },
-        // { icon: require('../assets/images/notification-off-circle.png'), label: 'Unsubscribe', url: '' },
       ],
+      subscribeItem: {
+        icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
+        click: async (evt) => {
+          evt.preventDefault()
+          await this.GLOBAL.api.account.subscribe()
+          this.builtinItems.splice(3, 1, this.unsubscribeItem)
+          
+        }
+      },
+      unsubscribeItem: {
+        icon: require('../assets/images/notification-off-circle.png'), label: this.$t('home.op_unsubscribe'),
+        click: async (evt) => {
+          evt.preventDefault()
+          await this.GLOBAL.api.account.unsubscribe()
+          this.builtinItems.splice(3, 1, this.subscribeItem)
+        }
+      },
+      unprohibitItem: {
+        icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_mute'),
+        click: async (evt) => {
+          evt.preventDefault()
+          await this.GLOBAL.api.property.create(true)
+          this.builtinItems.splice(4, 1, this.prohibitItem)
+        }
+      },
+      prohibitItem: {
+        icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_unmute'),
+        click: async (evt) => {
+          evt.preventDefault()
+          await this.GLOBAL.api.property.create(true)
+          this.builtinItems.splice(4, 1, this.unprohibitItem)
+        }
+      },
       shortcutsGroups: []
     }
   },
@@ -77,58 +109,30 @@ export default {
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()
       if (this.meInfo.data.state === 'pending') {
-        this.$router.replace('/pay')
+        this.$router.push('/pay')
         return
       }
+      this.updateSubscribeState()
       if (this.meInfo.data.role === 'admin') {
         this.updateProhibitedState()
       }
-      this.updateSubscribeState()
     } catch (err) {
       console.log('error', err)
     }
   },
   methods: {
     updateSubscribeState() {
-      if (!this.isSubscribed) {
-        this.builtinItems.push({
-          icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
-          click: async (evt) => {
-            evt.preventDefault()
-            await this.GLOBAL.api.account.subscribe()
-            window.location.reload()
-          }
-        })
+      if (this.isSubscribed) {
+        this.builtinItems.push(this.unsubscribeItem)
       } else {
-        this.builtinItems.push({
-          icon: require('../assets/images/notification-off-circle.png'), label: this.$t('home.op_unsubscribe'),
-          click: async (evt) => {
-            evt.preventDefault()
-            await this.GLOBAL.api.account.unsubscribe()
-            window.location.reload()
-          }
-        })
+        this.builtinItems.push(this.subscribeItem)
       }
     },
     updateProhibitedState() {
-      if (!this.isProhibited) {
-        this.builtinItems.push({
-          icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_mute'),
-          click: async (evt) => {
-            evt.preventDefault()
-            await this.GLOBAL.api.property.create(true)
-            window.location.reload()
-          }
-        })
+      if (this.isProhibited) {
+        this.builtinItems.push(this.prohibitItem)
       } else {
-        this.builtinItems.push({
-          icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_unmute'),
-          click: async (evt) => {
-            evt.preventDefault()
-            await this.GLOBAL.api.property.create(false)
-            window.location.reload()
-          }
-        })
+        this.builtinItems.push(this.unprohibitItem)
       }
     }
   }

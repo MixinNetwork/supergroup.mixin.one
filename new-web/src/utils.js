@@ -50,5 +50,33 @@ export default {
         }
       }
     }
+  },
+  reloadPage: function () {
+    let url = window.location.href
+    var key = 't='
+    var reg = new RegExp(key + '\\d+')
+    var timestamp =+ new Date()
+    let newUrl = url
+    if(url.indexOf(key)>-1){
+      // found timestamp 
+      newUrl = url.replace(reg, key + timestamp)
+    } else {
+      // no timestamp 
+      if (url.indexOf('\?')>-1){
+        var urlArr=url.split('\?');
+        if(urlArr[1]){
+          newUrl = urlArr[0]+'?'+key+timestamp+'&'+urlArr[1]
+        } else {
+          newUrl = urlArr[0]+'?'+key+timestamp;
+        }
+      } else {
+        if (url.indexOf('#')>-1){
+          newUrl = url.split('#')[0]+'?'+key+timestamp+location.hash;
+        } else {
+          newUrl = url+'?'+key+timestamp;
+        }
+      }
+    }
+    window.location.href = newUrl
   }
 }

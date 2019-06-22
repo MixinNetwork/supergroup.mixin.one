@@ -28,6 +28,7 @@ import dayjs from 'dayjs'
 import MemberItem from '@/components/partial/MemberItem'
 import Loading from '@/components/Loading'
 import { ActionSheet, Toast } from 'vant'
+import utils from '@/utils'
 
 export default {
   name: 'Members',
@@ -95,14 +96,14 @@ export default {
             this.maskLoading = false
             return
           }
-          window.location.reload()
+          utils.reloadPage()
         } else if (ix === 1) {
           let result = await this.GLOBAL.api.account.remove(mem.user_id)
           if (result.error) {
             this.maskLoading = false
             return
           }
-          window.location.reload()
+          utils.reloadPage()
         } else {
           this.maskLoading = false
         }
