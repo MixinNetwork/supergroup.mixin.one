@@ -39,4 +39,8 @@ func TestCouponCRUD(t *testing.T) {
 	coupons, err = CreateCoupons(ctx, admin)
 	assert.Nil(err)
 	assert.Len(coupons, 50)
+	user, err = FindUser(ctx, user.UserId)
+	assert.Nil(err)
+	assert.NotNil(user)
+	assert.True(user.SubscribedAt.After(genesisStartedAt()))
 }
