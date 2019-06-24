@@ -402,7 +402,9 @@ func handleExpiredPackets(ctx context.Context) {
 				session.Logger(ctx).Error(id, err)
 				break
 			}
-			session.Logger(ctx).Infof("REFUND %v", packet)
+			if packet != nil {
+				session.Logger(ctx).Infof("REFUND %v", packet)
+			}
 		}
 
 		if len(packetIds) < limit {
