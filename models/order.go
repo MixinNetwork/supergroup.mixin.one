@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS orders (
 	amount            VARCHAR(128) NOT NULL,
 	channel           VARCHAR(32) NOT NULL,
 	transaction_id    VARCHAR(32) DEFAULT '',
-	qr_url    		  VARCHAR(64) DEFAULT '',
 	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 	paid_at           TIMESTAMP WITH TIME ZONE
 );
@@ -41,7 +40,6 @@ type Order struct {
 	Amount        string
 	Channel       string
 	TransactionId string
-	QrUrl         string
 	CreatedAt     time.Time
 	PaidAt        pq.NullTime
 }
@@ -49,7 +47,7 @@ type Order struct {
 const WX_TN_PREFIX = "tn-"
 
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
-	query := "SELECT * FROM orders WHERE state='NOTPAID' ORDER BY created_at"
+	query := "SELECT * FROM orders WHERE state='NOTPAID' and created_at >  NOW() - INTERVAL '15 minute' ORDER BY created_at "
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -66,7 +64,7 @@ func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
 	return orders, nil
 }
 
-func CreateOrder(ctx context.Context, userId, channel, amount string) (*Order, error) {
+func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, wxpay.Params, wxpay.Params, error) {
 	order := &Order{
 		OrderId:       bot.UuidNewV4().String(),
 		UserId:        userId,
@@ -76,38 +74,44 @@ func CreateOrder(ctx context.Context, userId, channel, amount string) (*Order, e
 		Amount:        config.Get().System.WeChatPaymentAmount,
 		Channel:       "wx",
 		TransactionId: "",
-		QrUrl:         "",
 	}
+
 	// create a record
 	var err error
 	query := "INSERT INTO orders (order_id, user_id, prepay_id, state, amount, channel) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err = session.Database(ctx).ExecContext(ctx, query,
 		order.OrderId, order.UserId, order.PrepayId, order.State, order.Amount, order.Channel)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	order, err = GetOrder(ctx, order.UserId, order.OrderId)
+	order, err = GetOrder(ctx, order.OrderId)
+
 	// create wx payment request
 	var wxp wxpay.Params
+	var jswxp wxpay.Params
 	client := CreateWxClient()
-	wxp, err = CreateWxPayment(client, order.TraceId, order.Amount)
+	wxp, err = CreateWxPayment(client, order.TraceId, order.Amount, wxOpenId)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	order.QrUrl = wxp["code_url"]
-	order.State = "NOTPAID"
+
+	// sign params for jsapi
+	jswxp = GetPayJsParams(client, wxp)
+
 	// update record
-	query = "UPDATE orders SET (qr_url, state)=($1,$2) WHERE order_id=$3"
-	_, err = session.Database(ctx).ExecContext(ctx, query, order.QrUrl, order.State, order.OrderId)
+	order.State = "NOTPAID"
+	query = "UPDATE orders SET state=$1 WHERE order_id=$2"
+	_, err = session.Database(ctx).ExecContext(ctx, query, order.State, order.OrderId)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	return order, nil
+
+	return order, wxp, jswxp, nil
 }
 
-func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string) (*Order, error) {
-	query := "UPDATE orders SET state=$1 WHERE trace_id=$2"
-	_, err := session.Database(ctx).ExecContext(ctx, query, state, traceId)
+func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string, transactionId string) (*Order, error) {
+	query := "UPDATE orders SET state=$1, transaction_id=$2 WHERE trace_id=$3"
+	_, err := session.Database(ctx).ExecContext(ctx, query, state, transactionId, traceId)
 	if err != nil {
 		return nil, err
 	}
@@ -130,9 +134,9 @@ func GetOrderByTraceId(ctx context.Context, traceId int64) (*Order, error) {
 	return nil, nil
 }
 
-func GetOrder(ctx context.Context, userId, orderId string) (*Order, error) {
-	query := "SELECT * FROM orders WHERE user_id=$1 and order_id=$2 ORDER BY created_at LIMIT 1"
-	rows, err := session.Database(ctx).QueryContext(ctx, query, userId, orderId)
+func GetOrder(ctx context.Context, orderId string) (*Order, error) {
+	query := "SELECT * FROM orders WHERE order_id=$1 ORDER BY created_at LIMIT 1"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, orderId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -157,7 +161,6 @@ func orderFromRow(row durable.Row) (*Order, error) {
 		&od.Amount,
 		&od.Channel,
 		&od.TransactionId,
-		&od.QrUrl,
 		&od.CreatedAt,
 		&od.PaidAt,
 	)
@@ -168,26 +171,35 @@ func CreateWxClient() *wxpay.Client {
 	cfg := config.Get()
 	account := wxpay.NewAccount(cfg.Wechat.AppId, cfg.Wechat.MchId, cfg.Wechat.MchKey, false)
 	client := wxpay.NewClient(account)
-	// account.SetCertData("证书地址")
+	account.SetCertData("./cert_test.p12")
 	client.SetAccount(account)
 	client.SetHttpConnectTimeoutMs(2000)
 	client.SetHttpReadTimeoutMs(1000)
-	client.SetSignType(wxpay.HMACSHA256)
+	client.SetSignType(wxpay.MD5)
 	return client
 }
 
-func CreateWxPayment(client *wxpay.Client, traceId int64, amount string) (wxpay.Params, error) {
+func CreateWxPayment(client *wxpay.Client, traceId int64, amount, wxOpenId string) (wxpay.Params, error) {
 	fs, _ := strconv.ParseFloat(amount, 32)
 	tradeNo := WX_TN_PREFIX + strconv.FormatInt(traceId, 10)
 	params := make(wxpay.Params)
-	params.SetString("body", "test").
+	params.
 		SetString("out_trade_no", tradeNo).
 		SetInt64("total_fee", int64(math.Ceil(fs*100))).
-		SetString("spbill_create_ip", "127.0.0.1").
-		SetString("notify_url", "https://xue.cn/").
-		SetString("body", "学到-入群付费").
-		SetString("trade_type", "NATIVE")
+		// I don't know what's the meaning of the IP
+		SetString("spbill_create_ip", "123.12.12.123").
+		// I don't have the permission of notify url.
+		// so I pull to get order state
+		// @TODO need to implement an method to handle it.
+		SetString("notify_url", config.Get().Wechat.NotifyUrl).
+		// drop some shits here.
+		SetString("body", "Mixin-PayToJoin").
+		// only support jsapi trade type for now. No permission for "H5" trade type.
+		SetString("trade_type", "JSAPI").
+		SetString("openid", wxOpenId)
+
 	p, err := client.UnifiedOrder(params)
+
 	return p, err
 }
 
@@ -196,4 +208,19 @@ func FetchWxPayment(client *wxpay.Client, traceId int64) (wxpay.Params, error) {
 	params := make(wxpay.Params)
 	params.SetString("out_trade_no", tradeNo)
 	return client.OrderQuery(params)
+}
+
+func GetPayJsParams(client *wxpay.Client, params wxpay.Params) wxpay.Params {
+	// for JSAPI payment, we have to sign again for slight different params.
+	// be careful about the stupid fields spelling, WeChat's API design is horrible.
+	payParams := make(wxpay.Params)
+	payParams.SetString("appId", params["appid"])
+	payParams.SetString("timeStamp", strconv.FormatInt(time.Now().Unix(), 10))
+	payParams.SetString("nonceStr", strconv.FormatInt(time.Now().UTC().UnixNano(), 10))
+	// for JSAPI payment, use the prepay_id which get from UnifiedOrder() in this stupid form
+	payParams.SetString("package", "prepay_id="+params["prepay_id"])
+	payParams.SetString("signType", wxpay.MD5)
+	// No 'sign', please use 'paySign'. The stupid WeChat online sign tool say NO? Leave that!.
+	payParams.SetString("paySign", client.Sign(payParams))
+	return payParams
 }

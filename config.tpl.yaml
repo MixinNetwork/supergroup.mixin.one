@@ -59,10 +59,15 @@ message_template:
   message_commands_info   : "/INFO"
   message_commands_info_resp: "当前订阅人数: %d"
 wechat:
-  # 敏感数据，小心保管：
+  # 微信配置
   app_id: ""
+  app_secret: ""
+  token: ""
+  encodine_aes_key: ""
+  # 微信支付配置
   mch_id: ""
   mch_key: ""
+  notify_url:
 mixin:
   client_id        : "5fcd897e-e7b2-40d5-93cd-487e2d955556"
   client_secret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"

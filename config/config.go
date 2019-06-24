@@ -82,9 +82,13 @@ type Config struct {
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 	} `yaml:"message_template"`
 	Wechat struct {
-		AppId  string `yaml:"app_id"`
-		MchId  string `yaml:"mch_id"`
-		MchKey string `yaml:"mch_key"`
+		AppId          string `yaml:"app_id"`
+		AppSecret      string `yaml:"app_secret"`
+		Token          string `yaml:"token"`
+		EncodingAESKey string `yaml:"encodine_aes_key"`
+		MchId          string `yaml:"mch_id"`
+		MchKey         string `yaml:"mch_key"`
+		NotifyUrl      string `yaml:"notify_url"`
 	} `yaml:"wechat"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
