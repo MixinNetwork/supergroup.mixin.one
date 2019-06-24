@@ -48,7 +48,8 @@
     "method_crypto": "Pay with Crypto",
     "select_assets": "Select Assets",
     "method_wechat": "Pay with WeChat",
-    "price_label": "Price: {price} {unit}"
+    "price_label": "Price: {price} {unit}",
+    "success_toast": "You have joined the group."
   },
   "prepare_packet": {
     "title": "Prepare Lucky Coin",
@@ -79,7 +80,7 @@
     "kick": "Kick",
     "block": "Block"
   },
-  "wxpay": {
+  "pay_wxqr": {
     "title": "WeChat Payment",
     "hint_title": "Scan the QrCode with WeChat",
     "hint_desc": "Take a screenshot, and scan it in WeChat Scan.",
@@ -88,5 +89,18 @@
     "help_line_2": "Step 2: Open WeChat",
     "help_line_3": "Step 3: Tap the \"+\" button at top right, choose \"Scan\".",
     "help_line_4": "Step 4: Tap the \"Album\" at top right, choose the screenshot."
+  },
+  "wxpay": {
+    "title": "WeChat Payment",
+    "welcome": "Welcome to this group",
+    "welcome_desc": "According to the requirements, please pay to join the group.",
+    "pay_wechat": "WeChat Pay",
+    "price_label": "Price: {price} {unit}",
+    "succ_toast": "You order has been placed.",
+    "error_toast": "Payment Canceled: {msg}"
+  },
+  "wxpay_done": {
+    "title": "Payment Placed",
+    "hint": "Your order has been placed. <br/>It may take less than 3 min to handle your payment. <br/>Please return to Mixin Messenger and join the group later."
   }
 }

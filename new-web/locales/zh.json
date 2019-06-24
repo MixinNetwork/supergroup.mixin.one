@@ -33,8 +33,8 @@
     "op_luckycoin": "红包",
     "op_subscribe": "订阅",
     "op_unsubscribe": "取消订阅",
-    "op_mute": "禁止自由发言",
-    "op_unmute": "允许自由发言",
+    "op_mute": "禁止发言",
+    "op_unmute": "允许发言",
     "op_members": "成员",
     "op_messages": "消息管理"
   },
@@ -48,7 +48,8 @@
     "method_crypto": "使用数字货币支付",
     "select_assets": "选择数字货币",
     "method_wechat": "使用微信支付",
-    "price_label": "价格：{price} {unit}"
+    "price_label": "价格：{price} {unit}",
+    "success_toast": "你已加入本群"
   },
   "prepare_packet": {
     "title": "准备红包",
@@ -79,14 +80,27 @@
     "kick": "踢出",
     "block": "屏蔽"
   },
-  "wxpay": {
+  "pay_wxqr": {
     "title": "微信支付",
     "hint_title": "使用微信扫码如下二维码",
-    "hint_desc": "请使用屏幕截屏，然后打开微信“扫一扫”，从相册中调取该截屏图片扫码。",
+    "hint_desc": "请截屏或保存图片，然后打开微信“扫一扫”，从相册中调取该图片扫码。",
     "help_title": "操作方式",
-    "help_line_1": "第一步：在当前屏幕截屏，将图片保存到相册。",
+    "help_line_1": "第一步：在当前屏幕截屏，或长按二维码选择“保存到相册”，将图片保存到相册。",
     "help_line_2": "第二步：打开微信。",
     "help_line_3": "第三步：在微信右上角，点击 \"+\" 按钮，选择“扫一扫”。",
-    "help_line_4": "第四步：在右上角点击“相册”，选择刚才的截屏。"
+    "help_line_4": "第四步：在右上角点击“相册”，选择刚才的截屏或者二维码。"
+  },
+  "wxpay": {
+    "title": "微信支付",
+    "welcome": "欢迎来到本群",
+    "welcome_desc": "根据本群的要求，你需要先支付，才能加入群聊。",
+    "pay_wechat": "微信支付",
+    "price_label": "价格：{price} {unit}",
+    "succ_toast": "你的订单已提交。",
+    "error_toast": "支付终止：{msg}"
+  },
+  "wxpay_done": {
+    "title": "已支付",
+    "hint": "订单已提交。<br/>我们将在三分钟之内处理您的订单。<br/>请稍后返回 Mixin Messenger 查看进群状态。"
   }
 }

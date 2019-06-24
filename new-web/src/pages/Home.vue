@@ -55,15 +55,15 @@ export default {
         }
       },
       unprohibitItem: {
-        icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_mute'),
+        icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_unmute'),
         click: async (evt) => {
           evt.preventDefault()
-          await this.GLOBAL.api.property.create(true)
+          await this.GLOBAL.api.property.create(false)
           this.builtinItems.splice(4, 1, this.prohibitItem)
         }
       },
       prohibitItem: {
-        icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_unmute'),
+        icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_mute'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(true)
@@ -130,9 +130,9 @@ export default {
     },
     updateProhibitedState() {
       if (this.isProhibited) {
-        this.builtinItems.push(this.prohibitItem)
-      } else {
         this.builtinItems.push(this.unprohibitItem)
+      } else {
+        this.builtinItems.push(this.prohibitItem)
       }
     }
   }
