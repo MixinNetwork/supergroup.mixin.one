@@ -354,7 +354,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 				if transfer.Amount == asset.Amount && transfer.AssetId == asset.AssetId {
 					return user.Payment(ctx)
 				}
-			} else if (config.Get().System.AutoEstimate) {
+			} else if config.Get().System.AutoEstimate {
 				// @TODO
 				// if abs(float(config.Get().System.AutoEstimateBase) - models.EstimateUsd(transfer.Amount)) < 0.1 && transfer.AssetId == asset.AssetId {
 				// 	return user.Payment(ctx)
@@ -412,7 +412,9 @@ func handleExpiredPackets(ctx context.Context) {
 				session.Logger(ctx).Error(id, err)
 				break
 			}
-			session.Logger(ctx).Infof("REFUND %v", packet)
+			if packet != nil {
+				session.Logger(ctx).Infof("REFUND %v", packet)
+			}
 		}
 
 		if len(packetIds) < limit {
