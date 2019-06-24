@@ -24,7 +24,7 @@ const (
 
 const messages_DDL = `
 CREATE TABLE IF NOT EXISTS messages (
-	message_id            VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
 	user_id	              VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	category              VARCHAR(512) NOT NULL,
 	quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
