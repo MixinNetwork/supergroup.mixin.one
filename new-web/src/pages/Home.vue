@@ -96,14 +96,16 @@ export default {
     try {
       this.loading = true
       this.GLOBAL.api.website.config().then((conf) => {
-        this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
-          x.label = this.isZh ? x.label_zh: x.label_en
-          x.shortcuts = x.shortcuts.map((z) => {
-            z.label = this.isZh ? z.label_zh: z.label_en
-            return z
+        if (conf.data.home_shortcut_groups) {
+          this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
+            x.label = this.isZh ? x.label_zh: x.label_en
+            x.shortcuts = x.shortcuts.map((z) => {
+              z.label = this.isZh ? z.label_zh: z.label_en
+              return z
+            })
+            return x
           })
-          return x
-        })
+        }
         this.loading = false
       })
       this.websiteInfo = await this.GLOBAL.api.website.amount()
