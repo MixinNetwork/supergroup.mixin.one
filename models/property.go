@@ -3,10 +3,12 @@ package models
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
@@ -49,6 +51,21 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 	}
 	params, positions := compileTableQuery(propertiesColumns)
 	query := fmt.Sprintf("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", params, positions)
+	session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.ExecContext(ctx, query, property.values()...)
+		if err != nil {
+			return err
+		}
+		data := config.Get()
+		if data.System.ProhibitedMessageEnabled {
+			text := data.MessageTemplate.MessageProhibit
+			if value {
+				text = data.MessageTemplate.MessageAllow
+			}
+			return createSystemMessage(ctx, tx, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(text)))
+		}
+		return nil
+	})
 	_, err := session.Database(ctx).ExecContext(ctx, query, property.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)

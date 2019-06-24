@@ -40,7 +40,7 @@ appearance:
   home_shortcut_groups:
     - label_en: "3-Party Services"
       label_zh: "第三方提供的服务"
-      shortcuts: 
+      shortcuts:
         - icon: "..."
           label_en: "Service Name"
           label_zh: "服务名称"
@@ -51,6 +51,8 @@ message_template:
   group_redpacket_short_desc: "来自无名氏的红包"
   group_redpacket_desc    : "来自 %s 的红包"
   group_opened_redpacket  : "%s 打开了你的红包"
+  message_prohibit        : "开始禁言"
+  message_allow           : "结束禁言"
   message_tips_guest     : "您需要先点击机器图标授权。"
   message_tips_join      : "%s 加入了群组"
   message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"

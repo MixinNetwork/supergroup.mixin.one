@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -131,6 +132,25 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		return nil, session.TransactionError(ctx, err)
 	}
 	return message, nil
+}
+
+func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string) error {
+	mixin := config.Get().Mixin
+	t := time.Now()
+	message := &Message{
+		MessageId:        bot.UuidNewV4().String(),
+		UserId:           mixin.ClientId,
+		Category:         category,
+		Data:             data,
+		CreatedAt:        t,
+		UpdatedAt:        t,
+		State:            MessageStatePending,
+		LastDistributeAt: genesisStartedAt(),
+	}
+	params, positions := compileTableQuery(messagesCols)
+	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", params, positions)
+	_, err := tx.ExecContext(ctx, query, message.values()...)
+	return err
 }
 
 func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {

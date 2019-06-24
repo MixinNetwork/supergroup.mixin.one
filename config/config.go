@@ -74,6 +74,8 @@ type Config struct {
 		GroupRedPacketDesc      string `yaml:"group_redpacket_desc"`
 		GroupOpenedRedPacket    string `yaml:"group_opened_redpacket"`
 		MessageTipsGuest        string `yaml:"message_tips_guest"`
+		MessageProhibit         string `yaml:"message_prohibit"`
+		MessageAllow            string `yaml:"message_allow"`
 		MessageTipsJoin         string `yaml:"message_tips_join"`
 		MessageTipsHelp         string `yaml:"message_tips_help"`
 		MessageTipsHelpBtn      string `yaml:"message_tips_help_btn"`
