@@ -13,7 +13,6 @@ import (
 	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
-	"github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -347,9 +346,20 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 		return err
 	}
 	if user.TraceId == transfer.TraceId {
-		payments := config.Get().Payments
-		if !number.FromString(transfer.Amount).Exhausted() && payments[transfer.AssetId] == transfer.Amount {
+		if transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
 			return user.Payment(ctx)
+		}
+		for _, asset := range config.Get().System.AccpetPaymentAssetList {
+			if asset.Amount != "auto" {
+				if transfer.Amount == asset.Amount && transfer.AssetId == asset.AssetId {
+					return user.Payment(ctx)
+				}
+			} else if config.Get().System.AutoEstimate {
+				// @TODO
+				// if abs(float(config.Get().System.AutoEstimateBase) - models.EstimateUsd(transfer.Amount)) < 0.1 && transfer.AssetId == asset.AssetId {
+				// 	return user.Payment(ctx)
+				// }
+			}
 		}
 	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
@@ -402,7 +412,9 @@ func handleExpiredPackets(ctx context.Context) {
 				session.Logger(ctx).Error(id, err)
 				break
 			}
-			session.Logger(ctx).Infof("REFUND %v", packet)
+			if packet != nil {
+				session.Logger(ctx).Infof("REFUND %v", packet)
+			}
 		}
 
 		if len(packetIds) < limit {

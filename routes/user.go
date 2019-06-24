@@ -2,15 +2,20 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/MixinNetwork/supergroup.mixin.one/views"
 	"github.com/dimfeld/httptreemux"
+	"github.com/objcoding/wxpay"
 )
 
 type usersImpl struct{}
@@ -27,10 +32,14 @@ func registerUsers(router *httptreemux.TreeMux) {
 	router.POST("/unsubscribe", impl.unsubscribe)
 	router.POST("/users/:id/remove", impl.remove)
 	router.POST("/users/:id/block", impl.block)
+	router.POST("/wechat/pay/create", impl.createWxPay)
+	router.POST("/wechat/pay/callback", impl.wxPayCallback)
+	router.GET("/wechat/pay/:id", impl.checkWxPay)
 	router.GET("/me", impl.me)
 	router.GET("/subscribers", impl.subscribers)
 	router.GET("/users/:id", impl.show)
 	router.GET("/amount", impl.amount)
+	router.GET("/config", impl.getConfig)
 }
 
 func (impl *usersImpl) authenticate(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -120,6 +129,52 @@ func (impl *usersImpl) show(w http.ResponseWriter, r *http.Request, params map[s
 
 func (impl *usersImpl) amount(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	if s, err := models.ReadStatistic(r.Context(), middlewares.CurrentUser(r)); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderDataResponse(w, r, s)
+	}
+}
+
+func (impl *usersImpl) getConfig(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	views.RenderDataResponse(w, r, config.GetExported())
+}
+
+func (impl *usersImpl) wxPayCallback(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bodyString := string(bodyBytes)
+	fmt.Printf("wxPayCallback: %v\n", bodyString)
+	views.RenderDataResponse(w, r, config.GetExported())
+}
+
+func (impl *usersImpl) createWxPay(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	var payload struct {
+		OpenId string `json:"open_id"`
+		UserId string `json:"user_id"`
+	}
+	var resp struct {
+		Order       *models.Order `json:"order"`
+		PayParams   wxpay.Params  `json:"pay_params"`
+		PayJsParams wxpay.Params  `json:"pay_js_params"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		views.RenderErrorResponse(w, r, session.BadRequestError(r.Context()))
+	}
+	if order, payParams, payJsParams, err := models.CreateOrder(r.Context(), payload.UserId, "19.9", payload.OpenId); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		resp.Order = order
+		resp.PayParams = payParams
+		resp.PayJsParams = payJsParams
+		views.RenderDataResponse(w, r, resp)
+	}
+}
+
+func (impl *usersImpl) checkWxPay(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	id := params["id"]
+	if s, err := models.GetOrder(r.Context(), id); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderDataResponse(w, r, s)

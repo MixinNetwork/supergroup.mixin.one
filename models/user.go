@@ -14,7 +14,6 @@ import (
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
-	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -109,14 +108,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
-		exhausted := true
-		for _, v := range config.Get().Payments {
-			if !number.FromString(v).Exhausted() {
-				exhausted = false
-				break
-			}
-		}
-		if exhausted {
+		if !config.Get().System.PayToJoin {
 			item, err := readBlacklist(ctx, user.UserId)
 			if err != nil {
 				return nil, session.TransactionError(ctx, err)
