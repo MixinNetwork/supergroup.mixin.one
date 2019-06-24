@@ -18,6 +18,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
+	"github.com/lib/pq"
 )
 
 const (
@@ -356,7 +357,7 @@ func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 }
 
 func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string) string {
-	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status)
+	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', '%s')", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status, string(pq.FormatTimestamp(time.Now())))
 }
 
 func shardId(cid, uid string) (string, error) {
