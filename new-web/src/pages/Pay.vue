@@ -1,5 +1,6 @@
 <template>
-  <div class="pay-page">
+  <loading :loading="loading" :fullscreen="true">
+  <div class="pay-page" style="padding-top: 60px;">
     <nav-bar :title="$t('pay.title')" :hasTopRight="false"></nav-bar>
     <van-panel :title="$t('pay.welcome')" :desc="$t('pay.welcome_desc')">
     </van-panel>
@@ -16,7 +17,7 @@
       <van-cell
         :title="$t('pay.price_label', {price: currentCryptoPrice, unit: selectedAsset ? selectedAsset.text : '...'})"
         >
-        <span>≈{{currencySymbol}}{{currentEstimatedPrice.toLocaleString()}}</span>
+        <!-- <span>≈{{currencySymbol}}{{currentEstimatedPrice.toLocaleString()}}</span> -->
       </van-cell>
       <div slot="footer">
         <van-cell>
@@ -35,19 +36,22 @@
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="primary" @click="payWechat">{{$t('pay.pay_wechat')}}</van-button>
+          <van-button style="width: 100%" type="primary" @click="payWechatMobile">{{$t('pay.pay_wechat')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
   </div>
+  </loading>
 </template>
 
 <script>
 import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
+import Loading from '../components/Loading'
 import Row from '@/components/Nav'
 import uuid from 'uuid'
-import { CLIENT_ID } from '@/constants'
+import {Toast} from 'vant'
+import { CLIENT_ID, WEB_ROOT } from '@/constants'
 
 export default {
   name: 'Pay',
@@ -56,6 +60,7 @@ export default {
   },
   data () {
     return {
+      loading: true,
       config: null,
       meInfo: null,
       selectedAsset: null,
@@ -68,14 +73,14 @@ export default {
       cnyRatio: {},
       currentCryptoPrice: 0,
       currentEstimatedPrice: 0,
-      assets: [
-      ]
+      assets: []
     }
   },
   components: {
-    NavBar, RowSelect
+    NavBar, RowSelect, Loading
   },
   async mounted () {
+    this.loading = true
     let config = await this.GLOBAL.api.website.config()
     this.assets = config.data.accept_asset_list.map((x) => {
       x.text = x.symbol
@@ -98,6 +103,7 @@ export default {
       })
     this.meInfo = await this.GLOBAL.api.account.me()
     setTimeout(this.updatePrice, 2000)
+    this.loading = false
   },
   computed: {
     currencySymbol() {
@@ -110,14 +116,17 @@ export default {
   },
   methods: {
     payCrypto () {
+      this.loading = true
       let traceId = this.meInfo.data.trace_id
-      setTimeout(async () => { await this.waitForPayment(); }, 2000)
+      setTimeout(async () => { await this.waitForPayment(); }, 1000)
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`
       // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
     },
     async onChangeAsset (ix) {
+      this.loading = true
       this.selectedAsset = this.assets[ix]
       await this.updatePrice()
+      this.loading = false
     },
     async updatePrice () {
       if (this.selectedAsset.amount === 'auto') {
@@ -137,14 +146,16 @@ export default {
     async waitForPayment () {
       let meInfo = await this.GLOBAL.api.account.me()
       if (meInfo.error) {
-        setTimeout(async () => { await this.waitForPayment(); }, 2000)
+        setTimeout(async () => { await this.waitForPayment(); }, 1500)
         return;
       }
       if (meInfo.data.state === 'paid') {
+        Toast(this.$t('pay.success_toast'))
         this.$router.push('/');
+        this.loading = false
         return;
       }
-      setTimeout(async () => { await this.waitForPayment(); }, 2000)
+      setTimeout(async () => { await this.waitForPayment(); }, 1500)
     },
     async getCryptoEsitmatedUsdt (symbol) {
       if (this.cryptoEsitmatedUsdMap.hasOwnProperty(symbol)) {
@@ -159,14 +170,8 @@ export default {
       }
       return -1
     },
-    async payWechat () {
-      let orderInfo = await this.GLOBAL.api.account.create_wx_pay()
-      if (orderInfo.data && orderInfo.data.OrderId) {
-        this.$router.push('/pay/wx/' + orderInfo.data.OrderId + '?qr_url=' + encodeURIComponent(orderInfo.data.QrUrl))
-      } else {
-        Toast('Error.')
-      }
-      // this.meInfo = await this.GLOBAL.api.account.check_wx_pay('f64c815e-c98b-45fc-978e-ae6620bdfce0')
+    payWechatMobile () {
+      this.$router.push(`/pay/wxqr/?qr_url=${encodeURIComponent(WEB_ROOT + '/wechat/request/' + this.meInfo.data.user_id)}`)
     }
   }
 }
