@@ -66,6 +66,13 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+	if !user.isAdmin() {
+		if !durable.Allow(user.UserId) {
+			text := base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.MessageTipsTooMany))
+			err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text)
+			return nil, err
+		}
+	}
 	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
 		p, err := ReadProperty(ctx, ProhibitedMessage)
 		if err != nil {
