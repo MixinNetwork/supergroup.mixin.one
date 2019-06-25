@@ -21,7 +21,7 @@
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="info" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
+          <van-button style="width: 100%" type="info" :disabled="selectedAsset === null || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
         </van-cell>
         <!-- <van-cell>
           <van-button style="width: 100%" type="warning" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_foxone')}}</van-button>
