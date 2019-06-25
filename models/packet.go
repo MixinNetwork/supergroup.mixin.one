@@ -77,12 +77,14 @@ func (current *User) Prepare(ctx context.Context) (int64, error) {
 }
 
 func (current *User) CreatePacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
-	p, err := ReadProperty(ctx, ProhibitedMessage)
-	if err != nil {
-		return nil, err
-	}
-	if p != nil && p.Value == "true" {
-		return nil, session.ForbiddenError(ctx)
+	if current.isAdmin() {
+		p, err := ReadProperty(ctx, ProhibitedMessage)
+		if err != nil {
+			return nil, err
+		}
+		if p != nil && p.Value == "true" {
+			return nil, session.ForbiddenError(ctx)
+		}
 	}
 	asset, err := current.ShowAsset(ctx, assetId)
 	if err != nil {
