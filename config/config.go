@@ -65,6 +65,7 @@ type Config struct {
 		WeChatPaymentAmount      string         `yaml:"wechat_payment_amount"`
 	} `yaml:"system"`
 	Appearance struct {
+		HomeWelcomeMessage string          `yaml:"home_welcome_message"`
 		HomeShortcutGroups []ShortcutGroup `yaml:"home_shortcut_groups"`
 	} `yaml:"appearance"`
 	MessageTemplate struct {
@@ -109,6 +110,7 @@ type ExportedConfig struct {
 	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
 	AccpetWeChatPayment    bool            `json:"accept_wechat_payment"`
 	WeChatPaymentAmount    string          `json:"wechat_payment_amount"`
+	HomeWelcomeMessage     string          `json:"home_welcome_message"`
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
 
@@ -144,6 +146,7 @@ func GetExported() ExportedConfig {
 	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
 	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
 	exc.WeChatPaymentAmount = conf.System.WeChatPaymentAmount
+	exc.HomeWelcomeMessage = conf.Appearance.HomeWelcomeMessage
 	exc.HomeShortcutGroups = conf.Appearance.HomeShortcutGroups
 	return exc
 }

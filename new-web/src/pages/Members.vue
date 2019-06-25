@@ -2,6 +2,12 @@
   <loading :loading="maskLoading" :fullscreen="true">
     <div class="members-page">
       <nav-bar :title="$t('members.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
+      <van-cell>
+        <van-field placeholder="Search" left-icon="search"
+          @change="searchEnter" v-model="searchQuery"
+          >
+        </van-field>
+      </van-cell>
       <van-list
         v-model="loading"
         :finished="finished"
@@ -36,6 +42,7 @@ export default {
   },
   data () {
     return {
+      searchQuery: '',
       showActionSheet: false,
       maskLoading: false,
       currentMember: null,
@@ -66,9 +73,12 @@ export default {
   },
   methods: {
     async onLoad() {
+      await this.loadMembers(this.lastOffset, '')
+    },
+    async loadMembers(offset=0, query='', append=true) {
       this.maskLoading = true
       this.loading = true
-      let resp = await this.GLOBAL.api.account.subscribers(this.lastOffset)
+      let resp = await this.GLOBAL.api.account.subscribers(offset, query)
       if (resp.data.length < 2) {
         this.finished = true
       }
@@ -76,7 +86,11 @@ export default {
         x.time = dayjs(x.subscribed_at).format('YYYY.MM.DD')
         return x
       })
-      this.items = this.items.concat(resp.data)
+      if (append) {
+        this.items = this.items.concat(resp.data)
+      } else {
+        this.items = resp.data
+      }
       this.loading = false
       this.maskLoading = false
     },
@@ -113,6 +127,9 @@ export default {
     onCancelAction (item, ix) {
       this.showActionSheet = false
     },
+    searchEnter () {
+      this.loadMembers(0, this.searchQuery, false)
+    }
   }
 }
 </script>
