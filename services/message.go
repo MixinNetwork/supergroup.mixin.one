@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -350,7 +351,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 			return user.Payment(ctx)
 		}
 		for _, asset := range config.Get().System.AccpetPaymentAssetList {
-			if transfer.Amount == asset.Amount && transfer.AssetId == asset.AssetId {
+			if number.FromString(transfer.Amount).Equal(number.FromString(transfer.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)
 			}
 		}
