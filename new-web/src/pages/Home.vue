@@ -37,14 +37,16 @@ export default {
         // builtin
         { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/#/packets/prepare' },
         { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/#/members' },
-        { icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages' },
       ],
+      messagesItem: {
+        icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages'
+      },
       subscribeItem: {
         icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.subscribe()
-          this.builtinItems.splice(3, 1, this.unsubscribeItem)
+          this.builtinItems.splice(4, 1, this.unsubscribeItem)
           
         }
       },
@@ -53,7 +55,7 @@ export default {
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.unsubscribe()
-          this.builtinItems.splice(3, 1, this.subscribeItem)
+          this.builtinItems.splice(4, 1, this.subscribeItem)
         }
       },
       unprohibitItem: {
@@ -61,7 +63,7 @@ export default {
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(false)
-          this.builtinItems.splice(4, 1, this.prohibitItem)
+          this.builtinItems.splice(3, 1, this.prohibitItem)
         }
       },
       prohibitItem: {
@@ -69,7 +71,7 @@ export default {
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(true)
-          this.builtinItems.splice(4, 1, this.unprohibitItem)
+          this.builtinItems.splice(3, 1, this.unprohibitItem)
         }
       },
       shortcutsGroups: []
@@ -118,10 +120,11 @@ export default {
         this.$router.push('/pay')
         return
       }
-      this.updateSubscribeState()
       if (this.meInfo.data.role === 'admin') {
+        this.builtinItems.push(this.messagesItem)
         this.updateProhibitedState()
       }
+      this.updateSubscribeState()
     } catch (err) {
       console.log('error', err)
     }
