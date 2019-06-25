@@ -398,6 +398,8 @@ func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		u, err := userFromRow(rows)
 		if err != nil {
