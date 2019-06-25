@@ -86,7 +86,9 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		return nil, nil
 	}
 	if category == "PLAIN_AUDIO" && !config.Get().System.AudioMessageEnable {
-		return nil, nil
+		if !user.isAdmin() {
+			return nil, nil
+		}
 	}
 	message := &Message{
 		MessageId:        messageId,
