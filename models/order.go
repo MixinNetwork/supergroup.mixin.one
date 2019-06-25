@@ -2,8 +2,11 @@ package models
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -16,16 +19,16 @@ import (
 
 const order_DDL = `
 CREATE TABLE IF NOT EXISTS orders (
-	order_id	      VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
-	trace_id	      BIGSERIAL,
-	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
-	prepay_id 	      VARCHAR(36) DEFAULT '',
-	state             VARCHAR(32) NOT NULL,
-	amount            VARCHAR(128) NOT NULL,
-	channel           VARCHAR(32) NOT NULL,
-	transaction_id    VARCHAR(32) DEFAULT '',
-	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-	paid_at           TIMESTAMP WITH TIME ZONE
+	order_id         VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
+	trace_id         BIGSERIAL,
+	user_id          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	prepay_id        VARCHAR(36) DEFAULT '',
+	state            VARCHAR(32) NOT NULL,
+	amount           VARCHAR(128) NOT NULL,
+	channel          VARCHAR(32) NOT NULL,
+	transaction_id   VARCHAR(32) DEFAULT '',
+	created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	paid_at          TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(created_at, paid_at);
@@ -46,20 +49,36 @@ type Order struct {
 
 const WX_TN_PREFIX = "tn-"
 
+var orderColumns = []string{"order_id", "user_id", "trace_id", "prepay_id", "state", "amount", "channel", "transaction_id", "created_at", "paid_at"}
+
+func (o *Order) values() []interface{} {
+	return []interface{}{o.OrderId, o.UserId, o.TraceId, o.PrepayId, o.State, o.Amount, o.Channel, o.TransactionId, o.CreatedAt, o.PaidAt}
+}
+
+func orderFromRow(row durable.Row) (*Order, error) {
+	var o Order
+	err := row.Scan(&o.OrderId, &o.UserId, &o.TraceId, &o.PrepayId, &o.State, &o.Amount, &o.Channel, &o.TransactionId, &o.CreatedAt, &o.PaidAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &o, err
+}
+
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
-	query := "SELECT * FROM orders WHERE state='NOTPAID' and created_at >  NOW() - INTERVAL '15 minute' ORDER BY created_at "
+	query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '15 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+	defer rows.Close()
 
 	var orders []*Order
 	for rows.Next() {
-		p, err := orderFromRow(rows)
+		order, err := orderFromRow(rows)
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
-		orders = append(orders, p)
+		orders = append(orders, order)
 	}
 	return orders, nil
 }
@@ -76,15 +95,19 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 		TransactionId: "",
 	}
 
-	// create a record
+	// create an order
 	var err error
 	query := "INSERT INTO orders (order_id, user_id, prepay_id, state, amount, channel) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err = session.Database(ctx).ExecContext(ctx, query,
 		order.OrderId, order.UserId, order.PrepayId, order.State, order.Amount, order.Channel)
 	if err != nil {
+		return nil, nil, nil, session.TransactionError(ctx, err)
+	}
+
+	order, err = GetOrder(ctx, order.OrderId)
+	if err != nil {
 		return nil, nil, nil, err
 	}
-	order, err = GetOrder(ctx, order.OrderId)
 
 	// create wx payment request
 	var wxp wxpay.Params
@@ -113,58 +136,29 @@ func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string,
 	query := "UPDATE orders SET state=$1, transaction_id=$2 WHERE trace_id=$3"
 	_, err := session.Database(ctx).ExecContext(ctx, query, state, transactionId, traceId)
 	if err != nil {
-		return nil, err
+		return nil, session.TransactionError(ctx, err)
 	}
 	return GetOrderByTraceId(ctx, traceId)
 }
 
 func GetOrderByTraceId(ctx context.Context, traceId int64) (*Order, error) {
-	query := "SELECT * FROM orders WHERE trace_id=$1 ORDER BY created_at LIMIT 1"
-	rows, err := session.Database(ctx).QueryContext(ctx, query, traceId)
+	query := fmt.Sprintf("SELECT %s FROM orders WHERE trace_id=$1 ORDER BY created_at LIMIT 1", strings.Join(orderColumns, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, traceId)
+	order, err := orderFromRow(row)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	for rows.Next() {
-		p, err := orderFromRow(rows)
-		if err != nil {
-			return nil, session.TransactionError(ctx, err)
-		}
-		return p, nil
-	}
-	return nil, nil
+	return order, nil
 }
 
 func GetOrder(ctx context.Context, orderId string) (*Order, error) {
-	query := "SELECT * FROM orders WHERE order_id=$1 ORDER BY created_at LIMIT 1"
-	rows, err := session.Database(ctx).QueryContext(ctx, query, orderId)
+	query := fmt.Sprintf("SELECT %s FROM orders WHERE order_id=$1", strings.Join(orderColumns, ","))
+	row := session.Database(ctx).QueryRowContext(ctx, query, orderId)
+	order, err := orderFromRow(row)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	for rows.Next() {
-		p, err := orderFromRow(rows)
-		if err != nil {
-			return nil, session.TransactionError(ctx, err)
-		}
-		return p, nil
-	}
-	return nil, nil
-}
-
-func orderFromRow(row durable.Row) (*Order, error) {
-	var od Order
-	err := row.Scan(
-		&od.OrderId,
-		&od.TraceId,
-		&od.UserId,
-		&od.PrepayId,
-		&od.State,
-		&od.Amount,
-		&od.Channel,
-		&od.TransactionId,
-		&od.CreatedAt,
-		&od.PaidAt,
-	)
-	return &od, err
+	return order, nil
 }
 
 func CreateWxClient() *wxpay.Client {

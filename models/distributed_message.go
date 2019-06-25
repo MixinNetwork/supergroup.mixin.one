@@ -18,6 +18,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
+	"github.com/lib/pq"
 )
 
 const (
@@ -248,6 +249,18 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	return nil
 }
 
+func createSystemDistributedMessage(ctx context.Context, user *User, category, data string) error {
+	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", data)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	var values bytes.Buffer
+	values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
+	query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+	_, err = session.Database(ctx).ExecContext(ctx, query)
+	return err
+}
+
 func PendingDistributedMessages(ctx context.Context, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
 	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE status=$1 ORDER BY created_at LIMIT $2", strings.Join(distributedMessagesCols, ","))
@@ -356,7 +369,7 @@ func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 }
 
 func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string) string {
-	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', current_timestamp)", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status)
+	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', '%s')", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status, string(pq.FormatTimestamp(time.Now())))
 }
 
 func shardId(cid, uid string) (string, error) {

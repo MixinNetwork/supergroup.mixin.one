@@ -40,7 +40,7 @@ appearance:
   home_shortcut_groups:
     - label_en: "3-Party Services"
       label_zh: "第三方提供的服务"
-      shortcuts: 
+      shortcuts:
         - icon: "..."
           label_en: "Service Name"
           label_zh: "服务名称"
@@ -51,11 +51,14 @@ message_template:
   group_redpacket_short_desc: "来自无名氏的红包"
   group_redpacket_desc    : "来自 %s 的红包"
   group_opened_redpacket  : "%s 打开了你的红包"
+  message_prohibit        : "群主开启了禁言，暂时不能发言了。"
+  message_allow           : "群主关闭了禁言，你可以发言了。"
   message_tips_guest     : "您需要先点击机器图标授权。"
   message_tips_join      : "%s 加入了群组"
   message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
   message_tips_help_btn   : "点击加入群组"
   message_tips_unsubscribe: "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
+  message_tips_too_many   : "发送太频繁"
   message_commands_info   : "/INFO"
   message_commands_info_resp: "当前订阅人数: %d"
 wechat:
