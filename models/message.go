@@ -21,6 +21,13 @@ const (
 	MessageStateSuccess = "success"
 
 	MessageCategoryMessageRecall = "MESSAGE_RECALL"
+	MessageCategoryPlainText     = "PLAIN_TEXT"
+	MessageCategoryPlainImage    = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo    = "PLAIN_VIDEO"
+	MessageCategoryPlainData     = "PLAIN_DATA"
+	MessageCategoryPlainSticker  = "PLAIN_STICKER"
+	MessageCategoryPlainContact  = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio    = "PLAIN_AUDIO"
 )
 
 const messages_DDL = `
@@ -85,8 +92,11 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if len(data) > 5*1024 {
 		return nil, nil
 	}
-	if category == "PLAIN_AUDIO" && !config.Get().System.AudioMessageEnable {
+	if category == "PLAIN_AUDIO" {
 		if !user.isAdmin() {
+			return nil, nil
+		}
+		if !config.Get().System.AudioMessageEnable {
 			return nil, nil
 		}
 	}
