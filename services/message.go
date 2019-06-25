@@ -351,7 +351,7 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 			return user.Payment(ctx)
 		}
 		for _, asset := range config.Get().System.AccpetPaymentAssetList {
-			if number.FromString(transfer.Amount).Equal(number.FromString(transfer.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
+			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)
 			}
 		}
