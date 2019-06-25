@@ -139,9 +139,9 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 	return order, wxp, jswxp, nil
 }
 
-func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string, transactionId string) (*Order, error) {
-	query := "UPDATE orders SET state=$1, transaction_id=$2 WHERE trace_id=$3"
-	_, err := session.Database(ctx).ExecContext(ctx, query, state, transactionId, traceId)
+func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId string) (*Order, error) {
+	query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE trace_id=$3"
+	_, err := session.Database(ctx).ExecContext(ctx, query, transactionId, time.Now(), traceId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
