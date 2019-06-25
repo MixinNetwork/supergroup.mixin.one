@@ -21,6 +21,13 @@ const (
 	MessageStateSuccess = "success"
 
 	MessageCategoryMessageRecall = "MESSAGE_RECALL"
+	MessageCategoryPlainText     = "PLAIN_TEXT"
+	MessageCategoryPlainImage    = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo    = "PLAIN_VIDEO"
+	MessageCategoryPlainData     = "PLAIN_DATA"
+	MessageCategoryPlainSticker  = "PLAIN_STICKER"
+	MessageCategoryPlainContact  = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio    = "PLAIN_AUDIO"
 )
 
 const messages_DDL = `
