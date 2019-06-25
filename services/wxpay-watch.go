@@ -24,11 +24,11 @@ func StartWxPaymentWatch(name string, db *durable.Database) {
 	var err error
 	var params wxpay.Params
 	for true {
-		// check orders with state "NOTPAID" in every 2 seconds
-		// the window is 15 min
+		// check orders with state "NOTPAID" in every 5 seconds
+		// the window is 120 min
 		// @TODO
-		// 1. do not check the orders which of owners who have paid.
-		// 2. handle notify_url for better performance.
+		// [x] do not check the orders which of owners who have paid.
+		// [ ] handle notify_url for better performance.
 		orders, err = models.GetNotPaidOrders(ctx)
 		if err != nil {
 			time.Sleep(time.Duration(10) * time.Second)
@@ -57,6 +57,6 @@ func StartWxPaymentWatch(name string, db *durable.Database) {
 				}
 			}
 		}
-		time.Sleep(time.Duration(2) * time.Second)
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }

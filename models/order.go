@@ -65,7 +65,14 @@ func orderFromRow(row durable.Row) (*Order, error) {
 }
 
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
-	query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
+	query := fmt.Sprintf(`
+		SELECT %s FROM orders WHERE 
+		state='NOTPAID' 
+			AND created_at > NOW() - INTERVAL '120 minute' 
+			AND user_id NOT IN 
+				(SELECT user_id FROM users WHERE state='paid')
+		ORDER BY created_at`, strings.Join(orderColumns, ","))
+	// query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
