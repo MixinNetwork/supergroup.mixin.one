@@ -90,6 +90,7 @@ export default {
         this.items = this.items.concat(resp.data)
       } else {
         this.items = resp.data
+        this.finished = true
       }
       this.loading = false
       this.maskLoading = false
@@ -129,6 +130,7 @@ export default {
     },
     searchEnter () {
       this.loadMembers(0, this.searchQuery, false)
+      this.finished = true
     }
   }
 }

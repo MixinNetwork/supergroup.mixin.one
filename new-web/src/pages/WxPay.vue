@@ -12,7 +12,7 @@
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="primary" @click="payWechat">{{$t('wxpay.pay_wechat')}}</van-button>
+          <van-button style="width: 100%" type="primary" :disabled="loading" @click="payWechat">{{$t('wxpay.pay_wechat')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -61,7 +61,6 @@ export default {
           document.attachEvent('onWeixinJSBridgeReady', this.onBridgeReady);
         }
         alert("Please open this page in WeChat")
-        this.loading = false
       } else {
         this.onBridgeReady();
       }

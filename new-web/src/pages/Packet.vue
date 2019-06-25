@@ -1,6 +1,6 @@
 <template>
   <loading :loading="loading" :fullscreen="true">
-  <div class="prepare-packet-page">
+  <div class="packet-page" :class="isClose ? '' : 'open'">
     <div class="packet header">
       <div class="user avatar">
         <img v-if="hasAvatar" :src="user ? user.avatar_url : '#'" alt="user avatar"/>
@@ -13,7 +13,7 @@
       </h2>
     </div>
 
-    <div v-if="!isOpen" class="packet lottery">
+    <div v-if="!isClose" class="packet lottery">
       <template v-if="lottery">
         <h3>{{lottery.amount}}<span>{{asset.symbol}}</span></h3>
         <p>{{$t('packet.paid')}}</p>
@@ -27,7 +27,7 @@
     </div>
 
     <template v-if="pktData">
-      <div v-if="!isOpen" class="packet history">
+      <div v-if="!isClose" class="packet history">
         <h4>{{$t('packet.opened', {opened_count: pktData.opened_count, total_count: pktData.total_count})}}, 
           {{pktData.opened_amount}}/{{pktData.amount}} {{asset.symbol}}</h4>
         <ul >
@@ -74,7 +74,7 @@ export default {
     return {
       loading: false,
       pktData: null,
-      isOpen: false,
+      isClose: false,
       asset: {symbol: 'BTC'},
       lottery: null,
       user: null,
@@ -111,7 +111,7 @@ export default {
     }
 
     if (pktData.lottery || pktData.state === 'EXPIRED' || pktData.state === 'REFUNDED') {
-      this.isOpen = false
+      this.isClose = false
       for (var i in pktData.participants) {
         var participant = pktData.participants[i];
         pktData.participants[i]['symbol'] = pktData.asset.symbol;
@@ -119,7 +119,7 @@ export default {
         pktData.participants[i]['firstLetter'] = pktData.participants[i].avatar_url === '' ? (participant.full_name.trim()[0] || '^_^') : undefined;
       }
     } else {
-      this.isOpen = true
+      this.isClose = true
     }
     this.pktData = pktData
     this.user = pktData.user
@@ -141,6 +141,13 @@ export default {
 
 <style lang="scss" scoped>
 @import '../assets/scss/constant.scss';
+.packet-page {
+  height: 100%;
+  background: $color-main-highlight;
+}
+.packet-page.open {
+  background: white;
+}
 .open {
   background: $color-main-highlight;
   .packet.header {

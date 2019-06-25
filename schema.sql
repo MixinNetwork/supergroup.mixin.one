@@ -111,4 +111,4 @@ CREATE TABLE IF NOT EXISTS orders (
   paid_at          TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(created_at, paid_at);
+CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(user_id,state,created_at);

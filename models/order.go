@@ -65,7 +65,14 @@ func orderFromRow(row durable.Row) (*Order, error) {
 }
 
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
-	query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '15 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
+	query := fmt.Sprintf(`
+		SELECT %s FROM orders WHERE 
+		state='NOTPAID' 
+			AND created_at > NOW() - INTERVAL '120 minute' 
+			AND user_id NOT IN 
+				(SELECT user_id FROM users WHERE state='paid')
+		ORDER BY created_at`, strings.Join(orderColumns, ","))
+	// query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -123,8 +130,8 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 
 	// update record
 	order.State = "NOTPAID"
-	query = "UPDATE orders SET state=$1 WHERE order_id=$2"
-	_, err = session.Database(ctx).ExecContext(ctx, query, order.State, order.OrderId)
+	query = "UPDATE orders SET state=$1, prepay_id=$2 WHERE order_id=$3"
+	_, err = session.Database(ctx).ExecContext(ctx, query, order.State, wxp["prepay_id"], order.OrderId)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -132,9 +139,9 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 	return order, wxp, jswxp, nil
 }
 
-func UpdateOrderStateByTraceId(ctx context.Context, traceId int64, state string, transactionId string) (*Order, error) {
-	query := "UPDATE orders SET state=$1, transaction_id=$2 WHERE trace_id=$3"
-	_, err := session.Database(ctx).ExecContext(ctx, query, state, transactionId, traceId)
+func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId string) (*Order, error) {
+	query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE trace_id=$3"
+	_, err := session.Database(ctx).ExecContext(ctx, query, transactionId, time.Now(), traceId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
