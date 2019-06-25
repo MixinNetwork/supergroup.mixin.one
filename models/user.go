@@ -459,6 +459,7 @@ func findUsersByKeywords(ctx context.Context, keywords string) ([]*User, error) 
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+	defer rows.Close()
 
 	var users []*User
 	for rows.Next() {
