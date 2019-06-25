@@ -75,8 +75,14 @@ func (impl *usersImpl) me(w http.ResponseWriter, r *http.Request, _ map[string]s
 
 func (impl *usersImpl) subscribers(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	offset, _ := time.Parse(time.RFC3339Nano, r.URL.Query().Get("offset"))
-	num, _ := strconv.ParseInt(r.URL.Query().Get("q"), 10, 64)
-	if users, err := models.Subscribers(r.Context(), offset, num); err != nil {
+	var num int64
+	var keywords string
+	var err error
+	num, err = strconv.ParseInt(r.URL.Query().Get("q"), 10, 64)
+	if err != nil {
+		keywords = r.URL.Query().Get("q")
+	}
+	if users, err := models.Subscribers(r.Context(), offset, num, keywords); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderUsersView(w, r, users)

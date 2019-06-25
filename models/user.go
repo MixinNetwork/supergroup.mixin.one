@@ -341,9 +341,12 @@ func (user *User) Payment(ctx context.Context) error {
 	return nil
 }
 
-func Subscribers(ctx context.Context, offset time.Time, identity int64) ([]*User, error) {
+func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
 	if identity > 20000 {
 		return findUsersByIdentityNumber(ctx, identity)
+	}
+	if len(keywords) != 0 {
+		return findUsersByKeywords(ctx, keywords)
 	}
 	users, err := subscribedUsers(ctx, offset, 200)
 	if err != nil {
@@ -446,6 +449,24 @@ func findUsersByIdentityNumber(ctx context.Context, identity int64) ([]*User, er
 		return nil, session.TransactionError(ctx, err)
 	}
 	return []*User{user}, nil
+}
+
+func findUsersByKeywords(ctx context.Context, keywords string) ([]*User, error) {
+	query := fmt.Sprintf("SELECT %s FROM users WHERE LOWER(full_name) LIKE LOWER($1)", strings.Join(usersCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, fmt.Sprintf("%%%s%%", keywords))
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+
+	var users []*User
+	for rows.Next() {
+		p, err := userFromRow(rows)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		users = append(users, p)
+	}
+	return users, nil
 }
 
 func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error) {

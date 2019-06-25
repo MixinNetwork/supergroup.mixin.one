@@ -1,7 +1,7 @@
 <template>
   <loading :loading="loading" :fullscreen="true">
     <div class="home home-page page">
-      <van-panel :title="$t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
+      <van-panel :title="welcomeMessage || $t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
       </van-panel>
       <br/>
       <template v-for="group in shortcutsGroups">
@@ -30,7 +30,9 @@ export default {
     return {
       loading: false,
       meInfo: null,
+      welcomeMessage: '',
       websiteInfo: null,
+      websiteConf: null,
       builtinItems: [
         // builtin
         { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/#/packets/prepare' },
@@ -96,14 +98,18 @@ export default {
     try {
       this.loading = true
       this.GLOBAL.api.website.config().then((conf) => {
-        this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
-          x.label = this.isZh ? x.label_zh: x.label_en
-          x.shortcuts = x.shortcuts.map((z) => {
-            z.label = this.isZh ? z.label_zh: z.label_en
-            return z
+        this.websiteConf = conf
+        if (conf.data.home_shortcut_groups) {
+          this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
+            x.label = this.isZh ? x.label_zh: x.label_en
+            x.shortcuts = x.shortcuts.map((z) => {
+              z.label = this.isZh ? z.label_zh: z.label_en
+              return z
+            })
+            return x
           })
-          return x
-        })
+        }
+        this.welcomeMessage = this.websiteConf.data.home_welcome_message
         this.loading = false
       })
       this.websiteInfo = await this.GLOBAL.api.website.amount()
