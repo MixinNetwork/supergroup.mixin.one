@@ -485,12 +485,6 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 }
 
 func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
-	if user == nil {
-		if err := sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsGuest); err != nil {
-			return err
-		}
-		return nil
-	}
 	if err := sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsHelp); err != nil {
 		return err
 	}
