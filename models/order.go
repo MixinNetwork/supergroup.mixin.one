@@ -65,7 +65,7 @@ func orderFromRow(row durable.Row) (*Order, error) {
 }
 
 func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
-	query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '15 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
+	query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -123,8 +123,8 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 
 	// update record
 	order.State = "NOTPAID"
-	query = "UPDATE orders SET state=$1 WHERE order_id=$2"
-	_, err = session.Database(ctx).ExecContext(ctx, query, order.State, order.OrderId)
+	query = "UPDATE orders SET state=$1, prepay_id=$2 WHERE order_id=$3"
+	_, err = session.Database(ctx).ExecContext(ctx, query, order.State, wxp["prepay_id"], order.OrderId)
 	if err != nil {
 		return nil, nil, nil, err
 	}
