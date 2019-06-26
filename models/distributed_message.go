@@ -45,10 +45,8 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
 CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
 CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
-CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
 `
 
 var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
@@ -264,8 +262,8 @@ func createSystemDistributedMessage(ctx context.Context, user *User, category, d
 
 func PendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) ([]*DistributedMessage, error) {
 	var messages []*DistributedMessage
-	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY shard,status,created_at LIMIT $4", strings.Join(distributedMessagesCols, ","))
-	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, time.Now().Add(-2*UserActivePeriod), limit)
+	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE shard=$1 AND status=$2 ORDER BY shard,status,created_at LIMIT $3", strings.Join(distributedMessagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, shard, MessageStatusSent, limit)
 	if err != nil {
 		return messages, session.TransactionError(ctx, err)
 	}

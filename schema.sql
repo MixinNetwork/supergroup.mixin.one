@@ -44,8 +44,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
-CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
+CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
 CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 
 
