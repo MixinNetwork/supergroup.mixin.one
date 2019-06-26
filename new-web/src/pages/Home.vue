@@ -41,12 +41,13 @@ export default {
       messagesItem: {
         icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages'
       },
+      // 订阅始终在倒数第一个位置
       subscribeItem: {
         icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.subscribe()
-          this.builtinItems.splice(4, 1, this.unsubscribeItem)
+          this.builtinItems.splice(this.builtinItems.length - 1, 1, this.unsubscribeItem)
           
         }
       },
@@ -55,15 +56,16 @@ export default {
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.unsubscribe()
-          this.builtinItems.splice(4, 1, this.subscribeItem)
+          this.builtinItems.splice(this.builtinItems.length - 1, 1, this.subscribeItem)
         }
       },
+      // 禁言始终在倒数第二个位置
       unprohibitItem: {
         icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_unmute'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(false)
-          this.builtinItems.splice(3, 1, this.prohibitItem)
+          this.builtinItems.splice(this.builtinItems.length - 2, 1, this.prohibitItem)
         }
       },
       prohibitItem: {
@@ -71,7 +73,7 @@ export default {
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(true)
-          this.builtinItems.splice(3, 1, this.unprohibitItem)
+          this.builtinItems.splice(this.builtinItems.length - 2, 1, this.unprohibitItem)
         }
       },
       shortcutsGroups: []
