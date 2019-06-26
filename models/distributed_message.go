@@ -291,7 +291,7 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 }
 
 func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64, error) {
-	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE status=$1 AND created_at<$2 LIMIT $3)")
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE status=$1 AND created_at<$2 LIMIT $3")
 	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, time.Now().Add(-1*time.Hour), limit)
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
