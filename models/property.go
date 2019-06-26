@@ -58,9 +58,9 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 		}
 		data := config.Get()
 		if data.System.ProhibitedMessageEnabled {
-			text := data.MessageTemplate.MessageProhibit
+			text := data.MessageTemplate.MessageAllow
 			if value {
-				text = data.MessageTemplate.MessageAllow
+				text = data.MessageTemplate.MessageProhibit
 			}
 			return createSystemMessage(ctx, tx, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(text)))
 		}
