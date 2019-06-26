@@ -18,6 +18,7 @@ const (
 )
 
 const (
+	dropCouponsDDL             = `DROP TABLE IF EXISTS coupons;`
 	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
 	dropParticipantsDDL        = `DROP TABLE IF EXISTS participants;`
 	dropPacketsDDL             = `DROP TABLE IF EXISTS packets;`
@@ -43,6 +44,8 @@ func teardownTestContext(ctx context.Context) {
 		dropAssetsDDL,
 		dropParticipantsDDL,
 		dropPacketsDDL,
+		dropPropertiesDDL,
+		dropCouponsDDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {
@@ -71,6 +74,7 @@ func setupTestContext() context.Context {
 		packets_DDL,
 		participants_DDL,
 		properties_DDL,
+		coupons_DDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {

@@ -32,6 +32,7 @@ func RegisterRoutes(router *httptreemux.TreeMux) {
 	registerPackets(router)
 	registerMesseages(router)
 	registerProperties(router)
+	registerCoupons(router)
 }
 
 func root(w http.ResponseWriter, r *http.Request, params map[string]string) {
