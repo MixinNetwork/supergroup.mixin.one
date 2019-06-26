@@ -84,3 +84,15 @@ func ReadProperty(ctx context.Context, name string) (*Property, error) {
 	}
 	return property, nil
 }
+
+func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
+	query := fmt.Sprintf("SELECT %s FROM properties WHERE name=$1", strings.Join(propertiesColumns, ","))
+	row := tx.QueryRowContext(ctx, query, name)
+	property, err := propertyFromRow(row)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, session.TransactionError(ctx, err)
+	}
+	return property.Value == "true", nil
+}
