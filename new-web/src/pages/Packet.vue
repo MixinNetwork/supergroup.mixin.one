@@ -74,7 +74,7 @@ export default {
     return {
       loading: false,
       pktData: null,
-      isClose: false,
+      isClose: true,
       asset: {symbol: 'BTC'},
       lottery: null,
       user: null,
