@@ -24,7 +24,11 @@ func buildCoupon(coupon *models.Coupon) CouponView {
 }
 
 func RenderCoupon(w http.ResponseWriter, r *http.Request, coupon *models.Coupon) {
-	RenderDataResponse(w, r, buildCoupon(coupon))
+	if coupon != nil {
+		RenderDataResponse(w, r, buildCoupon(coupon))
+	} else {
+		RenderBlankResponse(w, r)
+	}
 }
 
 func RenderCoupons(w http.ResponseWriter, r *http.Request, coupons []*models.Coupon) {

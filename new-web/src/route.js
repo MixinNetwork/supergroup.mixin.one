@@ -7,6 +7,7 @@ import PayWxQr from './pages/PayWxQr'
 import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/Packet'
 import Members from './pages/Members'
+import Coupons from './pages/Coupons'
 import Messages from './pages/Messages'
 import WxPay from './pages/WxPay'
 import WxPayDone from './pages/WxPayDone'
@@ -21,6 +22,7 @@ const routes = [
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },
   { path: '/messages/', component: Messages },
+  { path: '/coupons/', component: Coupons },
   { path: '/auth', component: TestAuth },
   // special route for wechat, no auth required.
   { path: '/wxpay', component: WxPay }, 

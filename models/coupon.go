@@ -107,6 +107,9 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		if err != nil {
 			return err
 		}
+		if coupon == nil {
+			return nil
+		}
 		coupon.OccupiedBy = sql.NullString{String: user.UserId, Valid: true}
 		coupon.OccupiedAt = pq.NullTime{Time: time.Now(), Valid: true}
 		_, err = tx.ExecContext(ctx, query, coupon.OccupiedBy, coupon.OccupiedAt, coupon.CouponId)

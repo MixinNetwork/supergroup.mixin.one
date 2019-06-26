@@ -40,6 +40,17 @@
         </van-cell>
       </div>
     </van-panel>
+    <br/>
+    <van-panel :title="$t('pay.method_coupon')">
+      <van-cell>
+        <van-field :placeholder="$t('pay.coupon_placeholder')" v-model="couponCode"></van-field>
+      </van-cell>
+      <div slot="footer">
+        <van-cell>
+          <van-button style="width: 100%" type="info" @click="payCoupon" :disabled="loading">{{$t('pay.pay_coupon')}}</van-button>
+        </van-cell>
+      </div>
+    </van-panel>
   </div>
   </loading>
 </template>
@@ -73,6 +84,7 @@ export default {
       cnyRatio: {},
       currentCryptoPrice: 0,
       currentEstimatedPrice: 0,
+      couponCode: '',
       assets: []
     }
   },
@@ -172,6 +184,18 @@ export default {
     },
     payWechatMobile () {
       this.$router.push(`/pay/wxqr/?qr_url=${encodeURIComponent(WEB_ROOT + '/wechat/request/' + this.meInfo.data.user_id)}`)
+    },
+    async payCoupon () {
+      this.loading = true
+      let resp = await this.GLOBAL.api.coupon.occupy(this.couponCode)
+      if (resp && resp.data) {
+        Toast(this.$t('pay.correct_coupon_code_toast'))
+        this.$router.push('/')
+        this.loading = false
+      } else {
+        Toast(this.$t('pay.incorrect_coupon_code_toast'))
+        this.loading = false
+      }
     }
   }
 }

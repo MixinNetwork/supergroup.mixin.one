@@ -33,16 +33,14 @@ html, body {
   margin: 0;
   height: 100%;
   font-size: 14px;
-}
-a {
-}
-
-#app {
-  background: #f8f8f8;
   font-family: 'Roboto', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+a { }
+#app {
+  background: #f8f8f8;
   padding: 0;
   height: 100%;
 }
