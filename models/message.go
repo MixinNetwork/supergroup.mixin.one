@@ -94,12 +94,19 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if len(data) > 5*1024 {
 		return nil, nil
 	}
-	if category == "PLAIN_AUDIO" {
+	if category == MessageCategoryPlainAudio {
 		if !user.isAdmin() {
 			return nil, nil
 		}
 		if !config.Get().System.AudioMessageEnable {
 			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainImage {
+		if !user.isAdmin() {
+			if !config.Get().System.ImageMessageEnable {
+				return nil, nil
+			}
 		}
 	}
 	message := &Message{
