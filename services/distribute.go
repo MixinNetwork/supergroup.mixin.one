@@ -30,6 +30,15 @@ func distribute(ctx context.Context) {
 func pendingActiveDistributedMessages(ctx context.Context, shard, flag string, limit int64) {
 	for {
 		begin := time.Now()
+		_, err := models.CleanUpExpiredDistributedMessages(ctx, shard)
+		if err != nil {
+			session.Logger(ctx).Errorf("CleanUpExpiredDistributedMessages ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		if shard == flag {
+			log.Println("pendingActiveDistributedMessages CleanUpExpiredDistributedMessages SPEND TIME:::", shard, time.Now().Sub(begin))
+		}
 		messages, err := models.PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages ERROR: %+v", err)

@@ -72,22 +72,6 @@ func loopPendingMessage(ctx context.Context) {
 	}
 }
 
-func cleanUpDistributedMessages(ctx context.Context) {
-	limit := int64(100)
-	for {
-		count, err := models.CleanUpExpiredDistributedMessages(ctx, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("cleanUpDistributedMessages ERROR: %+v", err)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		if count < 100 {
-			time.Sleep(10 * time.Second)
-			continue
-		}
-	}
-}
-
 func sendTextMessage(ctx context.Context, mc *MessageContext, conversationId, label string) error {
 	params := map[string]interface{}{
 		"conversation_id": conversationId,

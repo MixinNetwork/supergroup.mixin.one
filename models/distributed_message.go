@@ -290,9 +290,9 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 	return nil
 }
 
-func CleanUpExpiredDistributedMessages(ctx context.Context, limit int64) (int64, error) {
-	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE status=$1 AND created_at<$2 LIMIT $3")
-	r, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, time.Now().Add(-1*time.Hour), limit)
+func CleanUpExpiredDistributedMessages(ctx context.Context, shard string) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE shard=$1 AND status=$2 AND created_at<$3")
+	r, err := session.Database(ctx).ExecContext(ctx, query, shard, MessageStatusDelivered, time.Now().Add(-1*time.Hour))
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}
