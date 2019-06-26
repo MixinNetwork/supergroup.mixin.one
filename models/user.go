@@ -117,10 +117,10 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			}
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
-			err = createConversation(ctx, "CONTACT", userId)
-			if err != nil {
-				return nil, session.ServerError(ctx, err)
-			}
+		}
+		err = createConversation(ctx, "CONTACT", userId)
+		if err != nil {
+			return nil, session.ServerError(ctx, err)
 		}
 	}
 	if strings.TrimSpace(fullName) != "" {
