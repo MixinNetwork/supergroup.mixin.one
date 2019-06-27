@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -18,6 +19,7 @@ const coupons_DDL = `
 CREATE TABLE IF NOT EXISTS coupons (
 	coupon_id         VARCHAR(36) PRIMARY KEY CHECK (coupon_id ~* '^[0-9a-f-]{36,36}$'),
 	code              VARCHAR(512) NOT NULL,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	occupied_by       VARCHAR(36),
 	occupied_at       TIMESTAMP WITH TIME ZONE,
 	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -25,25 +27,27 @@ CREATE TABLE IF NOT EXISTS coupons (
 
 CREATE UNIQUE INDEX IF NOT EXISTS coupons_codex ON coupons(code);
 CREATE INDEX IF NOT EXISTS coupons_occupiedx ON coupons(occupied_by);
+CREATE INDEX IF NOT EXISTS coupons_userx ON coupons(user_id);
 `
 
 type Coupon struct {
 	CouponId   string
 	Code       string
+	UserId     string
 	OccupiedBy sql.NullString
 	OccupiedAt pq.NullTime
 	CreatedAt  time.Time
 }
 
-var couponColums = []string{"coupon_id", "code", "occupied_by", "occupied_at", "created_at"}
+var couponColums = []string{"coupon_id", "code", "user_id", "occupied_by", "occupied_at", "created_at"}
 
 func (c *Coupon) values() []interface{} {
-	return []interface{}{c.CouponId, c.Code, c.OccupiedBy, c.OccupiedAt, c.CreatedAt}
+	return []interface{}{c.CouponId, c.Code, c.UserId, c.OccupiedBy, c.OccupiedAt, c.CreatedAt}
 }
 
 func couponFromRow(row durable.Row) (*Coupon, error) {
 	var c Coupon
-	err := row.Scan(&c.CouponId, &c.Code, &c.OccupiedBy, &c.OccupiedAt, &c.CreatedAt)
+	err := row.Scan(&c.CouponId, &c.Code, &c.UserId, &c.OccupiedBy, &c.OccupiedAt, &c.CreatedAt)
 	return &c, err
 }
 
@@ -74,34 +78,85 @@ func CreateCoupons(ctx context.Context, user *User, quantity int) ([]*Coupon, er
 		quantity = 100
 	}
 	var coupons []*Coupon
+
+	var values bytes.Buffer
+	t := time.Now()
 	for i := 0; i < quantity; i++ {
-		coupon, err := CreateCoupon(ctx)
-		if err != nil {
-			session.TransactionError(ctx, err)
-			continue
+		coupon := &Coupon{
+			CouponId:  bot.UuidNewV4().String(),
+			Code:      randomCode(),
+			UserId:    user.UserId,
+			CreatedAt: t,
 		}
 		coupons = append(coupons, coupon)
+		if i > 0 {
+			values.WriteString(",")
+		}
+		values.WriteString(fmt.Sprintf("('%s', '%s', '%s', '%s')", coupon.CouponId, coupon.Code, coupon.UserId, string(pq.FormatTimestamp(coupon.CreatedAt))))
+	}
+	query := fmt.Sprintf("INSERT INTO coupons (coupon_id,code,user_id,created_at) VALUES %s", values.String())
+	_, err := session.Database(ctx).ExecContext(ctx, query)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
 	}
 	return coupons, nil
 }
 
-func CreateCoupon(ctx context.Context) (*Coupon, error) {
-	coupon := &Coupon{
-		CouponId:  bot.UuidNewV4().String(),
-		Code:      randomCode(),
-		CreatedAt: time.Now(),
-	}
+func (user *User) Coupons(ctx context.Context) ([]*Coupon, error) {
+	var coupons []*Coupon
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		query := fmt.Sprintf("SELECT %s FROM coupons WHERE occupied_by IS NULL LIMIT 100", strings.Join(couponColums, ","))
+		rows, err := tx.QueryContext(ctx, query)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			coupon, err := couponFromRow(rows)
+			if err != nil {
+				return err
+			}
+			coupons = append(coupons, coupon)
+		}
+		if len(coupons) != 0 {
+			return nil
+		}
 
-	params, positions := compileTableQuery(couponColums)
-	query := fmt.Sprintf("INSERT INTO coupons (%s) VALUES (%s)", params, positions)
-	_, err := session.Database(ctx).ExecContext(ctx, query, coupon.values()...)
+		var values bytes.Buffer
+		t := time.Now()
+		for i := 0; i < 2; i++ {
+			coupon := &Coupon{
+				CouponId:  bot.UuidNewV4().String(),
+				Code:      randomCode(),
+				UserId:    user.UserId,
+				CreatedAt: t,
+			}
+			coupons = append(coupons, coupon)
+			if i > 0 {
+				values.WriteString(",")
+			}
+			values.WriteString(fmt.Sprintf("('%s', '%s', '%s', '%s')", coupon.CouponId, coupon.Code, coupon.UserId, string(pq.FormatTimestamp(coupon.CreatedAt))))
+		}
+		query = fmt.Sprintf("INSERT INTO coupons (coupon_id,code,user_id,created_at) VALUES %s", values.String())
+		_, err = tx.ExecContext(ctx, query)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
+		if sessionErr, ok := err.(session.Error); ok {
+			return nil, sessionErr
+		}
 		return nil, session.TransactionError(ctx, err)
 	}
-	return coupon, nil
+	return coupons, nil
 }
 
 func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
+	if user.State != PaymentStatePending {
+		return nil, session.ForbiddenError(ctx)
+	}
 	var coupon *Coupon
 	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
@@ -124,7 +179,9 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		if err := createSystemJoinMessage(ctx, tx, user); err != nil {
 			return err
 		}
-		user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
+		user.State = PaymentStatePaid
+		user.SubscribedAt = time.Now()
+		user.PayMethod = PayMethodCoupon
 		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
 		return err
 	})
