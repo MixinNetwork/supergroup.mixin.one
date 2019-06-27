@@ -100,15 +100,18 @@ func CreateCoupon(ctx context.Context) (*Coupon, error) {
 
 func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 	var coupon *Coupon
-	query := fmt.Sprintf("UPDATE coupons SET (occupied_by,occupied_at)=($1,$2) WHERE coupon_id=$3")
 	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
-		coupon, err = findCouponById(ctx, tx, code)
+		coupon, err = findCouponByCode(ctx, tx, code)
 		if err != nil {
 			return err
 		}
+		if coupon.OccupiedBy.Valid {
+			return session.ForbiddenError(ctx)
+		}
 		coupon.OccupiedBy = sql.NullString{String: user.UserId, Valid: true}
 		coupon.OccupiedAt = pq.NullTime{Time: time.Now(), Valid: true}
+		query := fmt.Sprintf("UPDATE coupons SET (occupied_by,occupied_at)=($1,$2) WHERE coupon_id=$3")
 		_, err = tx.ExecContext(ctx, query, coupon.OccupiedBy, coupon.OccupiedAt, coupon.CouponId)
 		if err != nil {
 			return err
@@ -118,12 +121,15 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		return err
 	})
 	if err != nil {
+		if sessionErr, ok := err.(session.Error); ok {
+			return nil, sessionErr
+		}
 		return nil, session.TransactionError(ctx, err)
 	}
 	return coupon, nil
 }
 
-func findCouponById(ctx context.Context, tx *sql.Tx, code string) (*Coupon, error) {
+func findCouponByCode(ctx context.Context, tx *sql.Tx, code string) (*Coupon, error) {
 	query := fmt.Sprintf("SELECT %s FROM coupons WHERE code=$1", strings.Join(couponColums, ","))
 	row := tx.QueryRowContext(ctx, query, code)
 	coupon, err := couponFromRow(row)

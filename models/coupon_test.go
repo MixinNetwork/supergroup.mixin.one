@@ -43,4 +43,11 @@ func TestCouponCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(user)
 	assert.True(user.SubscribedAt.After(genesisStartedAt()))
+
+	user2, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "11000", "name", "http://localhost")
+	assert.Nil(err)
+	assert.NotNil(user)
+	coupon, err = Occupied(ctx, coupon.Code, user2)
+	assert.NotNil(err)
+	assert.Nil(coupon)
 }

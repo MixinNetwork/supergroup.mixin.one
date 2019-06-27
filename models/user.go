@@ -171,6 +171,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 }
 
 func createConversation(ctx context.Context, category, participantId string) error {
+	if config.Get().Service.Environment == "test" {
+		return nil
+	}
 	conversationId := bot.UniqueConversationId(config.Get().Mixin.ClientId, participantId)
 	participant := bot.Participant{
 		UserId: participantId,
