@@ -103,8 +103,16 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		}
 	}
 	if category == MessageCategoryPlainImage {
-		if !user.isAdmin() {
-			if !config.Get().System.ImageMessageEnable {
+		if !user.isAdmin() && !config.Get().System.ImageMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainVideo {
+		if !user.isAdmin() && !config.Get().System.VideoMessageEnable {
+			return nil, nil
+		}
+		if category == MessageCategoryPlainContact {
+			if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
 				return nil, nil
 			}
 		}

@@ -50,6 +50,8 @@ type Config struct {
 		PriceAssetsEnable        bool     `yaml:"price_asset_enable"`
 		AudioMessageEnable       bool     `yaml:"audio_message_enable"`
 		ImageMessageEnable       bool     `yaml:"image_message_enable"`
+		VideoMessageEnable       bool     `yaml:"video_message_enable"`
+		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
 		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
