@@ -187,12 +187,17 @@ export default {
     },
     async payCoupon () {
       this.loading = true
-      let resp = await this.GLOBAL.api.coupon.occupy(this.couponCode)
-      if (resp && resp.data) {
-        Toast(this.$t('pay.correct_coupon_code_toast'))
-        this.$router.push('/')
-        this.loading = false
-      } else {
+      try {
+        let resp = await this.GLOBAL.api.coupon.occupy(this.couponCode)
+        if (resp && resp.data) {
+          Toast(this.$t('pay.correct_coupon_code_toast'))
+          this.$router.push('/')
+          this.loading = false
+        } else {
+          Toast(this.$t('pay.incorrect_coupon_code_toast'))
+          this.loading = false
+        }
+      } catch (err) {
         Toast(this.$t('pay.incorrect_coupon_code_toast'))
         this.loading = false
       }
