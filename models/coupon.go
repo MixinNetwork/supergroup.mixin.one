@@ -66,12 +66,15 @@ func ReadCoupons(ctx context.Context) ([]*Coupon, error) {
 	return coupons, nil
 }
 
-func CreateCoupons(ctx context.Context, user *User) ([]*Coupon, error) {
+func CreateCoupons(ctx context.Context, user *User, quantity int) ([]*Coupon, error) {
 	if !user.isAdmin() {
 		return nil, session.ForbiddenError(ctx)
 	}
+	if quantity > 100 || quantity < 1 {
+		quantity = 100
+	}
 	var coupons []*Coupon
-	for i := 0; i < 50; i++ {
+	for i := 0; i < quantity; i++ {
 		coupon, err := CreateCoupon(ctx)
 		if err != nil {
 			session.TransactionError(ctx, err)
