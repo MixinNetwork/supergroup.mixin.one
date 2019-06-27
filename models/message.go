@@ -189,6 +189,28 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 	return err
 }
 
+func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
+	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
+		t := time.Now()
+		message := &Message{
+			MessageId: bot.UuidNewV4().String(),
+			UserId:    config.Get().Mixin.ClientId,
+			Category:  "PLAIN_TEXT",
+			Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
+			CreatedAt: t,
+			UpdatedAt: t,
+			State:     MessageStatePending,
+		}
+		params, positions := compileTableQuery(messagesCols)
+		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+		_, err := tx.ExecContext(ctx, query, message.values()...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	var messages []*Message
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 ORDER BY state,updated_at LIMIT $2", strings.Join(messagesCols, ","))
