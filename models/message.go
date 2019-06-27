@@ -111,10 +111,10 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if !user.isAdmin() && !config.Get().System.VideoMessageEnable {
 			return nil, nil
 		}
-		if category == MessageCategoryPlainContact {
-			if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
-				return nil, nil
-			}
+	}
+	if category == MessageCategoryPlainContact {
+		if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
+			return nil, nil
 		}
 	}
 	message := &Message{
