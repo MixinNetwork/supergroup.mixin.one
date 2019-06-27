@@ -176,14 +176,7 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		if err != nil {
 			return err
 		}
-		if err := createSystemJoinMessage(ctx, tx, user); err != nil {
-			return err
-		}
-		user.State = PaymentStatePaid
-		user.SubscribedAt = time.Now()
-		user.PayMethod = PayMethodCoupon
-		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
-		return err
+		return user.paymentInTx(ctx, tx, PayMethodCoupon)
 	})
 	if err != nil {
 		if sessionErr, ok := err.(session.Error); ok {

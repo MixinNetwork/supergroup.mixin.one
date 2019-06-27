@@ -261,24 +261,32 @@ func (user *User) Unsubscribe(ctx context.Context) error {
 }
 
 func (user *User) Payment(ctx context.Context) error {
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		return user.paymentInTx(ctx, tx, PayMethodMixin)
+	})
+	if err != nil {
+		if sessionErr, ok := err.(session.Error); ok {
+			return sessionErr
+		}
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
+func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) error {
 	if user.State != PaymentStatePending {
 		return nil
 	}
-	item, err := readBlacklist(ctx, user.UserId)
-	if err != nil {
+	if b, err := readBlacklistInTx(ctx, tx, user.UserId); err != nil {
 		return err
-	} else if item != nil {
+	} else if b != nil {
 		return nil
 	}
 
-	user.State = PaymentStatePaid
-	user.SubscribedAt = time.Now()
-	user.PayMethod = PayMethodMixin
-	messages, err := readLastestMessages(ctx, 10)
+	messages, err := readLastestMessagesInTx(ctx, tx, 10)
 	if err != nil {
 		return err
 	}
-
 	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	var values bytes.Buffer
 	for i, msg := range messages {
@@ -313,25 +321,24 @@ func (user *User) Payment(ctx context.Context) error {
 		}
 		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 	}
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		v := values.String()
-		if v != "" {
-			dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
-			_, err := tx.ExecContext(ctx, dquery)
-			if err != nil {
-				return err
-			}
-		}
-		if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+	v := values.String()
+	if v != "" {
+		dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
+		_, err := tx.ExecContext(ctx, dquery)
+		if err != nil {
 			return err
 		}
-		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
-		return err
-	})
-	if err != nil {
-		return session.TransactionError(ctx, err)
 	}
-	return nil
+
+	if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+		return err
+	}
+
+	user.State = PaymentStatePaid
+	user.SubscribedAt = time.Now()
+	user.PayMethod = method
+	_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at,pay_method)=($1,$2,$3) WHERE user_id=$4", user.State, user.SubscribedAt, user.PayMethod, user.UserId)
+	return err
 }
 
 func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
