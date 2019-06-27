@@ -49,9 +49,12 @@ type Config struct {
 		MessageShardSize         int64    `yaml:"message_shard_size"`
 		PriceAssetsEnable        bool     `yaml:"price_asset_enable"`
 		AudioMessageEnable       bool     `yaml:"audio_message_enable"`
+		ImageMessageEnable       bool     `yaml:"image_message_enable"`
+		VideoMessageEnable       bool     `yaml:"video_message_enable"`
+		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		DetectImageEnabled       bool           `yaml:"detect_image"`
+		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
 		DetectLinkEnabled        bool           `yaml:"detect_link"`
 		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
 		PaymentAssetId           string         `yaml:"payment_asset_id"`

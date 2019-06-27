@@ -77,7 +77,7 @@ func (current *User) Prepare(ctx context.Context) (int64, error) {
 }
 
 func (current *User) CreatePacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
-	if current.isAdmin() {
+	if !current.isAdmin() {
 		p, err := ReadProperty(ctx, ProhibitedMessage)
 		if err != nil {
 			return nil, err
@@ -252,14 +252,16 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 				if err != nil {
 					return err
 				}
-				dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.GroupOpenedRedPacket, current.FullName))))
-				if err != nil {
+				if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
+					dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.GroupOpenedRedPacket, current.FullName))))
+					if err != nil {
+						return err
+					}
+					params, positions := compileTableQuery(distributedMessagesCols)
+					query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+					_, err = tx.ExecContext(ctx, query, dm.values()...)
 					return err
 				}
-				params, positions := compileTableQuery(distributedMessagesCols)
-				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
-				_, err = tx.ExecContext(ctx, query, dm.values()...)
-				return err
 			}
 			return err
 		})

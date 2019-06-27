@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,21 +16,37 @@ import (
 )
 
 func distribute(ctx context.Context) {
-	limit := int64(100)
+	limit := int64(80)
+	flag := ""
 	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
 		shard := shardId(config.Get().System.MessageShardModifier, i)
-		go pendingActiveDistributedMessages(ctx, shard, limit)
+		if i == 0 {
+			flag = shard
+		}
+		go pendingActiveDistributedMessages(ctx, shard, flag, limit)
 	}
-	go pendingDistributedMessages(ctx, limit)
 }
 
-func pendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) {
+func pendingActiveDistributedMessages(ctx context.Context, shard, flag string, limit int64) {
 	for {
+		begin := time.Now()
+		_, err := models.CleanUpExpiredDistributedMessages(ctx, shard)
+		if err != nil {
+			session.Logger(ctx).Errorf("CleanUpExpiredDistributedMessages ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		if shard == flag {
+			log.Println("pendingActiveDistributedMessages CleanUpExpiredDistributedMessages SPEND TIME:::", shard, time.Now().Sub(begin))
+		}
 		messages, err := models.PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages ERROR: %+v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
+		}
+		if shard == flag {
+			log.Println("pendingActiveDistributedMessages PendingActiveDistributedMessages SPEND TIME:::", shard, time.Now().Sub(begin))
 		}
 		if len(messages) < 1 {
 			time.Sleep(500 * time.Millisecond)
@@ -41,38 +58,17 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
+		if shard == flag {
+			log.Println("pendingActiveDistributedMessages sendDistributedMessges SPEND TIME:::", shard, time.Now().Sub(begin))
+		}
 		err = models.UpdateMessagesStatus(ctx, messages)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-	}
-}
-
-func pendingDistributedMessages(ctx context.Context, limit int64) {
-	for {
-		messages, err := models.PendingDistributedMessages(ctx, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		if len(messages) < 1 {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		err = sendDistributedMessges(ctx, "messages_in_order", messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages sendDistributedMessges ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		err = models.UpdateMessagesStatus(ctx, messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
+		if shard == flag {
+			log.Println("pendingActiveDistributedMessages UpdateMessagesStatus SPEND TIME :::", shard, time.Now().Sub(begin))
 		}
 	}
 }

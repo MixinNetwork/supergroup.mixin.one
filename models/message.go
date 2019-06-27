@@ -73,11 +73,13 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
-	if !user.isAdmin() {
-		if !durable.Allow(user.UserId) {
+	if user.UserId != config.Get().Mixin.ClientId && !user.isAdmin() {
+		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
 			text := base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.MessageTipsTooMany))
-			err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text)
-			return nil, err
+			if err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text); err != nil {
+				return nil, err
+			}
+			return nil, nil
 		}
 	}
 	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
@@ -92,11 +94,26 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if len(data) > 5*1024 {
 		return nil, nil
 	}
-	if category == "PLAIN_AUDIO" {
+	if category == MessageCategoryPlainAudio {
 		if !user.isAdmin() {
 			return nil, nil
 		}
 		if !config.Get().System.AudioMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainImage {
+		if !user.isAdmin() && !config.Get().System.ImageMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainVideo {
+		if !user.isAdmin() && !config.Get().System.VideoMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainContact {
+		if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
 			return nil, nil
 		}
 	}

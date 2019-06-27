@@ -50,7 +50,7 @@ func loopPendingMessage(ctx context.Context) {
 						continue
 					}
 				}
-				if config.Get().System.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
+				if config.Get().System.DetectQRCodeEnabled && message.Category == "PLAIN_IMAGE" {
 					if b, reason := validateMessage(ctx, message); !b {
 						if err := message.Leapfrog(ctx, reason); err != nil {
 							time.Sleep(500 * time.Millisecond)
@@ -68,22 +68,6 @@ func loopPendingMessage(ctx context.Context) {
 		}
 		if len(messages) < limit {
 			time.Sleep(500 * time.Millisecond)
-		}
-	}
-}
-
-func cleanUpDistributedMessages(ctx context.Context) {
-	limit := int64(100)
-	for {
-		count, err := models.CleanUpExpiredDistributedMessages(ctx, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("cleanUpDistributedMessages ERROR: %+v", err)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		if count < 100 {
-			time.Sleep(10 * time.Second)
-			continue
 		}
 	}
 }

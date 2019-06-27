@@ -58,9 +58,9 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 		}
 		data := config.Get()
 		if data.System.ProhibitedMessageEnabled {
-			text := data.MessageTemplate.MessageProhibit
+			text := data.MessageTemplate.MessageAllow
 			if value {
-				text = data.MessageTemplate.MessageAllow
+				text = data.MessageTemplate.MessageProhibit
 			}
 			return createSystemMessage(ctx, tx, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(text)))
 		}
@@ -83,4 +83,16 @@ func ReadProperty(ctx context.Context, name string) (*Property, error) {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return property, nil
+}
+
+func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
+	query := fmt.Sprintf("SELECT %s FROM properties WHERE name=$1", strings.Join(propertiesColumns, ","))
+	row := tx.QueryRowContext(ctx, query, name)
+	property, err := propertyFromRow(row)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, session.TransactionError(ctx, err)
+	}
+	return property.Value == "true", nil
 }
