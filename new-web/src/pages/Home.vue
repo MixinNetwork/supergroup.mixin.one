@@ -125,9 +125,9 @@ export default {
         this.$router.push('/pay')
         return
       }
+      this.builtinItems.push(this.couponsItem)
       if (this.meInfo.data.role === 'admin') {
         this.builtinItems.push(this.messagesItem)
-        this.builtinItems.push(this.couponsItem)
         this.updateProhibitedState()
       }
       this.updateSubscribeState()

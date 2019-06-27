@@ -6,6 +6,21 @@
         :rightText="$t('coupons.add_label')"
         @click-right="onClickRight"
         ></nav-bar>
+      <van-list
+        v-model="loading"
+        :finished="finished"
+        finished-text="~ END ~"
+        @load="onLoad"
+      >
+        <coupon-item :coupon="item" v-for="item in items" @coupon-click="couponClick"></coupon-item>
+      </van-list>
+      <van-action-sheet
+        v-model="showActionSheet"
+        :actions="actions"
+        :cancel-text="$t('comm.cancel')"
+        @select="onSelectAction"
+        @cancel="onCancelAction"
+      />
       <van-dialog
         v-model="showAddCouponModel"
         :title="$t('coupons.add_model_title')"
@@ -82,7 +97,9 @@ export default {
       this.showActionSheet = false
     },
     onClickRight () {
-      this.showAddCouponModel = true
+      if (window.localStorage.getItem('role') === 'admin') {
+        this.showAddCouponModel = true
+      }
     },
     onCreateCoupons () {
       this.maskLoading = true

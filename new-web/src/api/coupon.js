@@ -2,7 +2,7 @@ const api = require('./net').default
 
 const Coupon = {
   index: async function () {
-    return await api.get('/coupons', {})
+    return await api.get('/coupon', {})
   },
 
   create: async function () {
