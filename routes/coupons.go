@@ -42,6 +42,8 @@ func (impl *couponImpl) occupy(w http.ResponseWriter, r *http.Request, params ma
 	coupon, err := models.Occupied(r.Context(), params["code"], middlewares.CurrentUser(r))
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
+	} else if coupon == nil {
+		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderCoupon(w, r, coupon)
 	}

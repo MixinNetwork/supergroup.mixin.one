@@ -108,6 +108,8 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		coupon, err = findCouponByCode(ctx, tx, code)
 		if err != nil {
 			return err
+		} else if coupon == nil {
+			return nil
 		}
 		if coupon.OccupiedBy.Valid {
 			return session.ForbiddenError(ctx)
