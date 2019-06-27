@@ -115,6 +115,8 @@
     "add_model_title": "Create Coupons",
     "add_model_desc": "Tap 'Create' to create 50 available coupon codes",
     "create_button_label": "Create",
-    "copy": "Copy"
+    "copy": "Copy",
+    "state_available": "Available",
+    "state_used": "Used by {name}"
   }
 }

@@ -2,10 +2,10 @@
   <div class="coupon-item" @click="handleClick(coupon)">
     <div class="cell coupon-list-info">
       <div class="coupon-code">{{ coupon.code }}</div>
-        <div class="coupon-id">{{ coupon.coupon_id }}</div>
+        <div class="coupon-id"></div>
     </div>
     <div class="cell coupon-list-role">
-      <div class="coupon-role">{{coupon.category}}</div>
+      <div class="coupon-user">{{ coupon.full_name ? $t('coupons.state_used', {name: coupon.full_name}) : $t('coupons.state_available')}}</div>
       <div class="coupon-time">{{ coupon.time }}</div>
     </div>
   </div>
@@ -44,12 +44,15 @@ export default {
     align-items: flex-end;
   }
 
-  .coupon-code, .coupon-role {
+  .coupon-code {
+    font-size: 16px;
+  }
+  .coupon-user {
     height: 20px;
     font-size: 14px;
   }
 
-  .coupon-role.admin {
+  .coupon-user.admin {
     width: 22px;
     background: url('../../assets/images/icon-admin.png') 0 0 no-repeat;
     background-size: 22px 21px;

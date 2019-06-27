@@ -115,6 +115,8 @@
     "add_model_title": "创建兑换码",
     "add_model_desc": "点击 '创建'，创建 50 个新的兑换码",
     "create_button_label": "创建",
-    "copy": "复制"
+    "copy": "复制",
+    "state_available": "未使用",
+    "state_used": "被 {name} 用了"
   }
 }
