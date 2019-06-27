@@ -39,6 +39,10 @@ func TestCouponCRUD(t *testing.T) {
 	coupons, err = CreateCoupons(ctx, admin, 10)
 	assert.Nil(err)
 	assert.Len(coupons, 10)
+	for _, coupon := range coupons {
+		assert.False(coupon.OccupiedBy.Valid)
+		assert.False(coupon.OccupiedAt.Valid)
+	}
 	user, err = FindUser(ctx, user.UserId)
 	assert.Nil(err)
 	assert.NotNil(user)

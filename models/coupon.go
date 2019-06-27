@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -74,13 +75,25 @@ func CreateCoupons(ctx context.Context, user *User, quantity int) ([]*Coupon, er
 		quantity = 100
 	}
 	var coupons []*Coupon
+
+	var values bytes.Buffer
+	t := time.Now()
 	for i := 0; i < quantity; i++ {
-		coupon, err := CreateCoupon(ctx)
-		if err != nil {
-			session.TransactionError(ctx, err)
-			continue
+		coupon := &Coupon{
+			CouponId:  bot.UuidNewV4().String(),
+			Code:      randomCode(),
+			CreatedAt: t,
 		}
 		coupons = append(coupons, coupon)
+		if i > 0 {
+			values.WriteString(",")
+		}
+		values.WriteString(fmt.Sprintf("('%s', '%s', '%s')", coupon.CouponId, coupon.Code, string(pq.FormatTimestamp(coupon.CreatedAt))))
+	}
+	query := fmt.Sprintf("INSERT INTO coupons (coupon_id,code,created_at) VALUES %s", values.String())
+	_, err := session.Database(ctx).ExecContext(ctx, query)
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
 	}
 	return coupons, nil
 }
