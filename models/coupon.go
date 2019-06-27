@@ -37,6 +37,8 @@ type Coupon struct {
 	OccupiedBy sql.NullString
 	OccupiedAt pq.NullTime
 	CreatedAt  time.Time
+
+	FullName string
 }
 
 var couponColums = []string{"coupon_id", "code", "user_id", "occupied_by", "occupied_at", "created_at"}
@@ -116,6 +118,14 @@ func (user *User) Coupons(ctx context.Context) ([]*Coupon, error) {
 			if err != nil {
 				return err
 			}
+			if coupon.OccupiedBy.Valid {
+				user, err := findUserById(ctx, tx, coupon.OccupiedBy.String)
+				if err != nil {
+					return err
+				} else if user != nil {
+					coupon.FullName = user.FullName
+				}
+			}
 			coupons = append(coupons, coupon)
 		}
 		if len(coupons) != 0 {
@@ -176,14 +186,7 @@ func Occupied(ctx context.Context, code string, user *User) (*Coupon, error) {
 		if err != nil {
 			return err
 		}
-		if err := createSystemJoinMessage(ctx, tx, user); err != nil {
-			return err
-		}
-		user.State = PaymentStatePaid
-		user.SubscribedAt = time.Now()
-		user.PayMethod = PayMethodCoupon
-		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
-		return err
+		return user.paymentInTx(ctx, tx, PayMethodCoupon)
 	})
 	if err != nil {
 		if sessionErr, ok := err.(session.Error); ok {

@@ -23,7 +23,7 @@ func StartWxPaymentWatch(name string, db *durable.Database) {
 	var orders []*models.Order
 	var err error
 	var params wxpay.Params
-	for true {
+	for {
 		// check orders with state "NOTPAID" in every 5 seconds
 		// the window is 120 min
 		// @TODO
@@ -50,9 +50,6 @@ func StartWxPaymentWatch(name string, db *durable.Database) {
 				if strings.HasPrefix(tn, models.WX_TN_PREFIX) {
 					if tnId, err := strconv.ParseInt(tn[len(models.WX_TN_PREFIX):], 10, 64); err == nil {
 						models.MarkOrderAsPaidByTraceId(ctx, tnId, transactionId)
-						if user, err := models.FindUser(ctx, order.UserId); err == nil {
-							user.Payment(ctx)
-						}
 					}
 				}
 			}

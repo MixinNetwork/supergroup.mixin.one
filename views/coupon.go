@@ -11,6 +11,7 @@ type CouponView struct {
 	Type      string    `json:"type"`
 	CouponId  string    `json:"coupon_id"`
 	Code      string    `json:"code"`
+	FullName  string    `json:"full_name"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -19,6 +20,7 @@ func buildCoupon(coupon *models.Coupon) CouponView {
 		Type:      "coupon",
 		CouponId:  coupon.CouponId,
 		Code:      coupon.Code,
+		FullName:  coupon.FullName,
 		CreatedAt: coupon.CreatedAt,
 	}
 }

@@ -140,17 +140,33 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 }
 
 func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId string) (*Order, error) {
-	query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE trace_id=$3"
-	_, err := session.Database(ctx).ExecContext(ctx, query, transactionId, time.Now(), traceId)
+	var order *Order
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		order, err = getOrderByTraceId(ctx, tx, traceId)
+		if err != nil || order == nil {
+			return err
+		}
+		query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE oder_id=$3"
+		_, err = tx.ExecContext(ctx, query, transactionId, time.Now(), order.OrderId)
+		if err != nil {
+			return err
+		}
+		user, err := findUserById(ctx, tx, order.UserId)
+		if err != nil {
+			return err
+		}
+		return user.paymentInTx(ctx, tx, PayMethodCoupon)
+	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	return GetOrderByTraceId(ctx, traceId)
+	return order, nil
 }
 
-func GetOrderByTraceId(ctx context.Context, traceId int64) (*Order, error) {
+func getOrderByTraceId(ctx context.Context, tx *sql.Tx, traceId int64) (*Order, error) {
 	query := fmt.Sprintf("SELECT %s FROM orders WHERE trace_id=$1 ORDER BY created_at LIMIT 1", strings.Join(orderColumns, ","))
-	row := session.Database(ctx).QueryRowContext(ctx, query, traceId)
+	row := tx.QueryRowContext(ctx, query, traceId)
 	order, err := orderFromRow(row)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
