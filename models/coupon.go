@@ -37,6 +37,8 @@ type Coupon struct {
 	OccupiedBy sql.NullString
 	OccupiedAt pq.NullTime
 	CreatedAt  time.Time
+
+	FullName string
 }
 
 var couponColums = []string{"coupon_id", "code", "user_id", "occupied_by", "occupied_at", "created_at"}
@@ -115,6 +117,14 @@ func (user *User) Coupons(ctx context.Context) ([]*Coupon, error) {
 			coupon, err := couponFromRow(rows)
 			if err != nil {
 				return err
+			}
+			if coupon.OccupiedBy.Valid {
+				user, err := findUserById(ctx, tx, coupon.OccupiedBy.String)
+				if err != nil {
+					return err
+				} else if user != nil {
+					coupon.FullName = user.FullName
+				}
 			}
 			coupons = append(coupons, coupon)
 		}
