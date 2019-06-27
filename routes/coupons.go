@@ -22,6 +22,7 @@ func registerCoupons(router *httptreemux.TreeMux) {
 
 	router.POST("/coupons", impl.create)
 	router.POST("/coupons/:code", impl.occupy)
+	router.GET("/coupon", impl.reward)
 }
 
 func (impl *couponImpl) create(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -46,5 +47,14 @@ func (impl *couponImpl) occupy(w http.ResponseWriter, r *http.Request, params ma
 		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderCoupon(w, r, coupon)
+	}
+}
+
+func (impl *couponImpl) reward(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	coupons, err := middlewares.CurrentUser(r).Coupons(r.Context())
+	if err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderCoupons(w, r, coupons)
 	}
 }
