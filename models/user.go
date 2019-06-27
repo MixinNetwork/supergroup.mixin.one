@@ -133,23 +133,8 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	if user.isNew {
 		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 			if user.State == PaymentStatePaid {
-				if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-					t := time.Now()
-					message := &Message{
-						MessageId: bot.UuidNewV4().String(),
-						UserId:    config.Get().Mixin.ClientId,
-						Category:  "PLAIN_TEXT",
-						Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-						CreatedAt: t,
-						UpdatedAt: t,
-						State:     MessageStatePending,
-					}
-					params, positions := compileTableQuery(messagesCols)
-					query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-					_, err := tx.ExecContext(ctx, query, message.values()...)
-					if err != nil {
-						return err
-					}
+				if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+					return err
 				}
 			}
 			params, positions := compileTableQuery(usersCols)
@@ -171,6 +156,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 }
 
 func createConversation(ctx context.Context, category, participantId string) error {
+	if config.Get().Service.Environment == "test" {
+		return nil
+	}
 	conversationId := bot.UniqueConversationId(config.Get().Mixin.ClientId, participantId)
 	participant := bot.Participant{
 		UserId: participantId,
@@ -268,18 +256,8 @@ func (user *User) Payment(ctx context.Context) error {
 	} else if item != nil {
 		return nil
 	}
-	t := time.Now()
-	message := &Message{
-		MessageId: bot.UuidNewV4().String(),
-		UserId:    config.Get().Mixin.ClientId,
-		Category:  "PLAIN_TEXT",
-		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-		CreatedAt: t,
-		UpdatedAt: t,
-		State:     MessageStatePending,
-	}
-	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
 
+	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
 	messages, err := readLastestMessages(ctx, 10)
 	if err != nil {
 		return err
@@ -328,13 +306,8 @@ func (user *User) Payment(ctx context.Context) error {
 				return err
 			}
 		}
-		if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-			params, positions := compileTableQuery(messagesCols)
-			query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-			_, err := tx.ExecContext(ctx, query, message.values()...)
-			if err != nil {
-				return err
-			}
+		if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+			return err
 		}
 		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
 		return err
