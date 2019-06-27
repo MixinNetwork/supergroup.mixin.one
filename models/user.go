@@ -14,7 +14,6 @@ import (
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
-	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -109,14 +108,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
-		exhausted := true
-		for _, v := range config.Get().Payments {
-			if !number.FromString(v).Exhausted() {
-				exhausted = false
-				break
-			}
-		}
-		if exhausted {
+		if !config.Get().System.PayToJoin {
 			item, err := readBlacklist(ctx, user.UserId)
 			if err != nil {
 				return nil, session.TransactionError(ctx, err)
@@ -125,10 +117,10 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			}
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
-			err = createConversation(ctx, "CONTACT", userId)
-			if err != nil {
-				return nil, session.ServerError(ctx, err)
-			}
+		}
+		err = createConversation(ctx, "CONTACT", userId)
+		if err != nil {
+			return nil, session.ServerError(ctx, err)
 		}
 	}
 	if strings.TrimSpace(fullName) != "" {
@@ -141,21 +133,23 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	if user.isNew {
 		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 			if user.State == PaymentStatePaid {
-				t := time.Now()
-				message := &Message{
-					MessageId: bot.UuidNewV4().String(),
-					UserId:    config.Get().Mixin.ClientId,
-					Category:  "PLAIN_TEXT",
-					Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-					CreatedAt: t,
-					UpdatedAt: t,
-					State:     MessageStatePending,
-				}
-				params, positions := compileTableQuery(messagesCols)
-				query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-				_, err := tx.ExecContext(ctx, query, message.values()...)
-				if err != nil {
-					return err
+				if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
+					t := time.Now()
+					message := &Message{
+						MessageId: bot.UuidNewV4().String(),
+						UserId:    config.Get().Mixin.ClientId,
+						Category:  "PLAIN_TEXT",
+						Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
+						CreatedAt: t,
+						UpdatedAt: t,
+						State:     MessageStatePending,
+					}
+					params, positions := compileTableQuery(messagesCols)
+					query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+					_, err := tx.ExecContext(ctx, query, message.values()...)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			params, positions := compileTableQuery(usersCols)
@@ -334,11 +328,13 @@ func (user *User) Payment(ctx context.Context) error {
 				return err
 			}
 		}
-		params, positions := compileTableQuery(messagesCols)
-		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-		_, err := tx.ExecContext(ctx, query, message.values()...)
-		if err != nil {
-			return err
+		if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
+			params, positions := compileTableQuery(messagesCols)
+			query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+			_, err := tx.ExecContext(ctx, query, message.values()...)
+			if err != nil {
+				return err
+			}
 		}
 		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
 		return err
@@ -349,9 +345,12 @@ func (user *User) Payment(ctx context.Context) error {
 	return nil
 }
 
-func Subscribers(ctx context.Context, offset time.Time, identity int64) ([]*User, error) {
+func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
 	if identity > 20000 {
 		return findUsersByIdentityNumber(ctx, identity)
+	}
+	if len(keywords) != 0 {
+		return findUsersByKeywords(ctx, keywords)
 	}
 	users, err := subscribedUsers(ctx, offset, 200)
 	if err != nil {
@@ -403,6 +402,8 @@ func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		u, err := userFromRow(rows)
 		if err != nil {
@@ -454,6 +455,25 @@ func findUsersByIdentityNumber(ctx context.Context, identity int64) ([]*User, er
 		return nil, session.TransactionError(ctx, err)
 	}
 	return []*User{user}, nil
+}
+
+func findUsersByKeywords(ctx context.Context, keywords string) ([]*User, error) {
+	query := fmt.Sprintf("SELECT %s FROM users WHERE LOWER(full_name) LIKE LOWER($1)", strings.Join(usersCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, fmt.Sprintf("%%%s%%", keywords))
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		p, err := userFromRow(rows)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		users = append(users, p)
+	}
+	return users, nil
 }
 
 func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error) {

@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
-	"github.com/MixinNetwork/go-number"
+	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -74,7 +74,6 @@ type MessageContext struct {
 func (service *MessageService) Run(ctx context.Context) error {
 	go distribute(ctx)
 	go loopPendingMessage(ctx)
-	go cleanUpDistributedMessages(ctx)
 	go handlePendingParticipants(ctx)
 	go handleExpiredPackets(ctx)
 
@@ -347,9 +346,13 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 		return err
 	}
 	if user.TraceId == transfer.TraceId {
-		payments := config.Get().Payments
-		if !number.FromString(transfer.Amount).Exhausted() && payments[transfer.AssetId] == transfer.Amount {
+		if transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
 			return user.Payment(ctx)
+		}
+		for _, asset := range config.Get().System.AccpetPaymentAssetList {
+			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
+				return user.Payment(ctx)
+			}
 		}
 	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
@@ -402,7 +405,9 @@ func handleExpiredPackets(ctx context.Context) {
 				session.Logger(ctx).Error(id, err)
 				break
 			}
-			session.Logger(ctx).Infof("REFUND %v", packet)
+			if packet != nil {
+				session.Logger(ctx).Infof("REFUND %v", packet)
+			}
 		}
 
 		if len(packetIds) < limit {
@@ -473,12 +478,6 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 }
 
 func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
-	if user == nil {
-		if err := sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsGuest); err != nil {
-			return err
-		}
-		return nil
-	}
 	if err := sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsHelp); err != nil {
 		return err
 	}

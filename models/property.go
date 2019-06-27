@@ -3,10 +3,12 @@ package models
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
@@ -49,6 +51,21 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 	}
 	params, positions := compileTableQuery(propertiesColumns)
 	query := fmt.Sprintf("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", params, positions)
+	session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.ExecContext(ctx, query, property.values()...)
+		if err != nil {
+			return err
+		}
+		data := config.Get()
+		if data.System.ProhibitedMessageEnabled {
+			text := data.MessageTemplate.MessageAllow
+			if value {
+				text = data.MessageTemplate.MessageProhibit
+			}
+			return createSystemMessage(ctx, tx, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(text)))
+		}
+		return nil
+	})
 	_, err := session.Database(ctx).ExecContext(ctx, query, property.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -66,4 +83,16 @@ func ReadProperty(ctx context.Context, name string) (*Property, error) {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return property, nil
+}
+
+func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, error) {
+	query := fmt.Sprintf("SELECT %s FROM properties WHERE name=$1", strings.Join(propertiesColumns, ","))
+	row := tx.QueryRowContext(ctx, query, name)
+	property, err := propertyFromRow(row)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, session.TransactionError(ctx, err)
+	}
+	return property.Value == "true", nil
 }

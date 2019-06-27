@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -20,11 +21,18 @@ const (
 	MessageStateSuccess = "success"
 
 	MessageCategoryMessageRecall = "MESSAGE_RECALL"
+	MessageCategoryPlainText     = "PLAIN_TEXT"
+	MessageCategoryPlainImage    = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo    = "PLAIN_VIDEO"
+	MessageCategoryPlainData     = "PLAIN_DATA"
+	MessageCategoryPlainSticker  = "PLAIN_STICKER"
+	MessageCategoryPlainContact  = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio    = "PLAIN_AUDIO"
 )
 
 const messages_DDL = `
 CREATE TABLE IF NOT EXISTS messages (
-	message_id            VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
 	user_id	              VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
 	category              VARCHAR(512) NOT NULL,
 	quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
@@ -65,6 +73,15 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+	if user.UserId != config.Get().Mixin.ClientId && !user.isAdmin() {
+		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
+			text := base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.MessageTipsTooMany))
+			if err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text); err != nil {
+				return nil, err
+			}
+			return nil, nil
+		}
+	}
 	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
 		p, err := ReadProperty(ctx, ProhibitedMessage)
 		if err != nil {
@@ -74,8 +91,31 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, nil
 		}
 	}
-	if len(data) > 5*1024 || category == "PLAIN_AUDIO" {
+	if len(data) > 5*1024 {
 		return nil, nil
+	}
+	if category == MessageCategoryPlainAudio {
+		if !user.isAdmin() {
+			return nil, nil
+		}
+		if !config.Get().System.AudioMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainImage {
+		if !user.isAdmin() && !config.Get().System.ImageMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainVideo {
+		if !user.isAdmin() && !config.Get().System.VideoMessageEnable {
+			return nil, nil
+		}
+	}
+	if category == MessageCategoryPlainContact {
+		if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
+			return nil, nil
+		}
 	}
 	message := &Message{
 		MessageId:        messageId,
@@ -128,6 +168,25 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		return nil, session.TransactionError(ctx, err)
 	}
 	return message, nil
+}
+
+func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string) error {
+	mixin := config.Get().Mixin
+	t := time.Now()
+	message := &Message{
+		MessageId:        bot.UuidNewV4().String(),
+		UserId:           mixin.ClientId,
+		Category:         category,
+		Data:             data,
+		CreatedAt:        t,
+		UpdatedAt:        t,
+		State:            MessageStatePending,
+		LastDistributeAt: genesisStartedAt(),
+	}
+	params, positions := compileTableQuery(messagesCols)
+	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", params, positions)
+	_, err := tx.ExecContext(ctx, query, message.values()...)
+	return err
 }
 
 func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {

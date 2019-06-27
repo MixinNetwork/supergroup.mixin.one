@@ -15,6 +15,9 @@ var whitelist = [][2]string{
 	{"GET", "^/$"},
 	{"GET", "^/_hc$"},
 	{"GET", "^/users"},
+	{"GET", "^/config$"},
+	{"GET", "^/wechat"},
+	{"POST", "^/wechat"},
 	{"POST", "^/auth$"},
 }
 

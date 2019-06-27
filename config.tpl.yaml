@@ -13,28 +13,67 @@ system:
   message_shard_modifier: SHARD
   message_shard_size: 4
   price_asset_enable: true
+  audio_message_enable: false
+  image_message_enable: false
+  video_message_enable: false
+  contact_message_enable: false
   operator_list:
     - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
     - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
   detect_image: false
   detect_link: false
   prohibited_message: true
-payments:
-  c94ac88f-4671-3976-b60a-09064f1811e8: 0.001
-  3edb734c-6d6f-32ff-ab03-4eb43640c758: 10
+  payment_asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8"
+  payment_amount: "0.001"
+  # new payment settings
+  pay_to_join: true
+  auto_estimate: false
+  auto_estimate_currency: "usd" # cny or usd. only useful when auto_estimate == true
+  auto_estimate_base: "9.9"
+  accept_asset_list:
+    - symbol: "XIN"
+      asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8" # XIN
+      amount: "auto" # auto estimate
+    - symbol: "CNB"
+      asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c" # CNB
+      amount: "1000.00"
+  accept_wechat_payment: false
+  wechat_payment_amount: "0.01"
+appearance:
+  home_shortcut_groups:
+    - label_en: "3-Party Services"
+      label_zh: "第三方提供的服务"
+      shortcuts:
+        - icon: "..."
+          label_en: "Service Name"
+          label_zh: "服务名称"
+          url: https://..
 message_template:
   welcome_message        : "欢迎加入 Mixin 中文群"
   group_redpacket        : "中文群红包"
   group_redpacket_short_desc: "来自无名氏的红包"
   group_redpacket_desc    : "来自 %s 的红包"
   group_opened_redpacket  : "%s 打开了你的红包"
+  message_prohibit        : "群主开启了禁言，暂时不能发言了。"
+  message_allow           : "群主关闭了禁言，你可以发言了。"
   message_tips_guest     : "您需要先点击机器图标授权。"
   message_tips_join      : "%s 加入了群组"
   message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
   message_tips_help_btn   : "点击加入群组"
   message_tips_unsubscribe: "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
+  message_tips_too_many   : "发送太频繁"
   message_commands_info   : "/INFO"
   message_commands_info_resp: "当前订阅人数: %d"
+wechat:
+  # 微信配置
+  app_id: ""
+  app_secret: ""
+  token: ""
+  encodine_aes_key: ""
+  # 微信支付配置
+  mch_id: ""
+  mch_key: ""
+  notify_url:
 mixin:
   client_id        : "5fcd897e-e7b2-40d5-93cd-487e2d955556"
   client_secret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"

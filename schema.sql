@@ -16,7 +16,7 @@ CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 
 
 CREATE TABLE IF NOT EXISTS messages (
-  message_id            VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
   user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
   category              VARCHAR(512) NOT NULL,
   quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
@@ -44,8 +44,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS message_shard_status_recipientx ON distributed_messages(shard, status, recipient_id, created_at);
-CREATE INDEX IF NOT EXISTS message_status_createdx ON distributed_messages(status, created_at);
+CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
 CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 
 
@@ -96,3 +95,19 @@ CREATE TABLE IF NOT EXISTS properties (
   value              VARCHAR(1024) NOT NULL,
   created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS orders (
+  order_id         VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
+  trace_id         BIGSERIAL,
+  user_id          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  prepay_id        VARCHAR(36) DEFAULT '',
+  state            VARCHAR(32) NOT NULL,
+  amount           VARCHAR(128) NOT NULL,
+  channel          VARCHAR(32) NOT NULL,
+  transaction_id   VARCHAR(32) DEFAULT '',
+  created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  paid_at          TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(user_id,state,created_at);
