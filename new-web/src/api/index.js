@@ -6,5 +6,6 @@ export default {
   property: require('./property').default,
   packet: require('./packet').default,
   fox: require('./fox').default,
+  coupon: require('./coupon').default,
   net: require('./net').default,
 }

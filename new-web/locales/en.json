@@ -36,7 +36,8 @@
     "op_mute": "Mute Others",
     "op_unmute": "Unmute Others",
     "op_members": "Members",
-    "op_messages": "Messages"
+    "op_messages": "Messages",
+    "op_coupons": "Coupons"
   },
   "pay": {
     "title": "Pay to Join",
@@ -49,7 +50,12 @@
     "select_assets": "Select Assets",
     "method_wechat": "Pay with WeChat",
     "price_label": "Price: {price} {unit}",
-    "success_toast": "You have joined the group."
+    "success_toast": "You have joined the group.",
+    "pay_coupon": "Apply",
+    "method_coupon": "Apply a Coupon Code",
+    "coupon_placeholder": "Coupon Code",
+    "correct_coupon_code_toast": "Coupon code applied",
+    "incorrect_coupon_code_toast": "Incorrect coupon code"
   },
   "prepare_packet": {
     "title": "Prepare Lucky Coin",
@@ -102,5 +108,15 @@
   "wxpay_done": {
     "title": "Payment Placed",
     "hint": "Your order has been placed. <br/>It may take less than 3 min to handle your payment. <br/>Please return to Mixin Messenger and join the group later."
+  },
+  "coupons": {
+    "title": "Coupons",
+    "add_label": "Add",
+    "add_model_title": "Create Coupons",
+    "add_model_desc": "Tap 'Create' to create 50 available coupon codes",
+    "create_button_label": "Create",
+    "copy": "Copy",
+    "state_available": "Available",
+    "state_used": "Used by {name}"
   }
 }
