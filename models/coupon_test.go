@@ -31,8 +31,15 @@ func TestCouponCRUD(t *testing.T) {
 	coupon := coupons[0]
 	coupon, err = Occupied(ctx, coupon.Code, user)
 	assert.Nil(err)
-	assert.NotNil(coupons)
+	assert.NotNil(coupon)
 	assert.Equal(user.UserId, coupon.OccupiedBy.String)
+	user, err = FindUser(ctx, user.UserId)
+	assert.Nil(err)
+	coupon1 := coupons[1]
+	_, err = Occupied(ctx, coupon1.Code, user)
+	assert.NotNil(err)
+	assert.Equal(PaymentStatePaid, user.State)
+	assert.Equal(PayMethodCoupon, user.PayMethod)
 	coupons, err = CreateCoupons(ctx, user, 10)
 	assert.NotNil(err)
 	assert.Nil(coupons)
