@@ -118,9 +118,11 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
 		}
-		err = createConversation(ctx, "CONTACT", userId)
-		if err != nil {
-			return nil, session.ServerError(ctx, err)
+		if config.Get().Service.Environment != "test" {
+			err = createConversation(ctx, "CONTACT", userId)
+			if err != nil {
+				return nil, session.ServerError(ctx, err)
+			}
 		}
 	}
 	if strings.TrimSpace(fullName) != "" {
@@ -364,6 +366,16 @@ func SubscribersCount(ctx context.Context) (int64, error) {
 	query := "SELECT COUNT(*) FROM users WHERE subscribed_at>$1"
 	var count int64
 	err := session.Database(ctx).QueryRowContext(ctx, query, genesisStartedAt()).Scan(&count)
+	if err != nil {
+		return 0, session.TransactionError(ctx, err)
+	}
+	return count, nil
+}
+
+func PaidMemberCount(ctx context.Context) (int64, error) {
+	query := "SELECT COUNT(*) FROM users WHERE state='paid'"
+	var count int64
+	err := session.Database(ctx).QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}
