@@ -208,8 +208,8 @@ func findCouponByCode(ctx context.Context, tx *sql.Tx, code string) (*Coupon, er
 }
 
 func randomCode() string {
-	var letters = []rune("0123456789abcdefghijklmnopqrstuvwxyz")
-	b := make([]rune, 6)
+	var letters = []rune("0123456789")
+	b := make([]rune, 12)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
