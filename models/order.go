@@ -64,14 +64,14 @@ func orderFromRow(row durable.Row) (*Order, error) {
 	return &o, err
 }
 
-func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
+func GetNotPaidOrders(ctx context.Context, limit int64) ([]*Order, error) {
 	query := fmt.Sprintf(`
 		SELECT %s FROM orders WHERE
 		state='NOTPAID'
-			AND created_at > NOW() - INTERVAL '120 minute'
+			AND created_at > NOW() - INTERVAL '%d minute'
 			AND user_id NOT IN
 				(SELECT user_id FROM users WHERE state='paid')
-		ORDER BY created_at`, strings.Join(orderColumns, ","))
+		ORDER BY created_at`, strings.Join(orderColumns, ","), limit)
 	// query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
