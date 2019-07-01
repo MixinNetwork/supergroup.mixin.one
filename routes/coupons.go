@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"net/http"
 
@@ -35,7 +37,16 @@ func (impl *couponImpl) create(w http.ResponseWriter, r *http.Request, params ma
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
-		views.RenderCoupons(w, r, coupons)
+		b := &bytes.Buffer{}
+		wr := csv.NewWriter(b)
+		defer wr.Flush()
+
+		for _, coupon := range coupons {
+			wr.Write([]string{coupon.Code})
+		}
+		w.Header().Set("Content-Type", "text/csv")
+		w.Header().Set("Content-Disposition", "attachment;filename=coupons.csv")
+		w.Write(b.Bytes())
 	}
 }
 
