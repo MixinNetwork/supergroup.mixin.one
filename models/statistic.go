@@ -6,11 +6,11 @@ import (
 
 func ReadStatistic(ctx context.Context, user *User) (map[string]interface{}, error) {
 	s := make(map[string]interface{}, 0)
-	amount, err := SubscribersCount(ctx)
+	count, err := PaidMemberCount(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s["users_count"] = amount
+	s["users_count"] = count
 	s["prohibited"] = false
 	if user != nil && user.isAdmin() {
 		p, err := ReadProperty(ctx, ProhibitedMessage)

@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS assets (
 );
 `
 
-var assetsCols = []string{"asset_id", "symbol", "name", "icon_url", "price_btc", "price_usd"}
+const (
+	PacketMinAmount = "0.0001"
+)
 
 type Asset struct {
 	AssetId  string
@@ -35,7 +37,20 @@ type Asset struct {
 	IconURL  string
 	PriceBTC string
 	PriceUSD string
-	Balance  string
+
+	Balance string
+}
+
+var assetsColumns = []string{"asset_id", "symbol", "name", "icon_url", "price_btc", "price_usd"}
+
+func (a *Asset) values() []interface{} {
+	return []interface{}{a.AssetId, a.Symbol, a.Name, a.IconURL, a.PriceBTC, a.PriceUSD}
+}
+
+func assetFromRow(row durable.Row) (*Asset, error) {
+	var a Asset
+	err := row.Scan(&a.AssetId, &a.Symbol, &a.Name, &a.IconURL, &a.PriceBTC, &a.PriceUSD)
+	return &a, err
 }
 
 func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
@@ -45,7 +60,7 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 	}
 	var assets []*Asset
 	for _, a := range list {
-		if number.FromString(a.Balance).Cmp(number.FromString("0.0001")) < 0 {
+		if number.FromString(a.Balance).Cmp(number.FromString(PacketMinAmount)) < 0 {
 			continue
 		}
 		if config.Get().System.PriceAssetsEnable {
@@ -116,23 +131,17 @@ func upsertAssets(ctx context.Context, assets []*Asset) error {
 		}
 		values.WriteString(fmt.Sprintf("('%s','%s','%s','%s','%s','%s')", a.AssetId, a.Symbol, a.Name, a.IconURL, a.PriceBTC, a.PriceUSD))
 	}
-	query := fmt.Sprintf("INSERT INTO assets (%s) VALUES %s ON CONFLICT (asset_id) DO UPDATE SET (icon_url,price_btc,price_usd)=(EXCLUDED.icon_url, EXCLUDED.price_btc, EXCLUDED.price_usd)", strings.Join(assetsCols, ","), values.String())
+	query := fmt.Sprintf("INSERT INTO assets (%s) VALUES %s ON CONFLICT (asset_id) DO UPDATE SET (icon_url,price_btc,price_usd)=(EXCLUDED.icon_url, EXCLUDED.price_btc, EXCLUDED.price_usd)", strings.Join(assetsColumns, ","), values.String())
 	_, err := session.Database(ctx).ExecContext(ctx, query)
 	return err
 }
 
 func readAsset(ctx context.Context, tx *sql.Tx, assetId string) (*Asset, error) {
-	query := fmt.Sprintf("SELECT %s FROM assets WHERE asset_id=$1", strings.Join(assetsCols, ","))
+	query := fmt.Sprintf("SELECT %s FROM assets WHERE asset_id=$1", strings.Join(assetsColumns, ","))
 	row := tx.QueryRowContext(ctx, query, assetId)
 	asset, err := assetFromRow(row)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	return asset, err
-}
-
-func assetFromRow(row durable.Row) (*Asset, error) {
-	var a Asset
-	err := row.Scan(&a.AssetId, &a.Symbol, &a.Name, &a.IconURL, &a.PriceBTC, &a.PriceUSD)
-	return &a, err
 }
