@@ -22,7 +22,7 @@ func registerCoupons(router *httptreemux.TreeMux) {
 
 	router.POST("/coupons", impl.create)
 	router.POST("/coupons/:code", impl.occupy)
-	router.GET("/coupon", impl.reward)
+	//router.GET("/coupon", impl.reward)
 }
 
 func (impl *couponImpl) create(w http.ResponseWriter, r *http.Request, params map[string]string) {

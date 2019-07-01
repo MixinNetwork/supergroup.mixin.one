@@ -10,7 +10,6 @@ import '@/plugins/infinite-loading'
 
 Vue.config.productionTip = false
 Vue.prototype.GLOBAL = global
-// console.log(global)
 new Vue({
   components: {App},
   router,

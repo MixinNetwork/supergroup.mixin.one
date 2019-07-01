@@ -51,7 +51,7 @@ export default {
           evt.preventDefault()
           await this.GLOBAL.api.account.subscribe()
           this.builtinItems.splice(this.builtinItems.length - 1, 1, this.unsubscribeItem)
-          
+
         }
       },
       unsubscribeItem: {
@@ -125,8 +125,8 @@ export default {
         this.$router.push('/pay')
         return
       }
-      this.builtinItems.push(this.couponsItem)
       if (this.meInfo.data.role === 'admin') {
+        this.builtinItems.push(this.couponsItem)
         this.builtinItems.push(this.messagesItem)
         this.updateProhibitedState()
       }

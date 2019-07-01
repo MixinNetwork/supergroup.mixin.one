@@ -25,8 +25,8 @@ const routes = [
   { path: '/coupons/', component: Coupons },
   { path: '/auth', component: TestAuth },
   // special route for wechat, no auth required.
-  { path: '/wxpay', component: WxPay }, 
-  { path: '/wxpay/done', component: WxPayDone }, 
+  { path: '/wxpay', component: WxPay },
+  { path: '/wxpay/done', component: WxPayDone },
 ]
 
 const router = new VueRouter({
