@@ -39,14 +39,15 @@ func (impl *couponImpl) create(w http.ResponseWriter, r *http.Request, params ma
 	} else {
 		b := &bytes.Buffer{}
 		wr := csv.NewWriter(b)
-		defer wr.Flush()
-
 		for _, coupon := range coupons {
 			wr.Write([]string{coupon.Code})
 		}
+		wr.Flush()
+
+		bytes := b.Bytes()
 		w.Header().Set("Content-Type", "text/csv")
 		w.Header().Set("Content-Disposition", "attachment;filename=coupons.csv")
-		w.Write(b.Bytes())
+		w.Write(bytes)
 	}
 }
 

@@ -42,6 +42,7 @@ import CouponItem from '@/components/partial/CouponItem'
 import Loading from '@/components/Loading'
 import { ActionSheet, Toast, Dialog } from 'vant'
 import utils from '@/utils'
+import { saveAs } from 'file-saver'
 
 export default {
   name: 'Coupons',
@@ -72,17 +73,8 @@ export default {
   },
   methods: {
     async onLoad() {
-      this.loading = true
-      this.maskLoading = true
-      let resp = await this.GLOBAL.api.coupon.index()
       this.loading = false
       this.maskLoading = false
-      this.finished = true
-      console.log(resp.data)
-      this.items = resp.data.map((x) => {
-        x.time = dayjs(x.created_at).format('YYYY.MM.DD')
-        return x
-      })
     },
     couponClick (mem) {
       // this.showActionSheet = true
@@ -103,9 +95,10 @@ export default {
     },
     onCreateCoupons () {
       this.maskLoading = true
-      console.log('create coupon')
       this.GLOBAL.api.coupon.create().then((resp) => {
-        utils.reloadPage()
+        const blob = new Blob([resp], {type: 'text/csv'})
+        saveAs(blob, 'coupons.csv')
+        //utils.reloadPage()
         this.maskLoading = false
       }).catch((err) => {
         console.log(err)
