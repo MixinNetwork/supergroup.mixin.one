@@ -147,7 +147,7 @@ func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId 
 		if err != nil || order == nil {
 			return err
 		}
-		query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE oder_id=$3"
+		query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE order_id=$3"
 		_, err = tx.ExecContext(ctx, query, transactionId, time.Now(), order.OrderId)
 		if err != nil {
 			return err
