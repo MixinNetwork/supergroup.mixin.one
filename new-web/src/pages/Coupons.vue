@@ -72,17 +72,17 @@ export default {
   },
   methods: {
     async onLoad() {
-      this.loading = true
-      this.maskLoading = true
-      let resp = await this.GLOBAL.api.coupon.index()
+      // this.loading = true
+      // this.maskLoading = true
+      // let resp = await this.GLOBAL.api.coupon.index()
+      // this.maskLoading = false
+      // console.log(resp.data)
+      // this.items = resp.data.map((x) => {
+        //   x.time = dayjs(x.created_at).format('YYYY.MM.DD')
+      //   return x
+      // })
       this.loading = false
-      this.maskLoading = false
       this.finished = true
-      console.log(resp.data)
-      this.items = resp.data.map((x) => {
-        x.time = dayjs(x.created_at).format('YYYY.MM.DD')
-        return x
-      })
     },
     couponClick (mem) {
       // this.showActionSheet = true
@@ -104,7 +104,7 @@ export default {
     onCreateCoupons () {
       this.maskLoading = true
       console.log('create coupon')
-      this.GLOBAL.api.coupon.create().then((resp) => {
+      this.GLOBAL.api.coupon.create({ 'quantity': 50 }).then((resp) => {
         utils.reloadPage()
         this.maskLoading = false
       }).catch((err) => {

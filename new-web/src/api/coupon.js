@@ -5,9 +5,9 @@ const Coupon = {
     return await api.get('/coupon', {})
   },
 
-  create: async function () {
+  create: async function (params) {
     console.log('Coupon: create coupons')
-    return await api.post('/coupons', {}, {})
+    return await api.post('/coupons', params, {})
   },
 
   occupy: async function (code) {
