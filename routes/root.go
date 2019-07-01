@@ -29,6 +29,7 @@ func RegisterRoutes(router *httptreemux.TreeMux) {
 	registerPackets(router)
 	registerMesseages(router)
 	registerProperties(router)
+	registerCoupons(router)
 	registerWechat(router)
 }
 

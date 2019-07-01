@@ -10,7 +10,7 @@
     class="nav"
     :title="title"
     :left-text="hasBack ? $t('comm.back') : ''"
-    :right-text="hasTopRight ? $t('comm.more') : ''"
+    :right-text="hasTopRight ? (this.rightText || $t('comm.more')) : ''"
     :left-arrow="hasBack"
     @click-left="back"
     @click-right="more"
@@ -23,6 +23,7 @@ export default {
   name: 'Nav',
   props: {
     title: String,
+    rightText: String,
     hasBack: Boolean,
     hasTopRight: {
       type: Boolean,
@@ -40,7 +41,9 @@ export default {
     back () {
       this.$router.back()
     },
-    more () {}
+    more () {
+      this.$emit("click-right", {})
+    }
   }
 }
 </script>

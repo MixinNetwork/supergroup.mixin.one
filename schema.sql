@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
   state             VARCHAR(128) NOT NULL,
   active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
+  subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL,
+	pay_method        VARCHAR(512) NOT NULL DEFAULT ''
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
@@ -111,3 +112,17 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 
 CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(user_id,state,created_at);
+
+
+CREATE TABLE IF NOT EXISTS coupons (
+	coupon_id         VARCHAR(36) PRIMARY KEY CHECK (coupon_id ~* '^[0-9a-f-]{36,36}$'),
+	code              VARCHAR(512) NOT NULL,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	occupied_by       VARCHAR(36),
+	occupied_at       TIMESTAMP WITH TIME ZONE,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS coupons_codex ON coupons(code);
+CREATE INDEX IF NOT EXISTS coupons_occupiedx ON coupons(occupied_by);
+CREATE INDEX IF NOT EXISTS coupons_userx ON coupons(user_id);

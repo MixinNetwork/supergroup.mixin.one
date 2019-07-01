@@ -24,6 +24,11 @@ const (
 	PaymentStatePending = "pending"
 	PaymentStatePaid    = "paid"
 
+	PayMethodMixin  = "mixin"
+	PayMethodWechat = "wechat"
+	PayMethodCoupon = "coupon"
+	PayMethodOffer  = "offer"
+
 	UserActivePeriod = 5 * time.Minute
 )
 
@@ -37,7 +42,8 @@ CREATE TABLE IF NOT EXISTS users (
 	trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
 	state             VARCHAR(128) NOT NULL,
 	active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-	subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL
+	subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL,
+	pay_method        VARCHAR(512) NOT NULL DEFAULT ''
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
@@ -55,15 +61,22 @@ type User struct {
 	State          string
 	ActiveAt       time.Time
 	SubscribedAt   time.Time
+	PayMethod      string
 
 	isNew               bool
 	AuthenticationToken string
 }
 
-var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "avatar_url", "trace_id", "state", "active_at", "subscribed_at"}
+var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "avatar_url", "trace_id", "state", "active_at", "subscribed_at", "pay_method"}
 
 func (u *User) values() []interface{} {
-	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AvatarURL, u.TraceId, u.State, u.ActiveAt, u.SubscribedAt}
+	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AvatarURL, u.TraceId, u.State, u.ActiveAt, u.SubscribedAt, u.PayMethod}
+}
+
+func userFromRow(row durable.Row) (*User, error) {
+	var u User
+	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt, &u.PayMethod)
+	return &u, err
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
@@ -117,6 +130,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			}
 			user.State = PaymentStatePaid
 			user.SubscribedAt = time.Now()
+			user.PayMethod = PayMethodOffer
 		}
 		if config.Get().Service.Environment != "test" {
 			err = createConversation(ctx, "CONTACT", userId)
@@ -135,23 +149,8 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	if user.isNew {
 		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 			if user.State == PaymentStatePaid {
-				if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-					t := time.Now()
-					message := &Message{
-						MessageId: bot.UuidNewV4().String(),
-						UserId:    config.Get().Mixin.ClientId,
-						Category:  "PLAIN_TEXT",
-						Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-						CreatedAt: t,
-						UpdatedAt: t,
-						State:     MessageStatePending,
-					}
-					params, positions := compileTableQuery(messagesCols)
-					query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-					_, err := tx.ExecContext(ctx, query, message.values()...)
-					if err != nil {
-						return err
-					}
+				if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+					return err
 				}
 			}
 			params, positions := compileTableQuery(usersCols)
@@ -173,6 +172,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 }
 
 func createConversation(ctx context.Context, category, participantId string) error {
+	if config.Get().Service.Environment == "test" {
+		return nil
+	}
 	conversationId := bot.UniqueConversationId(config.Get().Mixin.ClientId, participantId)
 	participant := bot.Participant{
 		UserId: participantId,
@@ -261,32 +263,38 @@ func (user *User) Unsubscribe(ctx context.Context) error {
 }
 
 func (user *User) Payment(ctx context.Context) error {
+	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		return user.paymentInTx(ctx, tx, PayMethodMixin)
+	})
+	if err != nil {
+		if sessionErr, ok := err.(session.Error); ok {
+			return sessionErr
+		}
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
+func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) error {
 	if user.State != PaymentStatePending {
+		if method == PayMethodCoupon {
+			return session.ForbiddenError(ctx)
+		}
 		return nil
 	}
-	item, err := readBlacklist(ctx, user.UserId)
-	if err != nil {
+	if b, err := readBlacklistInTx(ctx, tx, user.UserId); err != nil {
 		return err
-	} else if item != nil {
+	} else if b != nil {
+		if method == PayMethodCoupon {
+			return session.ForbiddenError(ctx)
+		}
 		return nil
 	}
-	t := time.Now()
-	message := &Message{
-		MessageId: bot.UuidNewV4().String(),
-		UserId:    config.Get().Mixin.ClientId,
-		Category:  "PLAIN_TEXT",
-		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-		CreatedAt: t,
-		UpdatedAt: t,
-		State:     MessageStatePending,
-	}
-	user.State, user.SubscribedAt = PaymentStatePaid, time.Now()
 
-	messages, err := readLastestMessages(ctx, 10)
+	messages, err := readLastestMessagesInTx(ctx, tx, 10)
 	if err != nil {
 		return err
 	}
-
 	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	var values bytes.Buffer
 	for i, msg := range messages {
@@ -321,30 +329,24 @@ func (user *User) Payment(ctx context.Context) error {
 		}
 		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 	}
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		v := values.String()
-		if v != "" {
-			dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
-			_, err := tx.ExecContext(ctx, dquery)
-			if err != nil {
-				return err
-			}
+	v := values.String()
+	if v != "" {
+		dquery := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s ON CONFLICT (message_id) DO NOTHING", strings.Join(distributedMessagesCols, ","), values.String())
+		_, err := tx.ExecContext(ctx, dquery)
+		if err != nil {
+			return err
 		}
-		if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-			params, positions := compileTableQuery(messagesCols)
-			query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-			_, err := tx.ExecContext(ctx, query, message.values()...)
-			if err != nil {
-				return err
-			}
-		}
-		_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at)=($1,$2) WHERE user_id=$3", user.State, user.SubscribedAt, user.UserId)
-		return err
-	})
-	if err != nil {
-		return session.TransactionError(ctx, err)
 	}
-	return nil
+
+	if err := createSystemJoinMessage(ctx, tx, user); err != nil {
+		return err
+	}
+
+	user.State = PaymentStatePaid
+	user.SubscribedAt = time.Now()
+	user.PayMethod = method
+	_, err = tx.ExecContext(ctx, "UPDATE users SET (state,subscribed_at,pay_method)=($1,$2,$3) WHERE user_id=$4", user.State, user.SubscribedAt, user.PayMethod, user.UserId)
+	return err
 }
 
 func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
@@ -496,12 +498,6 @@ func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error)
 		return nil, nil
 	}
 	return user, err
-}
-
-func userFromRow(row durable.Row) (*User, error) {
-	var u User
-	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt)
-	return &u, err
 }
 
 func genesisStartedAt() time.Time {

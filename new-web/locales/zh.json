@@ -36,7 +36,8 @@
     "op_mute": "禁止发言",
     "op_unmute": "允许发言",
     "op_members": "成员",
-    "op_messages": "消息管理"
+    "op_messages": "消息管理",
+    "op_coupons": "兑换码"
   },
   "pay": {
     "title": "入群支付",
@@ -49,7 +50,12 @@
     "select_assets": "选择数字货币",
     "method_wechat": "使用微信支付",
     "price_label": "价格：{price} {unit}",
-    "success_toast": "你已加入本群"
+    "success_toast": "你已加入本群",
+    "pay_coupon": "兑换",
+    "method_coupon": "使用兑换码",
+    "coupon_placeholder": "兑换码",
+    "correct_coupon_code_toast": "已经兑换成功",
+    "incorrect_coupon_code_toast": "不正确的兑换码"
   },
   "prepare_packet": {
     "title": "准备红包",
@@ -102,5 +108,15 @@
   "wxpay_done": {
     "title": "已支付",
     "hint": "订单已提交。<br/>我们将在三分钟之内处理您的订单。<br/>请稍后返回 Mixin Messenger 查看进群状态。"
+  },
+  "coupons": {
+    "title": "兑换码",
+    "add_label": "创建兑换码",
+    "add_model_title": "创建兑换码",
+    "add_model_desc": "点击 '创建'，创建 100 个新的兑换码",
+    "create_button_label": "创建",
+    "copy": "复制",
+    "state_available": "未使用",
+    "state_used": "被 {name} 用了"
   }
 }
