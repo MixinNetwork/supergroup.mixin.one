@@ -156,7 +156,7 @@ func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId 
 		if err != nil {
 			return err
 		}
-		return user.paymentInTx(ctx, tx, PayMethodCoupon)
+		return user.paymentInTx(ctx, tx, PayMethodWechat)
 	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
