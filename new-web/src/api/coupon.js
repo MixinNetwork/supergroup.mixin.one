@@ -6,7 +6,6 @@ const Coupon = {
   },
 
   create: async function (params) {
-    console.log('Coupon: create coupons')
     return await api.post('/coupons', params, {})
   },
 

@@ -2,25 +2,13 @@
   <loading :loading="maskLoading" :fullscreen="true">
     <div class="coupons-page">
       <nav-bar :title="$t('coupons.title')"
-        :hasTopRight="true" :hasBack="true"
-        :rightText="$t('coupons.add_label')"
-        @click-right="onClickRight"
+        :hasTopRight="false" :hasBack="true"
         ></nav-bar>
-      <van-list
-        v-model="loading"
-        :finished="finished"
-        finished-text="~ END ~"
-        @load="onLoad"
-      >
-        <coupon-item :coupon="item" v-for="item in items" @coupon-click="couponClick"></coupon-item>
-      </van-list>
-      <van-action-sheet
-        v-model="showActionSheet"
-        :actions="actions"
-        :cancel-text="$t('comm.cancel')"
-        @select="onSelectAction"
-        @cancel="onCancelAction"
-      />
+      <div class="button-wrapper">
+        <van-button style="width: 100%" type="primary" @click="onCreateCoupons">
+          {{$t('coupons.add_label')}}
+        </van-button>
+      </div>
       <van-dialog
         v-model="showAddCouponModel"
         :title="$t('coupons.add_model_title')"
@@ -42,6 +30,7 @@ import CouponItem from '@/components/partial/CouponItem'
 import Loading from '@/components/Loading'
 import { ActionSheet, Toast, Dialog } from 'vant'
 import utils from '@/utils'
+import { saveAs } from 'file-saver'
 
 export default {
   name: 'Coupons',
@@ -96,16 +85,16 @@ export default {
     onCancelAction (item, ix) {
       this.showActionSheet = false
     },
-    onClickRight () {
+    onCreateCoupons () {
       if (window.localStorage.getItem('role') === 'admin') {
         this.showAddCouponModel = true
       }
     },
     onCreateCoupons () {
       this.maskLoading = true
-      console.log('create coupon')
-      this.GLOBAL.api.coupon.create({ 'quantity': 50 }).then((resp) => {
-        utils.reloadPage()
+      this.GLOBAL.api.coupon.create({quantity: 100}).then((resp) => {
+        const blob = new Blob([resp], {type: 'text/csv'})
+        saveAs(blob, 'coupons.csv')
         this.maskLoading = false
       }).catch((err) => {
         console.log(err)
@@ -118,5 +107,8 @@ export default {
 <style scoped>
 .coupons-page {
   padding-top: 60px;
+}
+.button-wrapper {
+  padding: 40px;
 }
 </style>
