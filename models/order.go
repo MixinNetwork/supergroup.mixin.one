@@ -64,14 +64,14 @@ func orderFromRow(row durable.Row) (*Order, error) {
 	return &o, err
 }
 
-func GetNotPaidOrders(ctx context.Context) ([]*Order, error) {
+func GetNotPaidOrders(ctx context.Context, limit int64) ([]*Order, error) {
 	query := fmt.Sprintf(`
 		SELECT %s FROM orders WHERE
 		state='NOTPAID'
-			AND created_at > NOW() - INTERVAL '120 minute'
+			AND created_at > NOW() - INTERVAL '%d minute'
 			AND user_id NOT IN
 				(SELECT user_id FROM users WHERE state='paid')
-		ORDER BY created_at`, strings.Join(orderColumns, ","))
+		ORDER BY created_at`, strings.Join(orderColumns, ","), limit)
 	// query := fmt.Sprintf("SELECT %s FROM orders WHERE state='NOTPAID' AND created_at > NOW() - INTERVAL '30 minute' ORDER BY created_at", strings.Join(orderColumns, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
 	if err != nil {
@@ -147,7 +147,7 @@ func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId 
 		if err != nil || order == nil {
 			return err
 		}
-		query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE oder_id=$3"
+		query := "UPDATE orders SET state='PAID', transaction_id=$1, paid_at=$2 WHERE order_id=$3"
 		_, err = tx.ExecContext(ctx, query, transactionId, time.Now(), order.OrderId)
 		if err != nil {
 			return err
@@ -156,7 +156,7 @@ func MarkOrderAsPaidByTraceId(ctx context.Context, traceId int64, transactionId 
 		if err != nil {
 			return err
 		}
-		return user.paymentInTx(ctx, tx, PayMethodCoupon)
+		return user.paymentInTx(ctx, tx, PayMethodWechat)
 	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)

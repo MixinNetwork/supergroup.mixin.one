@@ -27,7 +27,10 @@ func TestAssetCRUD(t *testing.T) {
 	}
 	err := upsertAssets(ctx, assets)
 	assert.Nil(err)
-	asset, err := testReadAsset(ctx, assets[0].AssetId)
+	asset, err := testReadAsset(ctx, bot.UuidNewV4().String())
+	assert.Nil(err)
+	assert.Nil(asset)
+	asset, err = testReadAsset(ctx, assets[0].AssetId)
 	assert.Nil(err)
 	assert.NotNil(asset)
 	assert.Equal("XIN", asset.Symbol)

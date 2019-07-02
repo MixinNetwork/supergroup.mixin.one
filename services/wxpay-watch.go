@@ -29,7 +29,7 @@ func StartWxPaymentWatch(name string, db *durable.Database) {
 		// @TODO
 		// [x] do not check the orders which of owners who have paid.
 		// [ ] handle notify_url for better performance.
-		orders, err = models.GetNotPaidOrders(ctx)
+		orders, err = models.GetNotPaidOrders(ctx, 120)
 		if err != nil {
 			time.Sleep(time.Duration(10) * time.Second)
 			log.Printf("Error in StartWxPaymentWatch's Loop: %v\n", err)
