@@ -120,39 +120,35 @@ type ExportedConfig struct {
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
 
-var conf *Config
+var AppConfig *Config
 
 func LoadConfig(dir string) {
 	data, err := ioutil.ReadFile(path.Join(dir, ConfigFile))
 	if err != nil {
 		log.Panicln(err)
 	}
-	conf = &Config{}
-	err = yaml.Unmarshal(data, conf)
+	AppConfig = &Config{}
+	err = yaml.Unmarshal(data, AppConfig)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	conf.System.Operators = make(map[string]bool)
-	for _, op := range conf.System.OperatorList {
-		conf.System.Operators[op] = true
+	AppConfig.System.Operators = make(map[string]bool)
+	for _, op := range AppConfig.System.OperatorList {
+		AppConfig.System.Operators[op] = true
 	}
-}
-
-func Get() *Config {
-	return conf
 }
 
 func GetExported() ExportedConfig {
 	var exc ExportedConfig
-	exc.MixinClientId = conf.Mixin.ClientId
-	exc.HTTPResourceHost = conf.Service.HTTPResourceHost
-	exc.AutoEstimate = conf.System.AutoEstimate
-	exc.AutoEstimateCurrency = conf.System.AutoEstimateCurrency
-	exc.AutoEstimateBase = conf.System.AutoEstimateBase
-	exc.AccpetPaymentAssetList = conf.System.AccpetPaymentAssetList
-	exc.AccpetWeChatPayment = conf.System.AccpetWeChatPayment
-	exc.WeChatPaymentAmount = conf.System.WeChatPaymentAmount
-	exc.HomeWelcomeMessage = conf.Appearance.HomeWelcomeMessage
-	exc.HomeShortcutGroups = conf.Appearance.HomeShortcutGroups
+	exc.MixinClientId = AppConfig.Mixin.ClientId
+	exc.HTTPResourceHost = AppConfig.Service.HTTPResourceHost
+	exc.AutoEstimate = AppConfig.System.AutoEstimate
+	exc.AutoEstimateCurrency = AppConfig.System.AutoEstimateCurrency
+	exc.AutoEstimateBase = AppConfig.System.AutoEstimateBase
+	exc.AccpetPaymentAssetList = AppConfig.System.AccpetPaymentAssetList
+	exc.AccpetWeChatPayment = AppConfig.System.AccpetWeChatPayment
+	exc.WeChatPaymentAmount = AppConfig.System.WeChatPaymentAmount
+	exc.HomeWelcomeMessage = AppConfig.Appearance.HomeWelcomeMessage
+	exc.HomeShortcutGroups = AppConfig.Appearance.HomeShortcutGroups
 	return exc
 }

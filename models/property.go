@@ -56,7 +56,7 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 		if err != nil {
 			return err
 		}
-		data := config.Get()
+		data := config.AppConfig
 		if data.System.ProhibitedMessageEnabled {
 			text := data.MessageTemplate.MessageAllow
 			if value {

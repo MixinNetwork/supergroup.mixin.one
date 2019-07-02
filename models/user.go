@@ -80,7 +80,7 @@ func userFromRow(row durable.Row) (*User, error) {
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
-	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.Get().Mixin.ClientId, config.Get().Mixin.ClientSecret, authorizationCode, "")
+	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.ClientSecret, authorizationCode, "")
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			ActiveAt:       time.Now(),
 			isNew:          true,
 		}
-		if !config.Get().System.PayToJoin {
+		if !config.AppConfig.System.PayToJoin {
 			item, err := readBlacklist(ctx, user.UserId)
 			if err != nil {
 				return nil, session.TransactionError(ctx, err)
@@ -132,7 +132,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			user.SubscribedAt = time.Now()
 			user.PayMethod = PayMethodOffer
 		}
-		if config.Get().Service.Environment != "test" {
+		if config.AppConfig.Service.Environment != "test" {
 			err = createConversation(ctx, "CONTACT", userId)
 			if err != nil {
 				return nil, session.ServerError(ctx, err)
@@ -172,10 +172,10 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 }
 
 func createConversation(ctx context.Context, category, participantId string) error {
-	if config.Get().Service.Environment == "test" {
+	if config.AppConfig.Service.Environment == "test" {
 		return nil
 	}
-	conversationId := bot.UniqueConversationId(config.Get().Mixin.ClientId, participantId)
+	conversationId := bot.UniqueConversationId(config.AppConfig.Mixin.ClientId, participantId)
 	participant := bot.Participant{
 		UserId: participantId,
 		Role:   "",
@@ -183,7 +183,7 @@ func createConversation(ctx context.Context, category, participantId string) err
 	participants := []bot.Participant{
 		participant,
 	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey)
+	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
 	return err
 }
 
@@ -385,7 +385,7 @@ func PaidMemberCount(ctx context.Context) (int64, error) {
 }
 
 func (user *User) DeleteUser(ctx context.Context, id string) error {
-	if !config.Get().System.Operators[user.UserId] {
+	if !config.AppConfig.System.Operators[user.UserId] {
 		return nil
 	}
 	_, err := session.Database(ctx).ExecContext(ctx, fmt.Sprintf("DELETE FROM users WHERE user_id=$1"), id)
@@ -396,14 +396,14 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (user *User) GetRole() string {
-	if config.Get().System.Operators[user.UserId] {
+	if config.AppConfig.System.Operators[user.UserId] {
 		return "admin"
 	}
 	return "user"
 }
 
 func (user *User) isAdmin() bool {
-	if config.Get().System.Operators[user.UserId] {
+	if config.AppConfig.System.Operators[user.UserId] {
 		return true
 	}
 	return false

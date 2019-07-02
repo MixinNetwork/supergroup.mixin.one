@@ -56,11 +56,11 @@ func teardownTestContext(ctx context.Context) {
 
 func setupTestContext() context.Context {
 	config.LoadConfig("../")
-	if config.Get().Service.Environment != testEnvironment || config.Get().Database.DatabaseName != testDatabase {
-		log.Panicln(config.Get().Service.Environment, config.Get().Database.DatabaseName)
+	if config.AppConfig.Service.Environment != testEnvironment || config.AppConfig.Database.DatabaseName != testDatabase {
+		log.Panicln(config.AppConfig.Service.Environment, config.AppConfig.Database.DatabaseName)
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.Get().Database.DatebaseUser, config.Get().Database.DatabasePassword, config.Get().Database.DatabaseHost, config.Get().Database.DatabasePort, config.Get().Database.DatabaseName)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.AppConfig.Database.DatebaseUser, config.AppConfig.Database.DatabasePassword, config.AppConfig.Database.DatabaseHost, config.AppConfig.Database.DatabasePort, config.AppConfig.Database.DatabaseName)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)

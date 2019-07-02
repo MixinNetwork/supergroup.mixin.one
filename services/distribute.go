@@ -16,8 +16,8 @@ import (
 
 func distribute(ctx context.Context) {
 	limit := int64(80)
-	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
-		shard := shardId(config.Get().System.MessageShardModifier, i)
+	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
+		shard := shardId(config.AppConfig.System.MessageShardModifier, i)
 		go pendingActiveDistributedMessages(ctx, shard, limit)
 	}
 }
@@ -58,7 +58,7 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 func sendDistributedMessges(ctx context.Context, key string, messages []*models.DistributedMessage) error {
 	var body []map[string]interface{}
 	for _, message := range messages {
-		if message.UserId == config.Get().Mixin.ClientId {
+		if message.UserId == config.AppConfig.Mixin.ClientId {
 			message.UserId = ""
 		}
 		if message.Category == models.MessageCategoryMessageRecall {
@@ -81,7 +81,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 	if err != nil {
 		return err
 	}
-	mixin := config.Get().Mixin
+	mixin := config.AppConfig.Mixin
 	accessToken, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "POST", "/messages", string(msgs))
 	if err != nil {
 		return err

@@ -16,10 +16,10 @@ var wxclient *wechat.Wechat
 func RegisterRoutes(router *httptreemux.TreeMux) {
 	//配置微信参数
 	wxcfg = &wechat.Config{
-		AppID:          config.Get().Wechat.AppId,
-		AppSecret:      config.Get().Wechat.AppSecret,
-		Token:          config.Get().Wechat.Token,
-		EncodingAESKey: config.Get().Wechat.EncodingAESKey,
+		AppID:          config.AppConfig.Wechat.AppId,
+		AppSecret:      config.AppConfig.Wechat.AppSecret,
+		Token:          config.AppConfig.Wechat.Token,
+		EncodingAESKey: config.AppConfig.Wechat.EncodingAESKey,
 	}
 	wxclient = wechat.NewWechat(wxcfg)
 

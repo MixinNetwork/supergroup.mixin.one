@@ -134,8 +134,8 @@ func testReadMessage(ctx context.Context, id string) (*Message, error) {
 func testReadDistributedMessages(ctx context.Context) ([]*DistributedMessage, error) {
 	limit := int64(64)
 	dms := make([]*DistributedMessage, 0)
-	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
-		shard := testShardId(config.Get().System.MessageShardModifier, i)
+	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
+		shard := testShardId(config.AppConfig.System.MessageShardModifier, i)
 		messages, err := PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			return dms, err
@@ -147,8 +147,8 @@ func testReadDistributedMessages(ctx context.Context) ([]*DistributedMessage, er
 
 func testCleanUpExpiredDistributedMessages(ctx context.Context) (int, error) {
 	count := 0
-	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
-		shard := testShardId(config.Get().System.MessageShardModifier, i)
+	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
+		shard := testShardId(config.AppConfig.System.MessageShardModifier, i)
 		n, err := CleanUpExpiredDistributedMessages(ctx, shard)
 		if err != nil {
 			return 0, err

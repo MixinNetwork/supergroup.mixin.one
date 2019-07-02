@@ -72,7 +72,7 @@ func (impl *wechatImpl) checkWxPay(w http.ResponseWriter, r *http.Request, param
 func (impl *wechatImpl) wxOAuthRequest(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	userId := params["id"]
 	wxoauth := wxclient.GetOauth()
-	url, err := wxoauth.GetRedirectURL(config.Get().Service.HTTPResourceHost+"/wechat/callback", "snsapi_userinfo", userId)
+	url, err := wxoauth.GetRedirectURL(config.AppConfig.Service.HTTPResourceHost+"/wechat/callback", "snsapi_userinfo", userId)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -90,6 +90,6 @@ func (impl *wechatImpl) wxOAuthCallback(w http.ResponseWriter, r *http.Request, 
 		fmt.Println(err)
 		return
 	}
-	url := fmt.Sprintf(config.Get().Service.HTTPResourceHost+"/?#/wxpay?access_token=%s&open_id=%s&user_id=%s", resToken.AccessToken, resToken.OpenID, userId)
+	url := fmt.Sprintf(config.AppConfig.Service.HTTPResourceHost+"/?#/wxpay?access_token=%s&open_id=%s&user_id=%s", resToken.AccessToken, resToken.OpenID, userId)
 	http.Redirect(w, r, url, 302)
 }
