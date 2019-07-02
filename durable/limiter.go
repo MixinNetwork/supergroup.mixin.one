@@ -13,6 +13,9 @@ func Allow(key string) bool {
 	if config.AppConfig.Service.Environment == "test" {
 		return true
 	}
+	if !config.AppConfig.System.LimitMessageFrequency {
+		return true
+	}
 	if limiters[key] == nil {
 		limiters[key] = rate.NewLimiter(rate.Every(3*time.Minute), 1)
 	}

@@ -17,6 +17,7 @@ system:
   image_message_enable: false
   video_message_enable: false
   contact_message_enable: false
+  limit_message_frequency: false
   operator_list:
     - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
     - "fcc87491-4fa0-4c2f-b387-262b63cbc112"

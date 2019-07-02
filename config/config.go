@@ -52,6 +52,7 @@ type Config struct {
 		ImageMessageEnable       bool     `yaml:"image_message_enable"`
 		VideoMessageEnable       bool     `yaml:"video_message_enable"`
 		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
+		LimitMessageFrequency    bool     `yaml:"limit_message_frequency"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
 		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
