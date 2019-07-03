@@ -375,7 +375,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
 		"title":       config.AppConfig.MessageTemplate.GroupRedPacket,
 		"description": description,
-		"action":      config.AppConfig.Service.HTTPResourceHost + "/#/packets/" + packet.PacketId,
+		"action":      config.AppConfig.Service.HTTPResourceHost + "/packets/" + packet.PacketId,
 	})
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
