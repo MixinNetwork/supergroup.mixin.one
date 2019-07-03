@@ -1,12 +1,8 @@
-function Property(api) {
-  this.api = api;
-}
+const api = require('./net').default
 
-Property.prototype = {
-  create: function (callback, state) {
-    this.api.request('POST', '/properties', {'value': state}, function(resp) {
-      return callback(resp);
-    })
+let Property = {
+  async create (state) {
+    return await api.post('/properties', {'value': state}, {})
   }
 }
 

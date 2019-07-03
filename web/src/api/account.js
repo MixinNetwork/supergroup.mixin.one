@@ -1,56 +1,56 @@
-function Account(api) {
-  this.api = api;
-}
+const api = require('./net').default
 
-Account.prototype = {
-  me: function (callback) {
-    this.api.request('GET', '/me', undefined, function(resp) {
-      return callback(resp);
-    });
+const Account = {
+  me: async function () {
+    return await api.get('/me', {})
   },
 
-  subscribe: function (callback) {
-    this.api.request('POST', '/subscribe', undefined, function(resp) {
-      return callback(resp);
-    });
+  subscribe: async function () {
+    return await api.post('/subscribe', {}, {})
   },
 
-  unsubscribe: function (callback) {
-    this.api.request('POST', '/unsubscribe', undefined, function(resp) {
-      return callback(resp);
-    });
+  unsubscribe: async function () {
+    return await api.post('/unsubscribe', {}, {})
   },
 
-  subscribers: function (callback, t, q) {
-    this.api.request('GET', '/subscribers?offset='+t+'&q='+q, undefined, function(resp) {
-      return callback(resp);
-    });
+  subscribers: async function (t=0, q='') {
+    return await api.get('/subscribers?offset=' + t + '&q=' + q, {})
   },
 
-  remove: function (callback, id) {
-    this.api.request('POST', '/users/'+id+'/remove', undefined, function(resp) {
-      return callback(resp);
-    });
+  remove: async function (id) {
+    return await api.post('/users/'+id+'/remove', {}, {})
   },
 
-  block: function (callback, id) {
-    this.api.request('POST', '/users/'+id+'/block', undefined, function(resp) {
-      return callback(resp);
-    });
+  block: async function (id) {
+    return await api.post('/users/'+id+'/block', {}, {})
   },
 
-  authenticate: function (callback, authorizationCode) {
+  authenticate: async function (authorizationCode) {
     var params = {
       "code": authorizationCode
     };
-    this.api.request('POST', '/auth', params, function(resp) {
-      if (resp.data) {
-        window.localStorage.setItem('token', resp.data.authentication_token);
-        window.localStorage.setItem('user_id', resp.data.user_id);
-        window.localStorage.setItem('role', resp.data.role);
-      }
-      return callback(resp);
-    });
+    let resp = await api.post('/auth', params, {})
+    if (resp.data) {
+      window.localStorage.setItem('token', resp.data.authentication_token);
+      window.localStorage.setItem('user_id', resp.data.user_id);
+      window.localStorage.setItem('role', resp.data.role);
+    }
+    return resp
+  },
+
+  config: async function () {
+    let resp = await api.post('/wechat', {}, {})
+    return resp
+  },
+
+  create_wx_pay: async function (params) {
+    let resp = await api.post('/wechat/pay/create', params, {})
+    return resp
+  },
+
+  check_wx_pay: async function (order_id) {
+    let resp = await api.get(`/wechat/pay/${order_id}`, {}, {})
+    return resp
   },
 
   userId: function () {

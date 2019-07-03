@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 );
 
 CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
-CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 `
 
 var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
@@ -72,7 +71,7 @@ type DistributedMessage struct {
 func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
-		ConversationId: UniqueConversationId(config.Get().Mixin.ClientId, recipientId),
+		ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, recipientId),
 		RecipientId:    recipientId,
 		UserId:         userId,
 		ParentId:       parentId,
@@ -194,7 +193,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 
 func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	ids := make([]string, 0)
-	for key, _ := range config.Get().System.Operators {
+	for key, _ := range config.AppConfig.System.Operators {
 		ids = append(ids, key)
 	}
 	messageIds := make([]string, len(ids))
@@ -249,7 +248,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 }
 
 func createSystemDistributedMessage(ctx context.Context, user *User, category, data string) error {
-	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.Get().Mixin.ClientId, user.UserId, "PLAIN_TEXT", data)
+	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, "PLAIN_TEXT", data)
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
@@ -363,11 +362,11 @@ func shardId(cid, uid string) (string, error) {
 	io.WriteString(h, minId)
 	io.WriteString(h, maxId)
 
-	b := new(big.Int).SetInt64(config.Get().System.MessageShardSize)
+	b := new(big.Int).SetInt64(config.AppConfig.System.MessageShardSize)
 	c := new(big.Int).SetBytes(h.Sum(nil))
 	m := new(big.Int).Mod(c, b)
 	h = md5.New()
-	h.Write([]byte(config.Get().System.MessageShardModifier))
+	h.Write([]byte(config.AppConfig.System.MessageShardModifier))
 	h.Write(m.Bytes())
 	s := h.Sum(nil)
 	s[6] = (s[6] & 0x0f) | 0x30

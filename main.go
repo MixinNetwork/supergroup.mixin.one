@@ -22,11 +22,11 @@ func main() {
 
 	config.LoadConfig(*dir)
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		config.Get().Database.DatebaseUser,
-		config.Get().Database.DatabasePassword,
-		config.Get().Database.DatabaseHost,
-		config.Get().Database.DatabasePort,
-		config.Get().Database.DatabaseName)
+		config.AppConfig.Database.DatebaseUser,
+		config.AppConfig.Database.DatabasePassword,
+		config.AppConfig.Database.DatabaseHost,
+		config.AppConfig.Database.DatabasePort,
+		config.AppConfig.Database.DatabaseName)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
@@ -43,7 +43,9 @@ func main() {
 
 	switch *service {
 	case "http":
-		go services.StartWxPaymentWatch(*service, database)
+		if config.AppConfig.System.AccpetWeChatPayment {
+			go services.StartWxPaymentWatch(*service, database)
+		}
 		err := StartServer(database)
 		if err != nil {
 			log.Println(err)
@@ -56,6 +58,6 @@ func main() {
 				log.Println(err)
 			}
 		}()
-		http.ListenAndServe(fmt.Sprintf(":%d", config.Get().Service.HTTPListenPort+2000), http.DefaultServeMux)
+		http.ListenAndServe(fmt.Sprintf(":%d", config.AppConfig.Service.HTTPListenPort+2000), http.DefaultServeMux)
 	}
 }

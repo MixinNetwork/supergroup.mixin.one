@@ -1,3 +1,49 @@
+# 2019-07-03
+
+添加了更多支付方式，包括微信支付, 但是需要相关的证书等, config.tpl.yaml 也作了相应的修改。
+
+```
+AlTER TABLE users ADD COLUMN pay_method VARCHAR(512) NOT NULL DEFAULT ''
+
+CREATE TABLE IF NOT EXISTS orders (
+  order_id         VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
+  trace_id         BIGSERIAL,
+  user_id          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  prepay_id        VARCHAR(36) DEFAULT '',
+  state            VARCHAR(32) NOT NULL,
+  amount           VARCHAR(128) NOT NULL,
+  channel          VARCHAR(32) NOT NULL,
+  transaction_id   VARCHAR(32) DEFAULT '',
+  created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  paid_at          TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS order_created_paidx ON orders(user_id,state,created_at);
+
+
+CREATE TABLE IF NOT EXISTS coupons (
+	coupon_id         VARCHAR(36) PRIMARY KEY CHECK (coupon_id ~* '^[0-9a-f-]{36,36}$'),
+	code              VARCHAR(512) NOT NULL,
+	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	occupied_by       VARCHAR(36),
+	occupied_at       TIMESTAMP WITH TIME ZONE,
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS coupons_codex ON coupons(code);
+CREATE INDEX IF NOT EXISTS coupons_occupiedx ON coupons(occupied_by);
+CREATE INDEX IF NOT EXISTS coupons_userx ON coupons(user_id);
+```
+
+Nginx 修改
+
+```
+location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+  expires max;
+  try_files $uri =404;
+}
+```
+
 # 2019-06-19
 
 支持全部禁言, 只允许管理员发言

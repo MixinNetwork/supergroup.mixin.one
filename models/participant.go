@@ -91,13 +91,13 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		if err != nil {
 			return err
 		}
-		memo := fmt.Sprintf(config.Get().MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
+		memo := fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
 		if strings.TrimSpace(packet.User.FullName) == "" {
-			memo = config.Get().MessageTemplate.GroupRedPacketShortDesc
+			memo = config.AppConfig.MessageTemplate.GroupRedPacketShortDesc
 		}
 		if count := utf8.RuneCountInString(memo); count > 100 {
 			name := string([]rune(packet.User.FullName)[:16])
-			memo = fmt.Sprintf(config.Get().MessageTemplate.GroupRedPacketDesc, name)
+			memo = fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, name)
 		}
 		in := &bot.TransferInput{
 			AssetId:     packet.AssetId,
@@ -107,7 +107,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 			Memo:        memo,
 		}
 		if !number.FromString(amount).Exhausted() {
-			err = bot.CreateTransfer(ctx, in, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey, config.Get().Mixin.SessionAssetPIN, config.Get().Mixin.PinToken)
+			err = bot.CreateTransfer(ctx, in, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, config.AppConfig.Mixin.SessionAssetPIN, config.AppConfig.Mixin.PinToken)
 			if err != nil {
 				return err
 			}

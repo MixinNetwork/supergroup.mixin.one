@@ -73,16 +73,16 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
-	if user.UserId != config.Get().Mixin.ClientId && !user.isAdmin() {
+	if user.UserId != config.AppConfig.Mixin.ClientId && !user.isAdmin() {
 		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
-			text := base64.StdEncoding.EncodeToString([]byte(config.Get().MessageTemplate.MessageTipsTooMany))
-			if err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text); err != nil {
+			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
+			if err := createSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text); err != nil {
 				return nil, err
 			}
 			return nil, nil
 		}
 	}
-	if config.Get().System.ProhibitedMessageEnabled && !user.isAdmin() {
+	if config.AppConfig.System.ProhibitedMessageEnabled && !user.isAdmin() {
 		p, err := ReadProperty(ctx, ProhibitedMessage)
 		if err != nil {
 			return nil, err
@@ -98,22 +98,22 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if !user.isAdmin() {
 			return nil, nil
 		}
-		if !config.Get().System.AudioMessageEnable {
+		if !config.AppConfig.System.AudioMessageEnable {
 			return nil, nil
 		}
 	}
 	if category == MessageCategoryPlainImage {
-		if !user.isAdmin() && !config.Get().System.ImageMessageEnable {
+		if !user.isAdmin() && !config.AppConfig.System.ImageMessageEnable {
 			return nil, nil
 		}
 	}
 	if category == MessageCategoryPlainVideo {
-		if !user.isAdmin() && !config.Get().System.VideoMessageEnable {
+		if !user.isAdmin() && !config.AppConfig.System.VideoMessageEnable {
 			return nil, nil
 		}
 	}
 	if category == MessageCategoryPlainContact {
-		if !user.isAdmin() && !config.Get().System.ContactMessageEnable {
+		if !user.isAdmin() && !config.AppConfig.System.ContactMessageEnable {
 			return nil, nil
 		}
 	}
@@ -171,7 +171,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 }
 
 func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string) error {
-	mixin := config.Get().Mixin
+	mixin := config.AppConfig.Mixin
 	t := time.Now()
 	message := &Message{
 		MessageId:        bot.UuidNewV4().String(),
@@ -190,25 +190,23 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 }
 
 func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
-	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-		t := time.Now()
-		message := &Message{
-			MessageId: bot.UuidNewV4().String(),
-			UserId:    config.Get().Mixin.ClientId,
-			Category:  "PLAIN_TEXT",
-			Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.Get().MessageTemplate.MessageTipsJoin, user.FullName))),
-			CreatedAt: t,
-			UpdatedAt: t,
-			State:     MessageStatePending,
-		}
-		params, positions := compileTableQuery(messagesCols)
-		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-		_, err := tx.ExecContext(ctx, query, message.values()...)
-		if err != nil {
-			return err
-		}
+	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); b {
+		return nil
 	}
-	return nil
+	t := time.Now()
+	message := &Message{
+		MessageId: bot.UuidNewV4().String(),
+		UserId:    config.AppConfig.Mixin.ClientId,
+		Category:  "PLAIN_TEXT",
+		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName))),
+		CreatedAt: t,
+		UpdatedAt: t,
+		State:     MessageStatePending,
+	}
+	params, positions := compileTableQuery(messagesCols)
+	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+	_, err := tx.ExecContext(ctx, query, message.values()...)
+	return err
 }
 
 func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {

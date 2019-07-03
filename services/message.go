@@ -89,7 +89,7 @@ func (service *MessageService) Run(ctx context.Context) error {
 }
 
 func (service *MessageService) loop(ctx context.Context) error {
-	conn, err := ConnectMixinBlaze(config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey)
+	conn, err := ConnectMixinBlaze(config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		case <-mc.ReadDone:
 			return nil
 		case msg := <-mc.ReadBuffer:
-			if msg.Category == "SYSTEM_ACCOUNT_SNAPSHOT" && msg.UserId != config.Get().Mixin.ClientId {
+			if msg.Category == "SYSTEM_ACCOUNT_SNAPSHOT" && msg.UserId != config.AppConfig.Mixin.ClientId {
 				data, err := base64.StdEncoding.DecodeString(msg.Data)
 				if err != nil {
 					return session.BlazeServerError(ctx, err)
@@ -132,7 +132,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 				if err != nil {
 					return session.BlazeServerError(ctx, err)
 				}
-			} else if msg.ConversationId == models.UniqueConversationId(config.Get().Mixin.ClientId, msg.UserId) {
+			} else if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
 				if err := handleMessage(ctx, mc, &msg); err != nil {
 					return err
 				}
@@ -346,10 +346,10 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 		return err
 	}
 	if user.TraceId == transfer.TraceId {
-		if transfer.Amount == config.Get().System.PaymentAmount && transfer.AssetId == config.Get().System.PaymentAssetId {
+		if transfer.Amount == config.AppConfig.System.PaymentAmount && transfer.AssetId == config.AppConfig.System.PaymentAssetId {
 			return user.Payment(ctx)
 		}
-		for _, asset := range config.Get().System.AccpetPaymentAssetList {
+		for _, asset := range config.AppConfig.System.AccpetPaymentAssetList {
 			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)
 			}
@@ -363,25 +363,25 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 }
 
 func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet) error {
-	description := fmt.Sprintf(config.Get().MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
+	description := fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
 	if strings.TrimSpace(packet.User.FullName) == "" {
-		description = config.Get().MessageTemplate.GroupRedPacketShortDesc
+		description = config.AppConfig.MessageTemplate.GroupRedPacketShortDesc
 	}
 	if count := utf8.RuneCountInString(description); count > 100 {
 		name := string([]rune(packet.User.FullName)[:16])
-		description = fmt.Sprintf(config.Get().MessageTemplate.GroupRedPacketDesc, name)
+		description = fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, name)
 	}
 	card, err := json.Marshal(map[string]string{
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
-		"title":       config.Get().MessageTemplate.GroupRedPacket,
+		"title":       config.AppConfig.MessageTemplate.GroupRedPacket,
 		"description": description,
-		"action":      config.Get().Service.HTTPResourceHost + "/#/packets/" + packet.PacketId,
+		"action":      config.AppConfig.Service.HTTPResourceHost + "/packets/" + packet.PacketId,
 	})
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
 	t := time.Now()
-	u := &models.User{UserId: config.Get().Mixin.ClientId, ActiveAt: time.Now()}
+	u := &models.User{UserId: config.AppConfig.Mixin.ClientId, ActiveAt: time.Now()}
 	_, err = models.CreateMessage(ctx, u, packet.PacketId, "APP_CARD", "", base64.StdEncoding.EncodeToString(card), t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
@@ -457,17 +457,17 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 		}
 	}
 	if user.SubscribedAt.IsZero() {
-		return sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsUnsubscribe)
+		return sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsUnsubscribe)
 	}
 	dataBytes, err := base64.StdEncoding.DecodeString(message.Data)
 	if err != nil {
 		return session.BadDataError(ctx)
 	} else if len(dataBytes) < 10 {
-		if strings.ToUpper(string(dataBytes)) == config.Get().MessageTemplate.MessageCommandsInfo {
+		if strings.ToUpper(string(dataBytes)) == config.AppConfig.MessageTemplate.MessageCommandsInfo {
 			if count, err := models.SubscribersCount(ctx); err != nil {
 				return err
 			} else {
-				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.Get().MessageTemplate.MessageCommandsInfoResp, count))
+				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.AppConfig.MessageTemplate.MessageCommandsInfoResp, count))
 			}
 		}
 	}
@@ -478,10 +478,10 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 }
 
 func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
-	if err := sendTextMessage(ctx, mc, message.ConversationId, config.Get().MessageTemplate.MessageTipsHelp); err != nil {
+	if err := sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsHelp); err != nil {
 		return err
 	}
-	if err := sendAppButton(ctx, mc, config.Get().MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.Get().Service.HTTPResourceHost); err != nil {
+	if err := sendAppButton(ctx, mc, config.AppConfig.MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.AppConfig.Service.HTTPResourceHost); err != nil {
 		return err
 	}
 	return nil

@@ -35,14 +35,14 @@ export default {
       websiteConf: null,
       builtinItems: [
         // builtin
-        { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/#/packets/prepare' },
-        { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/#/members' },
+        { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/packets/prepare' },
+        { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/members' },
       ],
       messagesItem: {
-        icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/#/messages'
+        icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/messages'
       },
       couponsItem: {
-        icon: require('../assets/images/coupons.png'), label:  this.$t('home.op_coupons'), url: '/#/coupons'
+        icon: require('../assets/images/coupons.png'), label:  this.$t('home.op_coupons'), url: '/coupons'
       },
       // 订阅始终在倒数第一个位置
       subscribeItem: {

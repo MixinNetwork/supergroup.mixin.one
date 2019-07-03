@@ -97,7 +97,7 @@ func CreateOrder(ctx context.Context, userId, amount, wxOpenId string) (*Order, 
 		TraceId:       0,
 		PrepayId:      "",
 		State:         "PENDING",
-		Amount:        config.Get().System.WeChatPaymentAmount,
+		Amount:        config.AppConfig.System.WeChatPaymentAmount,
 		Channel:       "wx",
 		TransactionId: "",
 	}
@@ -185,7 +185,7 @@ func GetOrder(ctx context.Context, orderId string) (*Order, error) {
 }
 
 func CreateWxClient() *wxpay.Client {
-	cfg := config.Get()
+	cfg := config.AppConfig
 	account := wxpay.NewAccount(cfg.Wechat.AppId, cfg.Wechat.MchId, cfg.Wechat.MchKey, false)
 	client := wxpay.NewClient(account)
 	account.SetCertData("./cert_test.p12")
@@ -208,7 +208,7 @@ func CreateWxPayment(client *wxpay.Client, traceId int64, amount, wxOpenId strin
 		// I don't have the permission of notify url.
 		// so I pull to get order state
 		// @TODO need to implement an method to handle it.
-		SetString("notify_url", config.Get().Wechat.NotifyUrl).
+		SetString("notify_url", config.AppConfig.Wechat.NotifyUrl).
 		// drop some shits here.
 		SetString("body", "Mixin-PayToJoin").
 		// only support jsapi trade type for now. No permission for "H5" trade type.

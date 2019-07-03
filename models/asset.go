@@ -63,7 +63,7 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 		if number.FromString(a.Balance).Cmp(number.FromString(PacketMinAmount)) < 0 {
 			continue
 		}
-		if config.Get().System.PriceAssetsEnable {
+		if config.AppConfig.System.PriceAssetsEnable {
 			if number.FromString(a.PriceUSD).Cmp(number.Zero()) <= 0 {
 				continue
 			}
