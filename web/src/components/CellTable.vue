@@ -2,10 +2,10 @@
   <div class="cell-table">
     <van-row class="table-row" v-for="group in groupedItems">
       <van-col span="6" v-for="item in group">
-        <a v-if="item.url" class="item" :href="item.url">
+        <router-link v-if="item.url" class="item" :to="item.url">
           <img :src="item.icon"/>
           <span>{{item.label}}</span>
-        </a>
+        </router-link>
         <a v-else class="item" @click="item.click">
           <img :src="item.icon"/>
           <span>{{item.label}}</span>
