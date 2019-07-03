@@ -6,7 +6,7 @@
     </van-panel>
     <br/>
     <van-panel :title="$t('pay.method_crypto')">
-      <row-select 
+      <row-select
         :index="0"
         :title="$t('pay.select_assets')"
         :columns="assets"
@@ -41,7 +41,7 @@
       </div>
     </van-panel>
     <br/>
-    <van-panel :title="$t('pay.method_coupon')">
+    <van-panel v-if="acceptCouponPayment" :title="$t('pay.method_coupon')">
       <van-cell>
         <van-field :placeholder="$t('pay.coupon_placeholder')" v-model="couponCode"></van-field>
       </van-cell>
@@ -78,6 +78,7 @@ export default {
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
       acceptWechatPayment: false,
+      acceptCouponPayment: false,
       wechatPaymentAmount: '100',
       cryptoEsitmatedUsdMap: {},
       currencyTickers: [],
@@ -104,6 +105,7 @@ export default {
     this.autoEstimateBase = config.data.auto_estimate_base
     this.acceptWechatPayment = config.data.accept_wechat_payment
     this.wechatPaymentAmount = config.data.wechat_payment_amount
+    this.acceptCouponPayment = config.data.accept_coupon_payment
     this.GLOBAL.api.fox.currency()
       .then((currencyInfo) => {
         this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
