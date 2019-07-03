@@ -76,7 +76,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if user.UserId != config.AppConfig.Mixin.ClientId && !user.isAdmin() {
 		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
 			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
-			if err := createSystemDistributedMessage(ctx, user, "PLAIN_TEXT", text); err != nil {
+			if err := createSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text); err != nil {
 				return nil, err
 			}
 			return nil, nil
@@ -190,25 +190,23 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 }
 
 func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
-	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); !b {
-		t := time.Now()
-		message := &Message{
-			MessageId: bot.UuidNewV4().String(),
-			UserId:    config.AppConfig.Mixin.ClientId,
-			Category:  "PLAIN_TEXT",
-			Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName))),
-			CreatedAt: t,
-			UpdatedAt: t,
-			State:     MessageStatePending,
-		}
-		params, positions := compileTableQuery(messagesCols)
-		query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-		_, err := tx.ExecContext(ctx, query, message.values()...)
-		if err != nil {
-			return err
-		}
+	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); b {
+		return nil
 	}
-	return nil
+	t := time.Now()
+	message := &Message{
+		MessageId: bot.UuidNewV4().String(),
+		UserId:    config.AppConfig.Mixin.ClientId,
+		Category:  "PLAIN_TEXT",
+		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName))),
+		CreatedAt: t,
+		UpdatedAt: t,
+		State:     MessageStatePending,
+	}
+	params, positions := compileTableQuery(messagesCols)
+	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+	_, err := tx.ExecContext(ctx, query, message.values()...)
+	return err
 }
 
 func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {

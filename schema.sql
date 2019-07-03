@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   state             VARCHAR(128) NOT NULL,
   active_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   subscribed_at     TIMESTAMP WITH TIME ZONE NOT NULL,
-	pay_method        VARCHAR(512) NOT NULL DEFAULT ''
+  pay_method        VARCHAR(512) NOT NULL DEFAULT ''
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
