@@ -28,6 +28,7 @@ const (
 	MessageCategoryPlainSticker  = "PLAIN_STICKER"
 	MessageCategoryPlainContact  = "PLAIN_CONTACT"
 	MessageCategoryPlainAudio    = "PLAIN_AUDIO"
+	MessageCategoryAppCard       = "APP_CARD"
 )
 
 const messages_DDL = `
@@ -88,7 +89,9 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, err
 		}
 		if p != nil && p.Value == "true" {
-			return nil, nil
+			if category != MessageCategoryAppCard {
+				return nil, nil
+			}
 		}
 	}
 	if len(data) > 5*1024 {
