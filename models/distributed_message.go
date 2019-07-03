@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 );
 
 CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
-CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 `
 
 var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}

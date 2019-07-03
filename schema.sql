@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
 );
 
 CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
-CREATE INDEX IF NOT EXISTS message_createdx ON distributed_messages(created_at);
 
 
 CREATE TABLE IF NOT EXISTS packets (

@@ -1,5 +1,5 @@
 service:
-  name: "Fox.ONE 中文群"
+  name: "Mixin 中文群"
   enviroment: "production or development"
   port: 7001
   host: "https://you-domain-name"
