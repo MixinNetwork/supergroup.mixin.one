@@ -1,3 +1,7 @@
+## NOTICE !!!
+
+Before you upgrade your group, please checkout `CHANGELOG.md` first. 
+
 ## Mixin Super Group
 
 supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlimited member group base on Mixin bot.

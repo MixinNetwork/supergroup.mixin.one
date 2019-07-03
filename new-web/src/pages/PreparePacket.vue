@@ -3,7 +3,7 @@
     <div class="prepare-packet-page">
       <nav-bar :title="$t('prepare_packet.title')" :hasTopRight="false" :hasBack="true"></nav-bar>
       <van-cell-group title="">
-        <row-select 
+        <row-select
           :index="0"
           :title="$t('prepare_packet.select_assets')"
           :columns="assets"
@@ -106,15 +106,14 @@ export default {
       if (createResp.error) {
         this.loading = false
         Toast('Error')
-        return 
+        return
       }
 
       console.log(createResp)
       let pkt = createResp.data
-      setTimeout(() => { 
+      setTimeout(() => {
         this.waitForPayment(pkt.packet_id)
       }, 2000)
-      // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`
     },
     onChangeAsset (ix) {
