@@ -15,16 +15,21 @@ import (
 )
 
 func distribute(ctx context.Context) {
-	limit := int64(100)
-	for i := int64(0); i < config.Get().System.MessageShardSize; i++ {
-		shard := shardId(config.Get().System.MessageShardModifier, i)
+	limit := int64(80)
+	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
+		shard := shardId(config.AppConfig.System.MessageShardModifier, i)
 		go pendingActiveDistributedMessages(ctx, shard, limit)
 	}
-	go pendingDistributedMessages(ctx, limit)
 }
 
 func pendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) {
 	for {
+		_, err := models.CleanUpExpiredDistributedMessages(ctx, shard)
+		if err != nil {
+			session.Logger(ctx).Errorf("CleanUpExpiredDistributedMessages ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
 		messages, err := models.PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages ERROR: %+v", err)
@@ -50,37 +55,10 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 	}
 }
 
-func pendingDistributedMessages(ctx context.Context, limit int64) {
-	for {
-		messages, err := models.PendingDistributedMessages(ctx, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		if len(messages) < 1 {
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		err = sendDistributedMessges(ctx, "messages_in_order", messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages sendDistributedMessges ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		err = models.UpdateMessagesStatus(ctx, messages)
-		if err != nil {
-			session.Logger(ctx).Errorf("PendingDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-	}
-}
-
 func sendDistributedMessges(ctx context.Context, key string, messages []*models.DistributedMessage) error {
 	var body []map[string]interface{}
 	for _, message := range messages {
-		if message.UserId == config.Get().Mixin.ClientId {
+		if message.UserId == config.AppConfig.Mixin.ClientId {
 			message.UserId = ""
 		}
 		if message.Category == models.MessageCategoryMessageRecall {
@@ -103,7 +81,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 	if err != nil {
 		return err
 	}
-	mixin := config.Get().Mixin
+	mixin := config.AppConfig.Mixin
 	accessToken, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "POST", "/messages", string(msgs))
 	if err != nil {
 		return err

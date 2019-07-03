@@ -11,3 +11,5 @@ env.prod.sh
 
 !config/config.go
 .DS_Store
+new-web/public/legacy
+new-web/public/shortcuts

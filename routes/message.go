@@ -34,6 +34,23 @@ func (impl *messageImpl) index(w http.ResponseWriter, r *http.Request, _ map[str
 }
 
 func (impl *messageImpl) recall(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	message, err := models.FindMessage(r.Context(), params["id"])
+	if err != nil {
+		views.RenderErrorResponse(w, r, err)
+		return
+	}
+	switch message.Category {
+	case models.MessageCategoryPlainText,
+		models.MessageCategoryPlainImage,
+		models.MessageCategoryPlainVideo,
+		models.MessageCategoryPlainData,
+		models.MessageCategoryPlainSticker,
+		models.MessageCategoryPlainContact,
+		models.MessageCategoryPlainAudio:
+	default:
+		views.RenderErrorResponse(w, r, session.ForbiddenError(r.Context()))
+		return
+	}
 	data, err := json.Marshal(map[string]string{"message_id": params["id"]})
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)

@@ -21,7 +21,10 @@ func (d *Database) RunInTransaction(ctx context.Context, fn func(ctx context.Con
 		return err
 	}
 	if err := fn(ctx, tx); err != nil {
-		return tx.Rollback()
+		if err := tx.Rollback(); err != nil {
+			return err
+		}
+		return err
 	}
 	return tx.Commit()
 }

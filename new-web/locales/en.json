@@ -1,0 +1,122 @@
+{
+  "comm": {
+    "withdraw": "Withdraw",
+    "deposit": "Deposit",
+    "estimated_assets": "Estimated Assets",
+    "copy_success": "Copy Successfully",
+    "back": "Back",
+    "more": "More",
+    "balance": "Balance",
+    "save": "Save",
+    "delete": "Delete",
+    "create": "Create",
+    "nomore": "No More Data",
+    "complete": "Compelete",
+    "verified_pin": "Already verified PIN?",
+    "no": "No",
+    "yes": "Yes",
+    "cancel": "Cancel"
+  },
+  "currency": {
+    "usd": "USD",
+    "cny": "CNY"
+  },
+  "errors": {
+    "more_than_available": "More than available"
+  },
+  "home": {
+    "title": "Group Home",
+    "welcome": "Welcome",
+    "welcome_desc": "Group Statistic: {count} members.",
+    "pane_operations": "Group Operations",
+    "pane_features": "Features",
+    "op_luckycoin": "Lucky Coin",
+    "op_subscribe": "Subscribe",
+    "op_unsubscribe": "Unsubscribe",
+    "op_mute": "Mute Others",
+    "op_unmute": "Unmute Others",
+    "op_members": "Members",
+    "op_messages": "Messages",
+    "op_coupons": "Coupons"
+  },
+  "pay": {
+    "title": "Pay to Join",
+    "pay_wechat": "WeChat Pay",
+    "pay_crypto": "Mixin Pay",
+    "pay_foxone": "Fox.ONE Pay",
+    "welcome": "Welcome to this group",
+    "welcome_desc": "According to the requirements, please pay to join the group.",
+    "method_crypto": "Pay with Crypto",
+    "select_assets": "Select Assets",
+    "method_wechat": "Pay with WeChat",
+    "price_label": "Price: {price} {unit}",
+    "success_toast": "You have joined the group.",
+    "pay_coupon": "Apply",
+    "method_coupon": "Apply a Coupon Code",
+    "coupon_placeholder": "Coupon Code",
+    "correct_coupon_code_toast": "Coupon code applied",
+    "incorrect_coupon_code_toast": "Incorrect coupon code"
+  },
+  "prepare_packet": {
+    "title": "Prepare Lucky Coin",
+    "welcome": "Share your luck with the group",
+    "welcome_desc": "Choose assets and share",
+    "select_assets": "Select Assets",
+    "placeholder_amount": "Min: 0.0001",
+    "placeholder_shares": "Max: {count} people",
+    "placeholder_memo": "Max: 36 charactors",
+    "amount": "Amount",
+    "shares": "People",
+    "memo": "Memo",
+    "default_memo": "Long {symbol}, short the world",
+    "pay": "Pay and Share"
+  },
+  "packet": {
+    "opened": "Opened %{opened_count}/%{total_count} lucky coin",
+    "open": "Open lucky coin",
+    "paid": "The lucky coin has sent to your wallet",
+    "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender."
+  },
+  "messages": {
+    "title": "Messages",
+    "recall": "Recall"
+  },
+  "members": {
+    "title": "Members",
+    "kick": "Kick",
+    "block": "Block"
+  },
+  "pay_wxqr": {
+    "title": "WeChat Payment",
+    "hint_title": "Scan the QrCode with WeChat",
+    "hint_desc": "Take a screenshot, and scan it in WeChat Scan.",
+    "help_title": "Instructions",
+    "help_line_1": "Step 1: Take a screenshot, it will be saved in your album.",
+    "help_line_2": "Step 2: Open WeChat",
+    "help_line_3": "Step 3: Tap the \"+\" button at top right, choose \"Scan\".",
+    "help_line_4": "Step 4: Tap the \"Album\" at top right, choose the screenshot."
+  },
+  "wxpay": {
+    "title": "WeChat Payment",
+    "welcome": "Welcome to this group",
+    "welcome_desc": "According to the requirements, please pay to join the group.",
+    "pay_wechat": "WeChat Pay",
+    "price_label": "Price: {price} {unit}",
+    "succ_toast": "You order has been placed.",
+    "error_toast": "Payment Canceled: {msg}"
+  },
+  "wxpay_done": {
+    "title": "Payment Placed",
+    "hint": "Your order has been placed. <br/>It may take less than 3 min to handle your payment. <br/>Please return to Mixin Messenger and join the group later."
+  },
+  "coupons": {
+    "title": "Coupons",
+    "add_label": "Add",
+    "add_model_title": "Create Coupons",
+    "add_model_desc": "Tap 'Create' to create 50 available coupon codes",
+    "create_button_label": "Create",
+    "copy": "Copy",
+    "state_available": "Available",
+    "state_used": "Used by {name}"
+  }
+}
