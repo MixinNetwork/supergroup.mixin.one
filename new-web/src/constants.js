@@ -4,7 +4,7 @@ export const CLIENT_ID = process.env.VUE_APP_CLIENT_ID
 
 export const WEB_ROOT = process.env.VUE_APP_WEB_ROOT
 
-export const OAUTH_CALLBACK_URL = process.env.VUE_APP_WEB_ROOT + '/#/auth'
+export const OAUTH_CALLBACK_URL = process.env.VUE_APP_WEB_ROOT + '/auth'
 
 export const BASE_URL = process.env.VUE_APP_API_ROOT
 
