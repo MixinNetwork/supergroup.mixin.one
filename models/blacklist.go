@@ -24,10 +24,10 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	if err != nil {
 		return nil, session.ForbiddenError(ctx)
 	}
-	if !config.Get().System.Operators[user.UserId] {
+	if !config.AppConfig.System.Operators[user.UserId] {
 		return nil, nil
 	}
-	if config.Get().System.Operators[userId] {
+	if config.AppConfig.System.Operators[userId] {
 		return nil, nil
 	}
 
@@ -58,6 +58,17 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 func readBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
 	var b Blacklist
 	err := session.Database(ctx).QueryRowContext(ctx, "SELECT user_id from blacklists WHERE user_id=$1", userId).Scan(&b.UserId)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	return &b, nil
+}
+
+func readBlacklistInTx(ctx context.Context, tx *sql.Tx, userId string) (*Blacklist, error) {
+	var b Blacklist
+	err := tx.QueryRowContext(ctx, "SELECT user_id from blacklists WHERE user_id=$1", userId).Scan(&b.UserId)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {

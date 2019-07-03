@@ -36,8 +36,8 @@ func loopPendingMessage(ctx context.Context) {
 			continue
 		}
 		for _, message := range messages {
-			if !config.Get().System.Operators[message.UserId] {
-				if config.Get().System.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
+			if !config.AppConfig.System.Operators[message.UserId] {
+				if config.AppConfig.System.DetectLinkEnabled && message.Category == "PLAIN_TEXT" {
 					data, err := base64.StdEncoding.DecodeString(message.Data)
 					if err != nil {
 						session.Logger(ctx).Errorf("DetectLink ERROR: %+v", err)
@@ -50,7 +50,7 @@ func loopPendingMessage(ctx context.Context) {
 						continue
 					}
 				}
-				if config.Get().System.DetectImageEnabled && message.Category == "PLAIN_IMAGE" {
+				if config.AppConfig.System.DetectQRCodeEnabled && message.Category == "PLAIN_IMAGE" {
 					if b, reason := validateMessage(ctx, message); !b {
 						if err := message.Leapfrog(ctx, reason); err != nil {
 							time.Sleep(500 * time.Millisecond)
@@ -68,22 +68,6 @@ func loopPendingMessage(ctx context.Context) {
 		}
 		if len(messages) < limit {
 			time.Sleep(500 * time.Millisecond)
-		}
-	}
-}
-
-func cleanUpDistributedMessages(ctx context.Context) {
-	limit := int64(100)
-	for {
-		count, err := models.CleanUpExpiredDistributedMessages(ctx, limit)
-		if err != nil {
-			session.Logger(ctx).Errorf("cleanUpDistributedMessages ERROR: %+v", err)
-			time.Sleep(500 * time.Millisecond)
-			continue
-		}
-		if count < 100 {
-			time.Sleep(10 * time.Second)
-			continue
 		}
 	}
 }
@@ -135,7 +119,7 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, "message.Data Unmarshal error"
 	}
-	attachment, err := bot.AttachemntShow(ctx, config.Get().Mixin.ClientId, config.Get().Mixin.SessionId, config.Get().Mixin.SessionKey, a.AttachmentId)
+	attachment, err := bot.AttachemntShow(ctx, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, a.AttachmentId)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
