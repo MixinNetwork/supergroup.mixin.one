@@ -1,34 +1,20 @@
-function Packet(api) {
-  this.api = api;
-}
+const api = require('./net').default
 
-Packet.prototype = {
-  prepare: function (callback) {
-    this.api.request('GET', '/packets/prepare', undefined, function(resp) {
-      if (!!resp.error && resp.error.code === 403) {
-        resp.error.code = 401;
-        return
-      }
-      return callback(resp);
-    });
+let Packet = {
+  async prepare () {
+    return await api.get('/packets/prepare', {});
   },
 
-  create: function (callback, params) {
-    this.api.request('POST', '/packets', params, function(resp) {
-      return callback(resp);
-    });
+  async create (params) {
+    return await api.post('/packets', params, {});
   },
 
-  show: function (callback, packetId) {
-    this.api.request('GET', '/packets/' + packetId, undefined, function(resp) {
-      return callback(resp);
-    });
+  async show (packetId) {
+    return await api.get('/packets/' + packetId, {})
   },
 
-  claim: function (callback, packetId) {
-    this.api.request('POST', '/packets/' + packetId + '/claim', undefined, function(resp) {
-      return callback(resp);
-    });
+  async claim (packetId) {
+    return await api.post('/packets/' + packetId + '/claim', {}, {});
   }
 };
 

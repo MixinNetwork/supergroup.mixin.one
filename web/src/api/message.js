@@ -1,19 +1,13 @@
-function Message(api) {
-  this.api = api;
-}
+const api = require('./net').default
 
-Message.prototype = {
-  index: function (callback) {
-    this.api.request('GET', '/messages', undefined, function(resp) {
-      return callback(resp);
-    });
+let Message = {
+  index: async function () {
+    return await api.get('/messages', {})
   },
 
-  recall: function (callback, messageId) {
-    this.api.request('POST', '/messages/' +messageId+'/recall', undefined, function(resp) {
-      return callback(resp);
-    });
+  recall: async function (messageId) {
+    return await api.post('/messages/' + messageId +'/recall', {}, {})
   }
 }
 
-export default Message;
+export default Message
