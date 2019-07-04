@@ -11,6 +11,7 @@ import Coupons from './pages/Coupons'
 import Messages from './pages/Messages'
 import WxPay from './pages/WxPay'
 import WxPayDone from './pages/WxPayDone'
+import { ROUTER_MODE } from '@/constants.js'
 
 Vue.use(VueRouter)
 
@@ -30,7 +31,7 @@ const routes = [
 ]
 
 const router = new VueRouter({
-  mode: 'history',
+  mode: ROUTER_MODE,
   routes // short for `routes: routes`
 })
 
