@@ -125,33 +125,34 @@ func validateMessage(ctx context.Context, message *models.Message) (bool, string
 		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
 	}
 
-	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", attachment.ViewURL)
-	req, err := http.NewRequest(http.MethodGet, strings.Replace(attachment.ViewURL, "assets.zeromesh.net", "s3.cn-north-1.amazonaws.com.cn", 0), nil)
+	url := strings.Replace(attachment.ViewURL, "assets.zeromesh.net", "s3.cn-north-1.amazonaws.com.cn", 0)
+	session.Logger(ctx).Infof("validateMessage attachment ViewURL %s", url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false, fmt.Sprintf("http.NewRequest error: %+v", err)
+		return true, ""
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false, fmt.Sprintf("http.Do error: %+v", err)
+		return true, ""
 	}
 	defer resp.Body.Close()
 	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		session.Logger(ctx).Errorf("validateMessage StatusCode ERROR: %d", resp.StatusCode)
-		return false, fmt.Sprintf("resp.StatusCode error: %d", resp.StatusCode)
+		return true, ""
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
-		return false, fmt.Sprintf("ioutil.ReadAll error: %+v", err)
+		return true, ""
 	}
 	if b, err := interceptors.CheckQRCode(ctx, data); b {
 		if err != nil {
-			return false, fmt.Sprintf("CheckQRCode error: %+v", err)
+			return true, ""
 		}
 		return false, "Image contains QR Code"
 	}
