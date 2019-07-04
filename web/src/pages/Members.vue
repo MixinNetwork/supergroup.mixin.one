@@ -113,7 +113,7 @@ export default {
           }
           utils.reloadPage()
         } else if (ix === 1) {
-          let result = await this.GLOBAL.api.account.remove(mem.user_id)
+          let result = await this.GLOBAL.api.account.block(mem.user_id)
           if (result.error) {
             this.maskLoading = false
             return
