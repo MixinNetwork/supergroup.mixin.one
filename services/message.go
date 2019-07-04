@@ -382,7 +382,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 	}
 	t := time.Now()
 	u := &models.User{UserId: config.AppConfig.Mixin.ClientId, ActiveAt: time.Now()}
-	_, err = models.CreateMessage(ctx, u, packet.PacketId, "APP_CARD", "", base64.StdEncoding.EncodeToString(card), t, t)
+	_, err = models.CreateMessage(ctx, u, packet.PacketId, models.MessageCategoryAppCard, "", base64.StdEncoding.EncodeToString(card), t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}

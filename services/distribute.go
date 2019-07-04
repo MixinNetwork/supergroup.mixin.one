@@ -15,7 +15,7 @@ import (
 )
 
 func distribute(ctx context.Context) {
-	limit := int64(80)
+	limit := int64(50)
 	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
 		shard := shardId(config.AppConfig.System.MessageShardModifier, i)
 		go pendingActiveDistributedMessages(ctx, shard, limit)
