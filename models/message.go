@@ -74,6 +74,9 @@ type Message struct {
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+	if len(data) > 5*1024 {
+		return nil, nil
+	}
 	if user.UserId != config.AppConfig.Mixin.ClientId && !user.isAdmin() {
 		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
 			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
@@ -83,19 +86,13 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, nil
 		}
 	}
-	if config.AppConfig.System.ProhibitedMessageEnabled && !user.isAdmin() {
-		p, err := ReadProperty(ctx, ProhibitedMessage)
+	if !user.isAdmin() {
+		b, err := ReadProhibitedProperty(ctx)
 		if err != nil {
 			return nil, err
+		} else if b {
+			return nil, nil
 		}
-		if p != nil && p.Value == "true" {
-			if category != MessageCategoryAppCard {
-				return nil, nil
-			}
-		}
-	}
-	if len(data) > 5*1024 {
-		return nil, nil
 	}
 	if category == MessageCategoryPlainAudio {
 		if !user.isAdmin() {
@@ -193,7 +190,8 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 }
 
 func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
-	if b, _ := readPropertyAsBool(ctx, tx, ProhibitedMessage); b {
+	b, err := readProhibitedStatus(ctx, tx)
+	if err != nil || b {
 		return nil
 	}
 	t := time.Now()
@@ -208,7 +206,7 @@ func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error 
 	}
 	params, positions := compileTableQuery(messagesCols)
 	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
-	_, err := tx.ExecContext(ctx, query, message.values()...)
+	_, err = tx.ExecContext(ctx, query, message.values()...)
 	return err
 }
 
