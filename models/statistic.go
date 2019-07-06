@@ -13,13 +13,11 @@ func ReadStatistic(ctx context.Context, user *User) (map[string]interface{}, err
 	s["users_count"] = count
 	s["prohibited"] = false
 	if user != nil && user.isAdmin() {
-		p, err := ReadProperty(ctx, ProhibitedMessage)
+		b, err := ReadProhibitedProperty(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if p != nil && p.Value == "true" {
-			s["prohibited"] = true
-		}
+		s["prohibited"] = b
 	}
 	return s, nil
 }

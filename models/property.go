@@ -44,9 +44,13 @@ type Property struct {
 }
 
 func CreateProperty(ctx context.Context, name string, value bool) (*Property, error) {
+	v := config.AppConfig.System.ProhibitedMessageEnabled
+	if v {
+		v = value
+	}
 	property := &Property{
 		Name:      name,
-		Value:     fmt.Sprint(value),
+		Value:     fmt.Sprint(v),
 		CreatedAt: time.Now(),
 	}
 	params, positions := compileTableQuery(propertiesColumns)
@@ -92,7 +96,30 @@ func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, err
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
-		return false, session.TransactionError(ctx, err)
+		return false, err
 	}
 	return property.Value == "true", nil
+}
+
+func ReadProhibitedProperty(ctx context.Context) (bool, error) {
+	if config.AppConfig.System.ProhibitedMessageEnabled {
+		var b bool
+		err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			var err error
+			b, err = readPropertyAsBool(ctx, tx, ProhibitedMessage)
+			return err
+		})
+		if err != nil {
+			return false, session.TransactionError(ctx, err)
+		}
+		return b, nil
+	}
+	return false, nil
+}
+
+func readProhibitedStatus(ctx context.Context, tx *sql.Tx) (bool, error) {
+	if config.AppConfig.System.ProhibitedMessageEnabled {
+		return readPropertyAsBool(ctx, tx, ProhibitedMessage)
+	}
+	return false, nil
 }
