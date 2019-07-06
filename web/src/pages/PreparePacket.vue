@@ -102,18 +102,23 @@ export default {
       }
 
       this.loading = true
-      let createResp = await this.GLOBAL.api.packet.create(payload)
-      if (createResp.error) {
+      let createResp = ''
+      try {
+        createResp = await this.GLOBAL.api.packet.create(payload)
+        if (createResp.error) {
+          this.loading = false
+          Toast('Error: ' + createResp.error)
+          return
+        }
+      } catch (err) {
         this.loading = false
-        Toast('Error')
-        return
+        Toast('Error: ' + err.toString())
       }
 
-      console.log(createResp)
       let pkt = createResp.data
       setTimeout(() => {
         this.waitForPayment(pkt.packet_id)
-      }, 2000)
+      }, 1000)
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`
     },
     onChangeAsset (ix) {
