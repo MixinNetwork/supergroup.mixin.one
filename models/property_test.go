@@ -14,7 +14,7 @@ func TestPropertyCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	name := "message-banned"
+	name := ProhibitedMessage
 	b, err := testReadPropertyAsBool(ctx, name)
 	assert.False(b)
 	assert.Nil(err)
@@ -25,6 +25,9 @@ func TestPropertyCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(p)
 	assert.Equal("true", p.Value)
+	b, err = ReadProhibitedProperty(ctx)
+	assert.Nil(err)
+	assert.True(b)
 	b, err = testReadPropertyAsBool(ctx, name)
 	assert.True(b)
 	assert.Nil(err)
@@ -38,6 +41,9 @@ func TestPropertyCRUD(t *testing.T) {
 	b, err = testReadPropertyAsBool(ctx, name)
 	assert.False(b)
 	assert.Nil(err)
+	b, err = ReadProhibitedProperty(ctx)
+	assert.Nil(err)
+	assert.False(b)
 }
 
 func testReadPropertyAsBool(ctx context.Context, name string) (bool, error) {
