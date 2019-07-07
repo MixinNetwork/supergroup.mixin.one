@@ -10,7 +10,11 @@ import (
 
 func init() {
 	plugin.On(plugin.EventTypeMessageCreated, func(m interface{}) {
-		fmt.Print(m.(models.Message).Data)
+		fmt.Println("new message", m.(models.Message).Data)
+	})
+
+	plugin.On(plugin.EventTypeProhibitedStatusChanged, func(s interface{}) {
+		fmt.Println("prohibited status changed to", s.(bool))
 	})
 
 	r := gin.Default()

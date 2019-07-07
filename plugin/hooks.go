@@ -3,7 +3,8 @@ package plugin
 type EventType string
 
 const (
-	EventTypeMessageCreated EventType = "MessageCreated" // payload is github.com/MixinNetwork/supergroup.mixin.one/models.Message
+	EventTypeMessageCreated          EventType = "MessageCreated"          // payload is github.com/MixinNetwork/supergroup.mixin.one/models.Message
+	EventTypeProhibitedStatusChanged EventType = "ProhibitedStatusChanged" // payload is bool
 )
 
 var callbacks = map[EventType][]func(interface{}){}
