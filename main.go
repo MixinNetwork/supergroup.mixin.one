@@ -95,6 +95,7 @@ func loadPlugins() {
 	}
 
 	for _, pluginFile := range plugins {
+		log.Println("loading plugin", pluginFile.Name())
 		_, err := plugin.Open(path.Join(pluginsDir, pluginFile.Name()))
 		if err != nil {
 			log.Panicln(err)
