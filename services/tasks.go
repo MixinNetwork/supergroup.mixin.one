@@ -18,7 +18,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
-	"mvdan.cc/xurls"
+	"mvdan.cc/xurls/v2"
 )
 
 type Attachment struct {

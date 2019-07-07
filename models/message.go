@@ -12,6 +12,7 @@ import (
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/plugin"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
 )
@@ -167,6 +168,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+	plugin.Trigger(plugin.EventTypeMessageCreated, *message)
 	return message, nil
 }
 
