@@ -43,6 +43,7 @@ import Loading from '@/components/Loading'
 import uuid from 'uuid'
 import {Toast} from 'vant'
 import { CLIENT_ID } from '@/constants'
+import countChars from '@/utils/countChars'
 
 export default {
   name: 'Prepare-Packet',
@@ -99,6 +100,12 @@ export default {
         greeting: this.form.memo,
         conversation_id: uuid.v4(),
         asset_id: this.selectedAsset.asset_id
+      }
+
+      if (countChars(payload.greeting) > 36) {
+        this.loading = false
+        Toast('Error: Too many charactors in greeting.')
+        return
       }
 
       this.loading = true
