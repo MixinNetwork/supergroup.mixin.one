@@ -43,6 +43,7 @@ import Loading from '@/components/Loading'
 import uuid from 'uuid'
 import {Toast} from 'vant'
 import { CLIENT_ID } from '@/constants'
+import countChars from '@/utils/countChars'
 
 export default {
   name: 'Prepare-Packet',
@@ -101,19 +102,30 @@ export default {
         asset_id: this.selectedAsset.asset_id
       }
 
-      this.loading = true
-      let createResp = await this.GLOBAL.api.packet.create(payload)
-      if (createResp.error) {
+      if (countChars(payload.greeting) > 36) {
         this.loading = false
-        Toast('Error')
+        Toast('Error: Too many charactors in greeting.')
         return
       }
 
-      console.log(createResp)
+      this.loading = true
+      let createResp = ''
+      try {
+        createResp = await this.GLOBAL.api.packet.create(payload)
+        if (createResp.error) {
+          this.loading = false
+          Toast('Error: ' + createResp.error)
+          return
+        }
+      } catch (err) {
+        this.loading = false
+        Toast('Error: ' + err.toString())
+      }
+
       let pkt = createResp.data
       setTimeout(() => {
         this.waitForPayment(pkt.packet_id)
-      }, 2000)
+      }, 1000)
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`
     },
     onChangeAsset (ix) {
