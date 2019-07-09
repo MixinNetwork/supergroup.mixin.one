@@ -10,6 +10,7 @@ import (
 
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/plugin"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
@@ -74,6 +75,11 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
+
+	if name == ProhibitedMessage {
+		plugin.Trigger(plugin.EventTypeProhibitedStatusChanged, value)
+	}
+
 	return property, nil
 }
 

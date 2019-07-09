@@ -107,6 +107,10 @@ type Config struct {
 		SessionId       string `yaml:"session_id"`
 		SessionKey      string `yaml:"session_key"`
 	} `yaml:"mixin"`
+	Plugins []struct {
+		SharedLibrary string                 `yaml:"shared_library"`
+		Config        map[string]interface{} `yaml:"config"`
+	}
 }
 
 type ExportedConfig struct {
