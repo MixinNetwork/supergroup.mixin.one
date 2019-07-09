@@ -10,7 +10,7 @@ const (
 var callbacks = map[EventType][]func(interface{}){}
 
 // called by plugin implementations
-func On(eventName EventType, fn func(interface{})) {
+func (*PluginContext) On(eventName EventType, fn func(interface{})) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 

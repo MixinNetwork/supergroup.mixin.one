@@ -8,7 +8,7 @@ import (
 var handlers = map[string]http.Handler{}
 
 // called by plugin implementations
-func RegisterHTTPHandler(groupName string, handler http.Handler) error {
+func (*PluginContext) RegisterHTTPHandler(groupName string, handler http.Handler) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 

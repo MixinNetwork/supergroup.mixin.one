@@ -5,18 +5,14 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
-	"path"
-	"plugin"
-	"regexp"
 	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/plugin"
 	"github.com/MixinNetwork/supergroup.mixin.one/services"
 )
 
@@ -24,8 +20,6 @@ func main() {
 	service := flag.String("service", "http", "run a service")
 	dir := flag.String("dir", "./", "config.yaml dir")
 	flag.Parse()
-
-	loadPlugins()
 
 	config.LoadConfig(*dir)
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
@@ -48,6 +42,8 @@ func main() {
 		log.Panicln(err)
 	}
 
+	plugin.LoadPlugins()
+
 	switch *service {
 	case "http":
 		if config.AppConfig.System.AccpetWeChatPayment {
@@ -66,39 +62,5 @@ func main() {
 			}
 		}()
 		http.ListenAndServe(fmt.Sprintf(":%d", config.AppConfig.Service.HTTPListenPort+2000), http.DefaultServeMux)
-	}
-}
-
-func loadPlugins() {
-	pluginsDir := "./plugins"
-	if _, err := os.Stat(pluginsDir); err != nil {
-		return
-	}
-	files, err := ioutil.ReadDir(pluginsDir)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	plugins := []os.FileInfo{}
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-
-		matched, err := regexp.MatchString(".*\\.so", file.Name())
-		if err != nil {
-			log.Panicln(err)
-		}
-		if matched {
-			plugins = append(plugins, file)
-		}
-	}
-
-	for _, pluginFile := range plugins {
-		log.Println("loading plugin", pluginFile.Name())
-		_, err := plugin.Open(path.Join(pluginsDir, pluginFile.Name()))
-		if err != nil {
-			log.Panicln(err)
-		}
 	}
 }
