@@ -13,3 +13,4 @@ env.prod.sh
 .DS_Store
 new-web/public/legacy
 new-web/public/shortcuts
+web/public/shortcuts
