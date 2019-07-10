@@ -8,17 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var pluginContext *plugin.PluginContext
-
-//nolint:unused
-func PluginInit(plugCtx *plugin.PluginContext) {
-	pluginContext = plugCtx
-
-	pluginContext.On(plugin.EventTypeMessageCreated, func(m interface{}) {
+//nolint:unused,deadcode
+func PluginInit(ctx *plugin.PluginContext) {
+	ctx.On(plugin.EventTypeMessageCreated, func(m interface{}) {
 		fmt.Println("new message", m.(models.Message).Data)
 	})
 
-	pluginContext.On(plugin.EventTypeProhibitedStatusChanged, func(s interface{}) {
+	ctx.On(plugin.EventTypeProhibitedStatusChanged, func(s interface{}) {
 		fmt.Println("prohibited status changed to", s.(bool))
 	})
 
@@ -26,7 +22,7 @@ func PluginInit(plugCtx *plugin.PluginContext) {
 
 	r.GET("/hello/world", helloWorld)
 
-	pluginContext.RegisterHTTPHandler("hello", r) //nolint:errcheck
+	ctx.RegisterHTTPHandler("hello", r) //nolint:errcheck
 }
 
 func helloWorld(c *gin.Context) {
