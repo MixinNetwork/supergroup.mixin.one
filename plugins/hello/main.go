@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/plugin"
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,7 @@ import (
 
 var pluginContext *plugin.PluginContext
 
-//nolint:unused
+//nolint:unused,deadcode
 func PluginInit(plugCtx *plugin.PluginContext) {
 	pluginContext = plugCtx
 
@@ -30,7 +31,8 @@ func PluginInit(plugCtx *plugin.PluginContext) {
 }
 
 func helloWorld(c *gin.Context) {
+	currentUser := middlewares.CurrentUser(c.Request)
 	c.JSON(200, gin.H{
-		"hello": "Hello, " + pluginContext.ConfigMustGet("hello").(string),
+		pluginContext.ConfigMustGet("hello").(string): "Hello, " + currentUser.FullName,
 	})
 }
