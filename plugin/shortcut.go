@@ -6,7 +6,7 @@ import (
 )
 
 // group := models.Shortcut.CreateGroup("group1", "Group 1", "组1", 0)
-// group.CreateItem("item1", "Item 1", "项1", "https://...", 0)
+// group.CreateItem("item1", "Item 1", "项1", "https://.../xx.jpg", "https://...", 0)
 // fmt.Println(models.Shortcut.AllGroups())
 
 type shortcut struct{}
@@ -17,6 +17,7 @@ type ShortcutItem struct {
 	ID       string `json:"id"`
 	LabelEn  string `json:"label_en"`
 	LabelZh  string `json:"label_zh"`
+	Icon     string `json:"icon"`
 	URL      string `json:"url"`
 	Sequence int    `json:"-"`
 }
@@ -86,7 +87,7 @@ func (shortcut) reindex() {
 	}
 }
 
-func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, url string, sequence int) *ShortcutItem {
+func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, icon, url string, sequence int) *ShortcutItem {
 	if s := g.FindItem(id); s != nil {
 		return s
 	}
@@ -99,6 +100,7 @@ func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, url string, sequence in
 		LabelEn:  labelEn,
 		LabelZh:  labelZh,
 		URL:      url,
+		Icon:     icon,
 		Sequence: sequence,
 	}
 
