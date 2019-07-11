@@ -42,7 +42,7 @@ func main() {
 		log.Panicln(err)
 	}
 
-	plugin.LoadPlugins()
+	plugin.LoadPlugins(database)
 
 	switch *service {
 	case "http":

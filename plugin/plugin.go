@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
+	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 )
 
 var (
@@ -18,6 +19,7 @@ type PluginContext struct {
 	sharedLibrary string
 	config        map[string]interface{}
 	plugin        *plugin.Plugin
+	hostDB        *durable.Database
 }
 
 func (pc *PluginContext) load() {
@@ -37,6 +39,14 @@ func (pc *PluginContext) load() {
 	}
 }
 
+func (pc *PluginContext) MixinClientID() string {
+	return config.AppConfig.Mixin.ClientId
+}
+
+func (pc *PluginContext) HostDB() *durable.Database {
+	return pc.hostDB
+}
+
 func (pc *PluginContext) ConfigGet(key string) (value interface{}, found bool) {
 	value, found = pc.config[key]
 	return
@@ -46,12 +56,13 @@ func (pc *PluginContext) ConfigMustGet(key string) (value interface{}) {
 	return pc.config[key]
 }
 
-func LoadPlugins() {
+func LoadPlugins(database *durable.Database) {
 	loadOnce.Do(func() {
 		for _, p := range config.AppConfig.Plugins {
 			plugCtx := &PluginContext{
 				sharedLibrary: p.SharedLibrary,
 				config:        p.Config,
+				hostDB:        database,
 			}
 			plugCtx.load()
 			loadedPlugins = append(loadedPlugins, plugCtx)
