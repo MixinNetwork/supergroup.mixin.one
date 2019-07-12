@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -21,6 +22,15 @@ var whitelist = [][2]string{
 	{"POST", "^/wechat"},
 	{"POST", "^/auth$"},
 	{"GET", "^/shortcuts$"},
+}
+
+var whitelistMutex sync.Mutex
+
+func WhitelistAppend(method, urlRegex string) {
+	whitelistMutex.Lock()
+	defer whitelistMutex.Unlock()
+
+	whitelist = append(whitelist, [2]string{method, urlRegex})
 }
 
 type contextValueKey struct{ int }
