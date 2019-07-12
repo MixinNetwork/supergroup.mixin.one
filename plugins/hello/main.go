@@ -29,9 +29,9 @@ func PluginInit(plugCtx *plugin.PluginContext) {
 
 	pluginContext.RegisterHTTPHandler("hello", r) //nolint:errcheck
 
-	group := plugin.Shortcut.CreateGroup("hello", "Hello", "你好", 0)
-	group.CreateItem("test2", "Test2", "测试2", "", "https://mixin.one", 1)
-	group.CreateItem("test1", "Test1", "测试1", "", "https://mixin.one", 0)
+	group := plugin.Shortcut.FindGroup("plugins")
+	group.CreateItem("hello0", "Hello 0", "测试0", "", "https://mixin.one", 99)
+	group.CreateItem("hello1", "Hello 1", "测试1", "", "https://mixin.one", 0)
 }
 
 func helloWorld(c *gin.Context) {

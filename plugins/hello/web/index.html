@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0, user-scalable=0">
+    <title>Hello</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div>
+        <input id="entry" value="John Smith" placeholder="Your Name" />
+      </div>
+      <button onclick="sendRequet()">Submit</button>
+    </div>
+    <script>
+      var entry = document.getElementById('entry')
+      function getQuery() {
+        var ret = {}
+        if (window.location.search) {
+          var query = window.location.search.slice(1)
+          var pairs = query.split('&')
+          for (let ix = 0; ix < pairs.length; ix++) {
+            var pair = pairs[ix]
+            var fields = pair.split('=')
+            if (fields.length) {
+              ret[fields[0]] = decodeURIComponent(fields[1])
+            }
+          }
+        }
+        return ret
+      }
+      function sendRequet() {
+        var value = entry.value
+        var query = getQuery()
+
+        const instance = axios.create({
+          baseURL: 'http://api.localhost:8000'
+        });
+        instance.defaults.headers.common['Authorization'] = 'Bearer ' + query['token']
+
+        instance.get('http://api.localhost:8000/hello/api/echo/' + value)
+          .then(function (response) {
+            console.log(response.data.message)
+            alert(response.data.message)
+          })
+          .catch(function (error) {
+            console.log(error)
+          })
+          .finally(function () {
+          })
+      }
+    </script>
+  </body>
+</html>

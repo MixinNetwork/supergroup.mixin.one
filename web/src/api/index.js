@@ -7,5 +7,6 @@ export default {
   packet: require('./packet').default,
   fox: require('./fox').default,
   coupon: require('./coupon').default,
+  plugin: require('./plugin').default,
   net: require('./net').default,
 }

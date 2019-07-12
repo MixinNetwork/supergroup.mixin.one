@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 )
@@ -34,15 +35,18 @@ type ShortcutGroup struct {
 var (
 	shortcutGroups []*ShortcutGroup = []*ShortcutGroup{
 		&ShortcutGroup{
-			ID:         "default",
-			LabelEn:    "Default",
-			LabelZh:    "群操作",
+			ID:         "plugins",
+			LabelEn:    "Plugins",
+			LabelZh:    "插件",
 			Items:      []*ShortcutItem{},
 			itemsIndex: map[string]*ShortcutItem{},
 		},
 	}
-	shortcutGroupsIndex map[string]*ShortcutGroup = map[string]*ShortcutGroup{"default": shortcutGroups[0]}
-	shortcutRWMutex     sync.RWMutex
+	shortcutGroupsIndex map[string]*ShortcutGroup = map[string]*ShortcutGroup{
+		"plugins": shortcutGroups[0],
+	}
+
+	shortcutRWMutex sync.RWMutex
 )
 
 func (shortcut) AllGroups() []*ShortcutGroup {
@@ -88,6 +92,8 @@ func (shortcut) reindex() {
 }
 
 func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, icon, url string, sequence int) *ShortcutItem {
+	fmt.Println(id, labelEn, labelZh)
+
 	if s := g.FindItem(id); s != nil {
 		return s
 	}
@@ -113,10 +119,18 @@ func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, icon, url string, seque
 }
 
 func (g *ShortcutGroup) FindItem(id string) *ShortcutItem {
+	fmt.Println(id)
+
 	shortcutRWMutex.RLock()
 	defer shortcutRWMutex.RUnlock()
 
-	return g.itemsIndex[id]
+	if g.itemsIndex != nil {
+		fmt.Println(g.itemsIndex)
+		if _, ok := g.itemsIndex[id]; ok {
+			return g.itemsIndex[id]
+		}
+	}
+	return nil
 }
 
 func (g *ShortcutGroup) reindex() {

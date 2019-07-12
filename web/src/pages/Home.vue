@@ -107,18 +107,15 @@ export default {
       this.GLOBAL.api.website.config().then((conf) => {
         this.websiteConf = conf
         if (conf.data.home_shortcut_groups) {
-          this.shortcutsGroups = conf.data.home_shortcut_groups.map((x) => {
-            x.label = this.isZh ? x.label_zh: x.label_en
-            x.shortcuts = x.shortcuts.map((z) => {
-              z.label = this.isZh ? z.label_zh: z.label_en
-              return z
-            })
-            return x
-          })
+          this.shortcutsGroups = this.addToGroups(conf.data.home_shortcut_groups, false)
         }
+        this.GLOBAL.api.plugin.shortcuts().then((resp) => {
+          this.shortcutsGroups = this.addToGroups(resp.data, true)
+        })
         this.welcomeMessage = this.websiteConf.data.home_welcome_message
         this.loading = false
       })
+
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()
       if (this.meInfo.data.state === 'pending') {
@@ -136,6 +133,31 @@ export default {
     }
   },
   methods: {
+    addToGroups (groups, isPlugin) {
+      return this.shortcutsGroups.concat(groups.map((x) => {
+        x.label = this.isZh ? x.label_zh: x.label_en
+        const items = x.items || x.shortcuts
+        x.shortcuts = items.map((z) => {
+          z.label = this.isZh ? z.label_zh: z.label_en
+          if (isPlugin) {
+            // z.click = this.handlePluginRedirect(x.id, z.id)
+            // z.url = ''
+            z.url += '?token=' + encodeURIComponent(localStorage.getItem('token'))
+          }
+          return z
+        })
+        return x
+      }))
+    },
+    handlePluginRedirect(groupId, itemId) {
+      return () => {
+        this.GLOBAL.api.plugin.redirect(groupId, itemId).then((resp) => {
+          console.log(resp)
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+    },
     updateSubscribeState() {
       if (this.isSubscribed) {
         this.builtinItems.push(this.unsubscribeItem)
