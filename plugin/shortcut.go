@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 )
@@ -92,8 +91,6 @@ func (shortcut) reindex() {
 }
 
 func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, icon, url string, sequence int) *ShortcutItem {
-	fmt.Println(id, labelEn, labelZh)
-
 	if s := g.FindItem(id); s != nil {
 		return s
 	}
@@ -119,13 +116,10 @@ func (g *ShortcutGroup) CreateItem(id, labelEn, labelZh, icon, url string, seque
 }
 
 func (g *ShortcutGroup) FindItem(id string) *ShortcutItem {
-	fmt.Println(id)
-
 	shortcutRWMutex.RLock()
 	defer shortcutRWMutex.RUnlock()
 
 	if g.itemsIndex != nil {
-		fmt.Println(g.itemsIndex)
 		if _, ok := g.itemsIndex[id]; ok {
 			return g.itemsIndex[id]
 		}
