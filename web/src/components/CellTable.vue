@@ -6,7 +6,7 @@
           <img :src="item.icon"/>
           <span>{{item.label}}</span>
         </a>
-        <a v-else-if="item.url.indexOf('http') === 0" class="item" @click="openExternalLink(item.url)">
+        <a v-else-if="item.url.indexOf('http') === 0 || item.isPlugin" class="item" @click="openExternalLink(item.url)">
           <img :src="item.icon"/>
           <span>{{item.label}}</span>
         </a>

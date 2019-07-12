@@ -142,6 +142,7 @@ export default {
           if (isPlugin) {
             // z.click = this.handlePluginRedirect(x.id, z.id)
             // z.url = ''
+            z.isPlugin = true
             z.url += '?token=' + encodeURIComponent(localStorage.getItem('token'))
           }
           return z
