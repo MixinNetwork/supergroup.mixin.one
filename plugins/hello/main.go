@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
@@ -26,17 +27,21 @@ func PluginInit(plugCtx *plugin.PluginContext) {
 	r := gin.Default()
 
 	r.GET("/hello/world", helloWorld)
+	r.GET("/hello/api/echo/:name", echo)
 
 	pluginContext.RegisterHTTPHandler("hello", r) //nolint:errcheck
 
 	group := plugin.Shortcut.FindGroup("plugins")
-	group.CreateItem("hello0", "Hello 0", "测试0", "", "https://mixin.one", 99)
-	group.CreateItem("hello1", "Hello 1", "测试1", "", "https://mixin.one", 0)
+	group.CreateItem("hello-simple", "Hello Simple", "测试页面", "/shortcuts/plugin-default.png", "/hello", 99)
+}
+
+func echo(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"message": "Hello " + c.Param("name") + ", hello " + pluginContext.ConfigMustGet("hello").(string),
+	})
 }
 
 func helloWorld(c *gin.Context) {
 	currentUser := middlewares.CurrentUser(c.Request)
-	c.JSON(200, gin.H{
-		pluginContext.ConfigMustGet("hello").(string): "Hello, " + currentUser.FullName,
-	})
+	c.String(http.StatusOK, "Hello %s", currentUser.FullName)
 }
