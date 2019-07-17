@@ -14,9 +14,9 @@ system:
   message_shard_size: 4
   price_asset_enable: true
   audio_message_enable: false
-  image_message_enable: false
+  image_message_enable: true
   video_message_enable: false
-  contact_message_enable: false
+  contact_message_enable: true
   limit_message_frequency: false
   detect_image: false
   detect_link: false
