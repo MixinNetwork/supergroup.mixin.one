@@ -1,3 +1,4 @@
+.DS_Store
 config/*
 deploy.sh
 nginx.conf
@@ -10,6 +11,6 @@ env.dev.sh
 env.prod.sh
 
 !config/config.go
-.DS_Store
+!config/config.tpl.yaml
 new-web/public/legacy
 new-web/public/shortcuts

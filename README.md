@@ -1,18 +1,16 @@
+supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlimited member group base on Mixin bot.
+
 ## NOTICE !!!
 
 Before you upgrade your group, please checkout `CHANGELOG.md` first. 
 
-## Mixin Super Group
-
-supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlimited member group base on Mixin bot.
-
 ## Prepare
 
-1. copy `config.tpl.yaml` to `config.yaml`
+1. copy `./config/config.tpl.yaml` to `./config/config.yaml`
 2. Replace configurations in `config.yaml`, we use PostgreSQL as our database.
 3. `cd web` and exec `npm install`
-4. copy `env.dev.tpl.sh` to `env.dev.sh` and copy `env.prod.tpl.sh` to `env.prod.sh`
-5. Replace all fields in `env.dev.sh` and `env.prod.sh`
+4. `cp env.example .env.local`, you can find more document in https://cli.vuejs.org/guide/mode-and-env.html
+5. Replace all configs in `.env.local`
 
 ## Run
 
@@ -23,4 +21,4 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 
 #### Front-end
 
-Generate static assets `cd web && npm run build`
+Generate static assets `cd web && npm run serve`

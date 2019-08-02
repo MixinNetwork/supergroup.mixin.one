@@ -17,7 +17,7 @@ import (
 
 func main() {
 	service := flag.String("service", "http", "run a service")
-	dir := flag.String("dir", "./", "config.yaml dir")
+	dir := flag.String("dir", "./config/", "config.yaml dir")
 	flag.Parse()
 
 	config.LoadConfig(*dir)

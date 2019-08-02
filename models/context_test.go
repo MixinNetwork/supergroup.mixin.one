@@ -55,7 +55,7 @@ func teardownTestContext(ctx context.Context) {
 }
 
 func setupTestContext() context.Context {
-	config.LoadConfig("../")
+	config.LoadConfig("../config")
 	if config.AppConfig.Service.Environment != testEnvironment || config.AppConfig.Database.DatabaseName != testDatabase {
 		log.Panicln(config.AppConfig.Service.Environment, config.AppConfig.Database.DatabaseName)
 	}
