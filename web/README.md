@@ -1,29 +1,18 @@
-# new-web
+This is the front-end of Mixin group, you can fork it and modify it to your own. If there's a problem, appreciate submitting an issue or PR.
 
-## Project setup
-```
-npm install
-```
+## Preparation
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+Before you start it, you should `cp env.example env.local`, you can find more document in https://cli.vuejs.org/guide/mode-and-env.html
 
-### Compiles and minifies for production
-```
-npm run build
-```
+## How to deploy
 
-### Run your tests
-```
-npm run test
-```
+Deploy the project, you need a web server like NGINX (or something else), then build the codes and sync to the remote server.
 
-### Lints and fixes files
 ```
-npm run lint
-```
+#!/bin/sh
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+rm -r dist/*
+npm run build || exit
+
+rsync -rcv dist/* group:/var/www/html/
+```
