@@ -27,7 +27,6 @@ type Attachment struct {
 
 func loopPendingMessage(ctx context.Context) {
 	limit := 5
-	re := xurls.Relaxed()
 	for {
 		messages, err := models.PendingMessages(ctx, int64(limit))
 		if err != nil {
@@ -42,7 +41,7 @@ func loopPendingMessage(ctx context.Context) {
 					if err != nil {
 						session.Logger(ctx).Errorf("DetectLink ERROR: %+v", err)
 					}
-					if re.Match(data) {
+					if xurls.Relaxed.Match(data) {
 						if err := message.Leapfrog(ctx, "Message contains link"); err != nil {
 							time.Sleep(500 * time.Millisecond)
 							session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)

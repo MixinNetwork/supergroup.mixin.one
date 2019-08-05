@@ -93,6 +93,15 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		} else if b {
 			return nil, nil
 		}
+		if category == MessageCategoryPlainImage && !config.AppConfig.System.ImageMessageEnable {
+			return nil, nil
+		}
+		if category == MessageCategoryPlainVideo && !config.AppConfig.System.VideoMessageEnable {
+			return nil, nil
+		}
+		if category == MessageCategoryPlainContact && !config.AppConfig.System.ContactMessageEnable {
+			return nil, nil
+		}
 	}
 	if category == MessageCategoryPlainAudio {
 		if !user.isAdmin() {
@@ -102,21 +111,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, nil
 		}
 	}
-	if category == MessageCategoryPlainImage {
-		if !user.isAdmin() && !config.AppConfig.System.ImageMessageEnable {
-			return nil, nil
-		}
-	}
-	if category == MessageCategoryPlainVideo {
-		if !user.isAdmin() && !config.AppConfig.System.VideoMessageEnable {
-			return nil, nil
-		}
-	}
-	if category == MessageCategoryPlainContact {
-		if !user.isAdmin() && !config.AppConfig.System.ContactMessageEnable {
-			return nil, nil
-		}
-	}
+
 	message := &Message{
 		MessageId:        messageId,
 		UserId:           user.UserId,
