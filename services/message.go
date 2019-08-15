@@ -346,9 +346,6 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 		return err
 	}
 	if user.TraceId == transfer.TraceId {
-		if transfer.Amount == config.AppConfig.System.PaymentAmount && transfer.AssetId == config.AppConfig.System.PaymentAssetId {
-			return user.Payment(ctx)
-		}
 		for _, asset := range config.AppConfig.System.AccpetPaymentAssetList {
 			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)

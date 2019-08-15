@@ -51,7 +51,6 @@ export default {
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
       cryptoEsitmatedUsdMap: {},
-      currencyTickers: [],
       cnyRatio: {},
       currentCryptoPrice: 0,
       currentEstimatedPrice: 0,
@@ -69,18 +68,6 @@ export default {
       return x
     })
     this.selectedAsset = this.assets[0]
-    this.autoEstimate = config.data.auto_estimate
-    this.autoEstimateCurrency = config.data.auto_estimate_currency
-    this.autoEstimateBase = config.data.auto_estimate_base
-    this.GLOBAL.api.fox.currency()
-      .then((currencyInfo) => {
-        this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
-          map[obj.from] = obj.price;
-          return map;
-        }, {})
-        this.cnyRatio = currencyInfo.data.currencies
-        // console.log(this.currencyTickers)
-      })
     this.meInfo = await this.GLOBAL.api.account.me()
     setTimeout(this.updatePrice, 2000)
     this.loading = false
@@ -100,7 +87,6 @@ export default {
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 1000)
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`
-      // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
     },
     async onChangeAsset (ix) {
       this.loading = true
@@ -109,19 +95,8 @@ export default {
       this.loading = false
     },
     async updatePrice () {
-      if (this.selectedAsset.amount === 'auto') {
-        let base = this.autoEstimateBase / parseFloat(this.cnyRatio.usdt)
-        let priceUsdt = await this.getCryptoEsitmatedUsdt(this.selectedAsset.symbol)
-        this.currentCryptoPrice = (base / priceUsdt).toFixed(8)
-        if (this.autoEstimateCurrency === 'usd') {
-          this.currentEstimatedPrice = base
-        } else {
-          this.currentEstimatedPrice = base * this.cnyRatio.usdt
-        }
-      } else {
-        this.currentCryptoPrice = parseFloat(this.selectedAsset.amount).toFixed(8)
-        this.currentEstimatedPrice = '-'
-      }
+      this.currentCryptoPrice = parseFloat(this.selectedAsset.amount).toFixed(8);
+      this.currentEstimatedPrice = '-';
     },
     async waitForPayment () {
       let meInfo = await this.GLOBAL.api.account.me()
@@ -137,19 +112,6 @@ export default {
       }
       setTimeout(async () => { await this.waitForPayment(); }, 1500)
     },
-    async getCryptoEsitmatedUsdt (symbol) {
-      if (this.cryptoEsitmatedUsdMap.hasOwnProperty(symbol)) {
-        return this.cryptoEsitmatedUsdMap[symbol]
-      }
-      // only support fetching from big.one
-      const pairName = symbol + '-' + 'USDT'
-      let resp = await this.GLOBAL.api.fox.b1Ticker(pairName)
-      if (resp && resp.data) {
-        this.cryptoEsitmatedUsdMap[symbol] = resp.data.close
-        return resp.data.close
-      }
-      return -1
-    }
   }
 }
 </script>

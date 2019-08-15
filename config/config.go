@@ -58,12 +58,7 @@ type Config struct {
 		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
 		DetectLinkEnabled        bool           `yaml:"detect_link"`
 		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
-		PaymentAssetId           string         `yaml:"payment_asset_id"`
-		PaymentAmount            string         `yaml:"payment_amount"`
 		PayToJoin                bool           `yaml:"pay_to_join"`
-		AutoEstimate             bool           `yaml:"auto_estimate"`
-		AutoEstimateCurrency     string         `yaml:"auto_estimate_currency"`
-		AutoEstimateBase         string         `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
 	} `yaml:"system"`
 	Appearance struct {
@@ -100,9 +95,6 @@ type Config struct {
 type ExportedConfig struct {
 	MixinClientId          string          `json:"mixin_client_id"`
 	HTTPResourceHost       string          `json:"host"`
-	AutoEstimate           bool            `json:"auto_estimate"`
-	AutoEstimateCurrency   string          `json:"auto_estimate_currency"`
-	AutoEstimateBase       string          `json:"auto_estimate_base"`
 	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
 	HomeWelcomeMessage     string          `json:"home_welcome_message"`
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
@@ -127,14 +119,11 @@ func LoadConfig(dir string) {
 }
 
 func GetExported() ExportedConfig {
-	var exc ExportedConfig
-	exc.MixinClientId = AppConfig.Mixin.ClientId
-	exc.HTTPResourceHost = AppConfig.Service.HTTPResourceHost
-	exc.AutoEstimate = AppConfig.System.AutoEstimate
-	exc.AutoEstimateCurrency = AppConfig.System.AutoEstimateCurrency
-	exc.AutoEstimateBase = AppConfig.System.AutoEstimateBase
-	exc.AccpetPaymentAssetList = AppConfig.System.AccpetPaymentAssetList
-	exc.HomeWelcomeMessage = AppConfig.Appearance.HomeWelcomeMessage
-	exc.HomeShortcutGroups = AppConfig.Appearance.HomeShortcutGroups
-	return exc
+	return ExportedConfig{
+		MixinClientId:          AppConfig.Mixin.ClientId,
+		HTTPResourceHost:       AppConfig.Service.HTTPResourceHost,
+		AccpetPaymentAssetList: AppConfig.System.AccpetPaymentAssetList,
+		HomeWelcomeMessage:     AppConfig.Appearance.HomeWelcomeMessage,
+		HomeShortcutGroups:     AppConfig.Appearance.HomeShortcutGroups,
+	}
 }

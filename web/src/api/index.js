@@ -4,6 +4,5 @@ export default {
   message: require('./message').default,
   property: require('./property').default,
   packet: require('./packet').default,
-  fox: require('./fox').default,
   net: require('./net').default,
 }
