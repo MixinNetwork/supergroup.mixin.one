@@ -43,9 +43,6 @@ func main() {
 
 	switch *service {
 	case "http":
-		if config.AppConfig.System.AccpetWeChatPayment {
-			go services.StartWxPaymentWatch(*service, database)
-		}
 		err := StartServer(database)
 		if err != nil {
 			log.Println(err)

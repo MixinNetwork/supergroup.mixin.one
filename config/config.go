@@ -65,9 +65,6 @@ type Config struct {
 		AutoEstimateCurrency     string         `yaml:"auto_estimate_currency"`
 		AutoEstimateBase         string         `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
-		AccpetWeChatPayment      bool           `yaml:"accept_wechat_payment"`
-		WeChatPaymentAmount      string         `yaml:"wechat_payment_amount"`
-		AccpetCouponPayment      bool           `yaml:"accept_coupon_payment"`
 	} `yaml:"system"`
 	Appearance struct {
 		HomeWelcomeMessage string          `yaml:"home_welcome_message"`
@@ -90,15 +87,6 @@ type Config struct {
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 	} `yaml:"message_template"`
-	Wechat struct {
-		AppId          string `yaml:"app_id"`
-		AppSecret      string `yaml:"app_secret"`
-		Token          string `yaml:"token"`
-		EncodingAESKey string `yaml:"encodine_aes_key"`
-		MchId          string `yaml:"mch_id"`
-		MchKey         string `yaml:"mch_key"`
-		NotifyUrl      string `yaml:"notify_url"`
-	} `yaml:"wechat"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
 		ClientSecret    string `yaml:"client_secret"`
@@ -116,9 +104,6 @@ type ExportedConfig struct {
 	AutoEstimateCurrency   string          `json:"auto_estimate_currency"`
 	AutoEstimateBase       string          `json:"auto_estimate_base"`
 	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
-	AccpetWeChatPayment    bool            `json:"accept_wechat_payment"`
-	WeChatPaymentAmount    string          `json:"wechat_payment_amount"`
-	AccpetCouponPayment    bool            `json:"accept_coupon_payment"`
 	HomeWelcomeMessage     string          `json:"home_welcome_message"`
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
@@ -149,9 +134,6 @@ func GetExported() ExportedConfig {
 	exc.AutoEstimateCurrency = AppConfig.System.AutoEstimateCurrency
 	exc.AutoEstimateBase = AppConfig.System.AutoEstimateBase
 	exc.AccpetPaymentAssetList = AppConfig.System.AccpetPaymentAssetList
-	exc.AccpetWeChatPayment = AppConfig.System.AccpetWeChatPayment
-	exc.WeChatPaymentAmount = AppConfig.System.WeChatPaymentAmount
-	exc.AccpetCouponPayment = AppConfig.System.AccpetCouponPayment
 	exc.HomeWelcomeMessage = AppConfig.Appearance.HomeWelcomeMessage
 	exc.HomeShortcutGroups = AppConfig.Appearance.HomeShortcutGroups
 	return exc

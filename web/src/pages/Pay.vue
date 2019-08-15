@@ -17,37 +17,10 @@
       <van-cell
         :title="$t('pay.price_label', {price: currentCryptoPrice, unit: selectedAsset ? selectedAsset.text : '...'})"
         >
-        <!-- <span>≈{{currencySymbol}}{{currentEstimatedPrice.toLocaleString()}}</span> -->
       </van-cell>
       <div slot="footer">
         <van-cell>
           <van-button style="width: 100%" type="info" :disabled="selectedAsset === null || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
-        </van-cell>
-        <!-- <van-cell>
-          <van-button style="width: 100%" type="warning" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_foxone')}}</van-button>
-        </van-cell> -->
-      </div>
-    </van-panel>
-    <br/>
-    <van-panel v-if="acceptWechatPayment" :title="$t('pay.method_wechat')">
-      <van-cell
-        :title="$t('pay.price_label', {price: wechatPaymentAmount, unit: $t('currency.' + autoEstimateCurrency)})"
-        >
-      </van-cell>
-      <div slot="footer">
-        <van-cell>
-          <van-button style="width: 100%" type="primary" @click="payWechatMobile">{{$t('pay.pay_wechat')}}</van-button>
-        </van-cell>
-      </div>
-    </van-panel>
-    <br/>
-    <van-panel v-if="acceptCouponPayment" :title="$t('pay.method_coupon')">
-      <van-cell>
-        <van-field :placeholder="$t('pay.coupon_placeholder')" v-model="couponCode"></van-field>
-      </van-cell>
-      <div slot="footer">
-        <van-cell>
-          <van-button style="width: 100%" type="info" @click="payCoupon" :disabled="loading">{{$t('pay.pay_coupon')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -77,15 +50,11 @@ export default {
       selectedAsset: null,
       autoEstimate: false,
       autoEstimateCurrency: 'usd',
-      acceptWechatPayment: false,
-      acceptCouponPayment: false,
-      wechatPaymentAmount: '100',
       cryptoEsitmatedUsdMap: {},
       currencyTickers: [],
       cnyRatio: {},
       currentCryptoPrice: 0,
       currentEstimatedPrice: 0,
-      couponCode: '',
       assets: []
     }
   },
@@ -103,9 +72,6 @@ export default {
     this.autoEstimate = config.data.auto_estimate
     this.autoEstimateCurrency = config.data.auto_estimate_currency
     this.autoEstimateBase = config.data.auto_estimate_base
-    this.acceptWechatPayment = config.data.accept_wechat_payment
-    this.wechatPaymentAmount = config.data.wechat_payment_amount
-    this.acceptCouponPayment = config.data.accept_coupon_payment
     this.GLOBAL.api.fox.currency()
       .then((currencyInfo) => {
         this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
@@ -183,26 +149,6 @@ export default {
         return resp.data.close
       }
       return -1
-    },
-    payWechatMobile () {
-      this.$router.push(`/pay/wxqr/?qr_url=${encodeURIComponent(WEB_ROOT + '/wechat/request/' + this.meInfo.data.user_id)}`)
-    },
-    async payCoupon () {
-      this.loading = true
-      try {
-        let resp = await this.GLOBAL.api.coupon.occupy(this.couponCode)
-        if (resp && resp.data) {
-          Toast(this.$t('pay.correct_coupon_code_toast'))
-          this.$router.push('/')
-          this.loading = false
-        } else {
-          Toast(this.$t('pay.incorrect_coupon_code_toast'))
-          this.loading = false
-        }
-      } catch (err) {
-        Toast(this.$t('pay.incorrect_coupon_code_toast'))
-        this.loading = false
-      }
     }
   }
 }

@@ -24,10 +24,8 @@ const (
 	PaymentStatePending = "pending"
 	PaymentStatePaid    = "paid"
 
-	PayMethodMixin  = "mixin"
-	PayMethodWechat = "wechat"
-	PayMethodCoupon = "coupon"
-	PayMethodOffer  = "offer"
+	PayMethodMixin = "mixin"
+	PayMethodOffer = "offer"
 
 	UserActivePeriod = 5 * time.Minute
 )
@@ -277,17 +275,11 @@ func (user *User) Payment(ctx context.Context) error {
 
 func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) error {
 	if user.State != PaymentStatePending {
-		if method == PayMethodCoupon {
-			return session.ForbiddenError(ctx)
-		}
 		return nil
 	}
 	if b, err := readBlacklistInTx(ctx, tx, user.UserId); err != nil {
 		return err
 	} else if b != nil {
-		if method == PayMethodCoupon {
-			return session.ForbiddenError(ctx)
-		}
 		return nil
 	}
 

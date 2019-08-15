@@ -41,9 +41,6 @@ export default {
       messagesItem: {
         icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/messages'
       },
-      couponsItem: {
-        icon: require('../assets/images/coupons.png'), label:  this.$t('home.op_coupons'), url: '/coupons'
-      },
       // 订阅始终在倒数第一个位置
       subscribeItem: {
         icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
