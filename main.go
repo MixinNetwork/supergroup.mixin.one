@@ -22,11 +22,11 @@ func main() {
 
 	config.LoadConfig(*dir)
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		config.AppConfig.Database.DatebaseUser,
-		config.AppConfig.Database.DatabasePassword,
-		config.AppConfig.Database.DatabaseHost,
-		config.AppConfig.Database.DatabasePort,
-		config.AppConfig.Database.DatabaseName)
+		config.AppConfig.Database.User,
+		config.AppConfig.Database.Password,
+		config.AppConfig.Database.Host,
+		config.AppConfig.Database.Port,
+		config.AppConfig.Database.Name)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)

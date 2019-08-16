@@ -38,11 +38,11 @@ type Config struct {
 		HTTPResourceHost string `yaml:"host"`
 	} `yaml:"service"`
 	Database struct {
-		DatebaseUser     string `yaml:"username"`
-		DatabasePassword string `yaml:"password"`
-		DatabaseHost     string `yaml:"host"`
-		DatabasePort     string `yaml:"port"`
-		DatabaseName     string `yaml:"database_name"`
+		User     string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		Name     string `yaml:"database_name"`
 	} `yaml:"database"`
 	System struct {
 		MessageShardModifier     string   `yaml:"message_shard_modifier"`
