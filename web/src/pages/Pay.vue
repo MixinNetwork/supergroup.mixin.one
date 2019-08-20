@@ -1,7 +1,7 @@
 <template>
   <loading :loading="loading" :fullscreen="true">
-  <div class="pay-page" style="padding-top: 60px;">
-    <nav-bar :title="$t('pay.title')" :hasTopRight="false"></nav-bar>
+  <div class="container">
+    <nav-bar :title="$t('pay.title')"></nav-bar>
     <van-panel :title="$t('pay.welcome')" :desc="$t('pay.welcome_desc')">
     </van-panel>
     <br/>
@@ -12,15 +12,15 @@
         :columns="assets"
         placeholder="Tap to Select"
         @change="onChangeAsset">
-        <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
+        <span slot="text">{{selectedAsset.symbol}}</span>
       </row-select>
       <van-cell
-        :title="$t('pay.price_label', {price: currentCryptoPrice, unit: selectedAsset ? selectedAsset.text : '...'})"
+        :title="$t('pay.price_label', {price: selectedAsset.amount, unit: selectedAsset.symbol})"
         >
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="info" :disabled="selectedAsset === null || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
+          <van-button style="width: 100%" type="info" :disabled="selectedAsset.amount==0 || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -44,16 +44,14 @@ export default {
   },
   data () {
     return {
-      loading: true,
+      loading: false,
       config: null,
       meInfo: null,
-      selectedAsset: null,
-      autoEstimate: false,
-      autoEstimateCurrency: 'usd',
-      cryptoEsitmatedUsdMap: {},
-      cnyRatio: {},
-      currentCryptoPrice: 0,
-      currentEstimatedPrice: 0,
+      selectedAsset: {
+        asset_id: "",
+        symbol: "Tap To Select",
+        amount: 0,
+      },
       assets: []
     }
   },
@@ -61,42 +59,30 @@ export default {
     NavBar, RowSelect, Loading
   },
   async mounted () {
-    this.loading = true
-    let config = await this.GLOBAL.api.website.config()
-    this.assets = config.data.accept_asset_list.map((x) => {
-      x.text = x.symbol
-      return x
-    })
-    this.selectedAsset = this.assets[0]
+    this.loading = true;
+    let config = await this.GLOBAL.api.website.config();
+    this.assets = config.data.accept_asset_list.map((a) => {
+      a.text = a.symbol;
+      a.amount = Math.floor(parseFloat(a.amount) * 100000000) / 100000000;
+      return a
+    });
+    if (this.assets.length > 0) {
+      this.selectedAsset = this.assets[0]
+    }
     this.meInfo = await this.GLOBAL.api.account.me()
-    setTimeout(this.updatePrice, 2000)
     this.loading = false
   },
   computed: {
-    currencySymbol() {
-      if (this.autoEstimate) {
-        if (this.autoEstimateCurrency === 'cny') return '¥'
-        if (this.autoEstimateCurrency === 'usd') return '$'
-      }
-      return ''
-    }
   },
   methods: {
     payCrypto () {
       this.loading = true
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 1000)
-      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`
+      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.selectedAsset.amount}&trace=${traceId}&memo=PAY_TO_JOIN`
     },
     async onChangeAsset (ix) {
-      this.loading = true
-      this.selectedAsset = this.assets[ix]
-      await this.updatePrice()
-      this.loading = false
-    },
-    async updatePrice () {
-      this.currentCryptoPrice = parseFloat(this.selectedAsset.amount).toFixed(8);
-      this.currentEstimatedPrice = '-';
+      this.selectedAsset = this.assets[ix];
     },
     async waitForPayment () {
       let meInfo = await this.GLOBAL.api.account.me()
@@ -117,7 +103,7 @@ export default {
 </script>
 
 <style scoped>
-.pay-page {
+.container {
   padding-top: 60px;
 }
 </style>

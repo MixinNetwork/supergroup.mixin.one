@@ -1,11 +1,4 @@
 <template>
-  <!-- <el-row v-if="hasBack || hasTopRight" class="nav">
-    <el-col :span="3">
-      <el-button v-show="hasBack" type="text" icon="el-icon-back" class="back-button" @click="back"></el-button>
-    </el-col>
-    <el-col :span="hasBack ? 18: 24"><span class="title">{{title}}</span></el-col>
-    <el-col :span="4"></el-col>
-  </el-row> -->
   <van-nav-bar
     class="nav"
     :title="title"
@@ -34,8 +27,7 @@ export default {
     'van-nav-bar': NavBar,
   },
   data() {
-    return {
-    }
+    return {}
   },
   methods: {
     back () {
@@ -51,14 +43,12 @@ export default {
 <style lang="scss" scoped>
 .nav {
   position: fixed;
-  // padding: 0px 20px;
   left: 0;
   right: 0;
   top: 0;
   z-index: 9;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  // height: 44px;
   .title {
     font-size: 16px;
     height: 44px;
