@@ -56,11 +56,11 @@ func teardownTestContext(ctx context.Context) {
 
 func setupTestContext() context.Context {
 	config.LoadConfig("../config")
-	if config.AppConfig.Service.Environment != testEnvironment || config.AppConfig.Database.DatabaseName != testDatabase {
-		log.Panicln(config.AppConfig.Service.Environment, config.AppConfig.Database.DatabaseName)
+	if config.AppConfig.Service.Environment != testEnvironment || config.AppConfig.Database.Name != testDatabase {
+		log.Panicln(config.AppConfig.Service.Environment, config.AppConfig.Database.Name)
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.AppConfig.Database.DatebaseUser, config.AppConfig.Database.DatabasePassword, config.AppConfig.Database.DatabaseHost, config.AppConfig.Database.DatabasePort, config.AppConfig.Database.DatabaseName)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.AppConfig.Database.User, config.AppConfig.Database.Password, config.AppConfig.Database.Host, config.AppConfig.Database.Port, config.AppConfig.Database.Name)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
@@ -74,7 +74,6 @@ func setupTestContext() context.Context {
 		packets_DDL,
 		participants_DDL,
 		properties_DDL,
-		coupons_DDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {

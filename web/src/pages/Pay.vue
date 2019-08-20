@@ -1,7 +1,7 @@
 <template>
   <loading :loading="loading" :fullscreen="true">
-  <div class="pay-page" style="padding-top: 60px;">
-    <nav-bar :title="$t('pay.title')" :hasTopRight="false"></nav-bar>
+  <div class="container">
+    <nav-bar :title="$t('pay.title')"></nav-bar>
     <van-panel :title="$t('pay.welcome')" :desc="$t('pay.welcome_desc')">
     </van-panel>
     <br/>
@@ -12,42 +12,15 @@
         :columns="assets"
         placeholder="Tap to Select"
         @change="onChangeAsset">
-        <span slot="text">{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
+        <span slot="text">{{selectedAsset.symbol}}</span>
       </row-select>
       <van-cell
-        :title="$t('pay.price_label', {price: currentCryptoPrice, unit: selectedAsset ? selectedAsset.text : '...'})"
-        >
-        <!-- <span>≈{{currencySymbol}}{{currentEstimatedPrice.toLocaleString()}}</span> -->
-      </van-cell>
-      <div slot="footer">
-        <van-cell>
-          <van-button style="width: 100%" type="info" :disabled="selectedAsset === null || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
-        </van-cell>
-        <!-- <van-cell>
-          <van-button style="width: 100%" type="warning" :disabled="selectedAsset === null" @click="payCrypto">{{$t('pay.pay_foxone')}}</van-button>
-        </van-cell> -->
-      </div>
-    </van-panel>
-    <br/>
-    <van-panel v-if="acceptWechatPayment" :title="$t('pay.method_wechat')">
-      <van-cell
-        :title="$t('pay.price_label', {price: wechatPaymentAmount, unit: $t('currency.' + autoEstimateCurrency)})"
+        :title="$t('pay.price_label', {price: selectedAsset.amount, unit: selectedAsset.symbol})"
         >
       </van-cell>
       <div slot="footer">
         <van-cell>
-          <van-button style="width: 100%" type="primary" @click="payWechatMobile">{{$t('pay.pay_wechat')}}</van-button>
-        </van-cell>
-      </div>
-    </van-panel>
-    <br/>
-    <van-panel v-if="acceptCouponPayment" :title="$t('pay.method_coupon')">
-      <van-cell>
-        <van-field :placeholder="$t('pay.coupon_placeholder')" v-model="couponCode"></van-field>
-      </van-cell>
-      <div slot="footer">
-        <van-cell>
-          <van-button style="width: 100%" type="info" @click="payCoupon" :disabled="loading">{{$t('pay.pay_coupon')}}</van-button>
+          <van-button style="width: 100%" type="info" :disabled="selectedAsset.amount==0 || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -71,21 +44,14 @@ export default {
   },
   data () {
     return {
-      loading: true,
+      loading: false,
       config: null,
       meInfo: null,
-      selectedAsset: null,
-      autoEstimate: false,
-      autoEstimateCurrency: 'usd',
-      acceptWechatPayment: false,
-      acceptCouponPayment: false,
-      wechatPaymentAmount: '100',
-      cryptoEsitmatedUsdMap: {},
-      currencyTickers: [],
-      cnyRatio: {},
-      currentCryptoPrice: 0,
-      currentEstimatedPrice: 0,
-      couponCode: '',
+      selectedAsset: {
+        asset_id: "",
+        symbol: "Tap To Select",
+        amount: 0,
+      },
       assets: []
     }
   },
@@ -93,69 +59,30 @@ export default {
     NavBar, RowSelect, Loading
   },
   async mounted () {
-    this.loading = true
-    let config = await this.GLOBAL.api.website.config()
-    this.assets = config.data.accept_asset_list.map((x) => {
-      x.text = x.symbol
-      return x
-    })
-    this.selectedAsset = this.assets[0]
-    this.autoEstimate = config.data.auto_estimate
-    this.autoEstimateCurrency = config.data.auto_estimate_currency
-    this.autoEstimateBase = config.data.auto_estimate_base
-    this.acceptWechatPayment = config.data.accept_wechat_payment
-    this.wechatPaymentAmount = config.data.wechat_payment_amount
-    this.acceptCouponPayment = config.data.accept_coupon_payment
-    this.GLOBAL.api.fox.currency()
-      .then((currencyInfo) => {
-        this.currencyTickers = currencyInfo.data.cnyTickers.reduce((map, obj) => {
-          map[obj.from] = obj.price;
-          return map;
-        }, {})
-        this.cnyRatio = currencyInfo.data.currencies
-        // console.log(this.currencyTickers)
-      })
+    this.loading = true;
+    let config = await this.GLOBAL.api.website.config();
+    this.assets = config.data.accept_asset_list.map((a) => {
+      a.text = a.symbol;
+      a.amount = Math.floor(parseFloat(a.amount) * 100000000) / 100000000;
+      return a
+    });
+    if (this.assets.length > 0) {
+      this.selectedAsset = this.assets[0]
+    }
     this.meInfo = await this.GLOBAL.api.account.me()
-    setTimeout(this.updatePrice, 2000)
     this.loading = false
   },
   computed: {
-    currencySymbol() {
-      if (this.autoEstimate) {
-        if (this.autoEstimateCurrency === 'cny') return '¥'
-        if (this.autoEstimateCurrency === 'usd') return '$'
-      }
-      return ''
-    }
   },
   methods: {
     payCrypto () {
       this.loading = true
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 1000)
-      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`
-      // console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.currentCryptoPrice}&trace=${traceId}&memo=PAY_TO_JOIN`);
+      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.selectedAsset.amount}&trace=${traceId}&memo=PAY_TO_JOIN`
     },
     async onChangeAsset (ix) {
-      this.loading = true
-      this.selectedAsset = this.assets[ix]
-      await this.updatePrice()
-      this.loading = false
-    },
-    async updatePrice () {
-      if (this.selectedAsset.amount === 'auto') {
-        let base = this.autoEstimateBase / parseFloat(this.cnyRatio.usdt)
-        let priceUsdt = await this.getCryptoEsitmatedUsdt(this.selectedAsset.symbol)
-        this.currentCryptoPrice = (base / priceUsdt).toFixed(8)
-        if (this.autoEstimateCurrency === 'usd') {
-          this.currentEstimatedPrice = base
-        } else {
-          this.currentEstimatedPrice = base * this.cnyRatio.usdt
-        }
-      } else {
-        this.currentCryptoPrice = parseFloat(this.selectedAsset.amount).toFixed(8)
-        this.currentEstimatedPrice = '-'
-      }
+      this.selectedAsset = this.assets[ix];
     },
     async waitForPayment () {
       let meInfo = await this.GLOBAL.api.account.me()
@@ -171,45 +98,12 @@ export default {
       }
       setTimeout(async () => { await this.waitForPayment(); }, 1500)
     },
-    async getCryptoEsitmatedUsdt (symbol) {
-      if (this.cryptoEsitmatedUsdMap.hasOwnProperty(symbol)) {
-        return this.cryptoEsitmatedUsdMap[symbol]
-      }
-      // only support fetching from big.one
-      const pairName = symbol + '-' + 'USDT'
-      let resp = await this.GLOBAL.api.fox.b1Ticker(pairName)
-      if (resp && resp.data) {
-        this.cryptoEsitmatedUsdMap[symbol] = resp.data.close
-        return resp.data.close
-      }
-      return -1
-    },
-    payWechatMobile () {
-      this.$router.push(`/pay/wxqr/?qr_url=${encodeURIComponent(WEB_ROOT + '/wechat/request/' + this.meInfo.data.user_id)}`)
-    },
-    async payCoupon () {
-      this.loading = true
-      try {
-        let resp = await this.GLOBAL.api.coupon.occupy(this.couponCode)
-        if (resp && resp.data) {
-          Toast(this.$t('pay.correct_coupon_code_toast'))
-          this.$router.push('/')
-          this.loading = false
-        } else {
-          Toast(this.$t('pay.incorrect_coupon_code_toast'))
-          this.loading = false
-        }
-      } catch (err) {
-        Toast(this.$t('pay.incorrect_coupon_code_toast'))
-        this.loading = false
-      }
-    }
   }
 }
 </script>
 
 <style scoped>
-.pay-page {
+.container {
   padding-top: 60px;
 }
 </style>

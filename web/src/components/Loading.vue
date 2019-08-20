@@ -51,7 +51,6 @@ export default {
     transform: translate(-50%, -50%);
     z-index: 1;
     padding: 10px;
-    // background: rgba(0, 0, 0, 0.8);
     border-radius: 3px;
   }
 }

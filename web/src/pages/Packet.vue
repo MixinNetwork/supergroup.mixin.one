@@ -8,7 +8,7 @@
       </div>
       <h1 class="user name">{{user ? user.full_name : '...'}}</h1>
       <h2 class="greeting" v-if="pktData">
-        <i class="icon-bubble"></i> 
+        <i class="icon-bubble"></i>
         {{pktData.greeting || '...'}}
       </h2>
     </div>
@@ -28,7 +28,7 @@
 
     <template v-if="pktData">
       <div v-if="!isClose" class="packet history">
-        <h4>{{$t('packet.opened', {opened_count: pktData.opened_count, total_count: pktData.total_count})}}, 
+        <h4>{{$t('packet.opened', {opened_count: pktData.opened_count, total_count: pktData.total_count})}},
           {{pktData.opened_amount}}/{{pktData.amount}} {{asset.symbol}}</h4>
         <ul >
           <li v-for="user in pktData.participants">
@@ -54,8 +54,8 @@
             <div class="rect5"></div>
           </div>
         </div>
-      </div>     
-    </template> 
+      </div>
+    </template>
   </div>
   </loading>
 </template>
@@ -99,7 +99,7 @@ export default {
     let pktInfo = await this.GLOBAL.api.packet.show(pktId)
     if (pktInfo.error) {
       this.loading = false
-      return 
+      return
     }
     let pktData = pktInfo.data
     for (var i in pktData.participants) {
@@ -346,5 +346,4 @@ export default {
     }
   }
 }
-
 </style>

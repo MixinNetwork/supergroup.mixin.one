@@ -28,7 +28,7 @@ export default {
 <style lang="scss" scoped>
 .asset-item {
   display: flex;
-  
+
   .cell {
     display: flex;
     flex-direction: column;
@@ -59,4 +59,3 @@ export default {
   }
 }
 </style>
-

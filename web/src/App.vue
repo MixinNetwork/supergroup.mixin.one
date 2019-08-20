@@ -15,12 +15,10 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.path !== '/wxpay') {
-      this.GLOBAL.api.net.on(401, (payload)=>{
+    this.GLOBAL.api.net.on(401, (payload)=>{
         let url = `https://mixin.one/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=${encodeURIComponent(OAUTH_CALLBACK_URL)}`
         window.location.href = url
-      })
-    }
+        })
   },
   methods: {
   }

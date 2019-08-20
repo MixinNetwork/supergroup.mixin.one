@@ -41,7 +41,6 @@
   },
   "pay": {
     "title": "Pay to Join",
-    "pay_wechat": "WeChat Pay",
     "pay_crypto": "Mixin Pay",
     "pay_foxone": "Fox.ONE Pay",
     "welcome": "Welcome to this group",

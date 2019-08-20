@@ -38,11 +38,11 @@ type Config struct {
 		HTTPResourceHost string `yaml:"host"`
 	} `yaml:"service"`
 	Database struct {
-		DatebaseUser     string `yaml:"username"`
-		DatabasePassword string `yaml:"password"`
-		DatabaseHost     string `yaml:"host"`
-		DatabasePort     string `yaml:"port"`
-		DatabaseName     string `yaml:"database_name"`
+		User     string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+		Name     string `yaml:"database_name"`
 	} `yaml:"database"`
 	System struct {
 		MessageShardModifier     string   `yaml:"message_shard_modifier"`
@@ -53,21 +53,13 @@ type Config struct {
 		VideoMessageEnable       bool     `yaml:"video_message_enable"`
 		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
 		LimitMessageFrequency    bool     `yaml:"limit_message_frequency"`
+		DetectQRCodeEnabled      bool     `yaml:"detect_image"`
+		DetectLinkEnabled        bool     `yaml:"detect_link"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
-		DetectLinkEnabled        bool           `yaml:"detect_link"`
 		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
-		PaymentAssetId           string         `yaml:"payment_asset_id"`
-		PaymentAmount            string         `yaml:"payment_amount"`
 		PayToJoin                bool           `yaml:"pay_to_join"`
-		AutoEstimate             bool           `yaml:"auto_estimate"`
-		AutoEstimateCurrency     string         `yaml:"auto_estimate_currency"`
-		AutoEstimateBase         string         `yaml:"auto_estimate_base"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
-		AccpetWeChatPayment      bool           `yaml:"accept_wechat_payment"`
-		WeChatPaymentAmount      string         `yaml:"wechat_payment_amount"`
-		AccpetCouponPayment      bool           `yaml:"accept_coupon_payment"`
 	} `yaml:"system"`
 	Appearance struct {
 		HomeWelcomeMessage string          `yaml:"home_welcome_message"`
@@ -90,15 +82,6 @@ type Config struct {
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 	} `yaml:"message_template"`
-	Wechat struct {
-		AppId          string `yaml:"app_id"`
-		AppSecret      string `yaml:"app_secret"`
-		Token          string `yaml:"token"`
-		EncodingAESKey string `yaml:"encodine_aes_key"`
-		MchId          string `yaml:"mch_id"`
-		MchKey         string `yaml:"mch_key"`
-		NotifyUrl      string `yaml:"notify_url"`
-	} `yaml:"wechat"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`
 		ClientSecret    string `yaml:"client_secret"`
@@ -112,13 +95,7 @@ type Config struct {
 type ExportedConfig struct {
 	MixinClientId          string          `json:"mixin_client_id"`
 	HTTPResourceHost       string          `json:"host"`
-	AutoEstimate           bool            `json:"auto_estimate"`
-	AutoEstimateCurrency   string          `json:"auto_estimate_currency"`
-	AutoEstimateBase       string          `json:"auto_estimate_base"`
 	AccpetPaymentAssetList []PaymentAsset  `json:"accept_asset_list"`
-	AccpetWeChatPayment    bool            `json:"accept_wechat_payment"`
-	WeChatPaymentAmount    string          `json:"wechat_payment_amount"`
-	AccpetCouponPayment    bool            `json:"accept_coupon_payment"`
 	HomeWelcomeMessage     string          `json:"home_welcome_message"`
 	HomeShortcutGroups     []ShortcutGroup `json:"home_shortcut_groups"`
 }
@@ -142,17 +119,11 @@ func LoadConfig(dir string) {
 }
 
 func GetExported() ExportedConfig {
-	var exc ExportedConfig
-	exc.MixinClientId = AppConfig.Mixin.ClientId
-	exc.HTTPResourceHost = AppConfig.Service.HTTPResourceHost
-	exc.AutoEstimate = AppConfig.System.AutoEstimate
-	exc.AutoEstimateCurrency = AppConfig.System.AutoEstimateCurrency
-	exc.AutoEstimateBase = AppConfig.System.AutoEstimateBase
-	exc.AccpetPaymentAssetList = AppConfig.System.AccpetPaymentAssetList
-	exc.AccpetWeChatPayment = AppConfig.System.AccpetWeChatPayment
-	exc.WeChatPaymentAmount = AppConfig.System.WeChatPaymentAmount
-	exc.AccpetCouponPayment = AppConfig.System.AccpetCouponPayment
-	exc.HomeWelcomeMessage = AppConfig.Appearance.HomeWelcomeMessage
-	exc.HomeShortcutGroups = AppConfig.Appearance.HomeShortcutGroups
-	return exc
+	return ExportedConfig{
+		MixinClientId:          AppConfig.Mixin.ClientId,
+		HTTPResourceHost:       AppConfig.Service.HTTPResourceHost,
+		AccpetPaymentAssetList: AppConfig.System.AccpetPaymentAssetList,
+		HomeWelcomeMessage:     AppConfig.Appearance.HomeWelcomeMessage,
+		HomeShortcutGroups:     AppConfig.Appearance.HomeShortcutGroups,
+	}
 }

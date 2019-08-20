@@ -11,7 +11,7 @@ database:
   database_name: "postgres"
 system:
   message_shard_modifier: SHARD
-  message_shard_size: 4
+  message_shard_size: 6
   price_asset_enable: true
   audio_message_enable: false
   image_message_enable: true
@@ -21,23 +21,17 @@ system:
   detect_image: false
   detect_link: false
   prohibited_message: true
-  # new payment settings
-  auto_estimate: false
-  auto_estimate_currency: "usd" # cny or usd. only useful when auto_estimate == true
-  auto_estimate_base: "9.9"
-  accept_wechat_payment: false
-  wechat_payment_amount: "0.01"
   operator_list:
     - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
     - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
   pay_to_join: true
   accept_asset_list:
     - symbol: "XIN"
-      asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8" # XIN
-      amount: "auto" # auto estimate
+      asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8"
+      amount: "0.001"
     - symbol: "CNB"
-      asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c" # CNB
-      amount: "1000.00"
+      asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c"
+      amount: "1000"
 appearance:
   home_shortcut_groups:
     - label_en: "3-Party Services"
@@ -46,7 +40,7 @@ appearance:
         - icon: "..."
           label_en: "Service Name"
           label_zh: "服务名称"
-          url: https://..
+          url: "https://.."
 message_template:
   welcome_message        : "欢迎加入 Mixin 中文群"
   group_redpacket        : "中文群红包"
@@ -63,16 +57,6 @@ message_template:
   message_tips_too_many   : "发送太频繁"
   message_commands_info   : "/INFO"
   message_commands_info_resp: "当前订阅人数: %d"
-wechat:
-  # 微信配置
-  app_id: ""
-  app_secret: ""
-  token: ""
-  encodine_aes_key: ""
-  # 微信支付配置
-  mch_id: ""
-  mch_key: ""
-  notify_url:
 mixin:
   client_id        : "5fcd897e-e7b2-40d5-93cd-487e2d955556"
   client_secret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"

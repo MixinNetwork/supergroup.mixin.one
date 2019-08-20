@@ -1,4 +1,3 @@
-
 const api = require('./net').default
 
 const Website = {
