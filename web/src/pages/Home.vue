@@ -34,16 +34,25 @@ export default {
       websiteInfo: null,
       websiteConf: null,
       builtinItems: [
-        // builtin
-        { icon: require('../assets/images/luckymoney-circle.png'), label: this.$t('home.op_luckycoin'), url: '/packets/prepare' },
-        { icon: require('../assets/images/users-circle.png'), label: this.$t('home.op_members'), url: '/members' },
+        {
+          icon: require('../assets/images/luckymoney-circle.png'),
+          label: this.$t('home.op_luckycoin'),
+          url: '/packets/prepare'
+        }, {
+          icon: require('../assets/images/users-circle.png'),
+          label: this.$t('home.op_members'),
+          url: '/members'
+        },
       ],
       messagesItem: {
-        icon: require('../assets/images/messages-circle.png'), label:  this.$t('home.op_messages'), url: '/messages'
+        icon: require('../assets/images/messages-circle.png'),
+        label:  this.$t('home.op_messages'),
+        url: '/messages'
       },
       // 订阅始终在倒数第一个位置
       subscribeItem: {
-        icon: require('../assets/images/notification-circle.png'), label: this.$t('home.op_subscribe'),
+        icon: require('../assets/images/notification-circle.png'),
+        label: this.$t('home.op_subscribe'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.subscribe()
@@ -52,7 +61,8 @@ export default {
         }
       },
       unsubscribeItem: {
-        icon: require('../assets/images/notification-off-circle.png'), label: this.$t('home.op_unsubscribe'),
+        icon: require('../assets/images/notification-off-circle.png'),
+        label: this.$t('home.op_unsubscribe'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.account.unsubscribe()
@@ -61,7 +71,8 @@ export default {
       },
       // 禁言始终在倒数第二个位置
       unprohibitItem: {
-        icon: require('../assets/images/unprohibited.png'), label: this.$t('home.op_unmute'),
+        icon: require('../assets/images/unprohibited.png'),
+        label: this.$t('home.op_unmute'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(false)
@@ -69,7 +80,8 @@ export default {
         }
       },
       prohibitItem: {
-        icon: require('../assets/images/prohibited.png'), label: this.$t('home.op_mute'),
+        icon: require('../assets/images/prohibited.png'),
+        label: this.$t('home.op_mute'),
         click: async (evt) => {
           evt.preventDefault()
           await this.GLOBAL.api.property.create(true)
@@ -123,7 +135,6 @@ export default {
         return
       }
       if (this.meInfo.data.role === 'admin') {
-        this.builtinItems.push(this.couponsItem)
         this.builtinItems.push(this.messagesItem)
         this.updateProhibitedState()
       }
