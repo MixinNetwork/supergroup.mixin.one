@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from './pages/Home'
-import TestAuth from './pages/TestAuth'
+import Auth from './pages/Auth'
 import Pay from './pages/Pay'
 import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/Packet'
@@ -18,7 +18,7 @@ const routes = [
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },
   { path: '/messages/', component: Messages },
-  { path: '/auth', component: TestAuth },
+  { path: '/auth', component: Auth },
 ]
 
 const router = new VueRouter({

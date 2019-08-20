@@ -150,10 +150,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.home-page {
-  // padding-top: 60px;
-}
-</style>
-
