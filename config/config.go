@@ -53,10 +53,10 @@ type Config struct {
 		VideoMessageEnable       bool     `yaml:"video_message_enable"`
 		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
 		LimitMessageFrequency    bool     `yaml:"limit_message_frequency"`
+		DetectQRCodeEnabled      bool     `yaml:"detect_image"`
+		DetectLinkEnabled        bool     `yaml:"detect_link"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		DetectQRCodeEnabled      bool           `yaml:"detect_image"`
-		DetectLinkEnabled        bool           `yaml:"detect_link"`
 		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
 		PayToJoin                bool           `yaml:"pay_to_join"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
