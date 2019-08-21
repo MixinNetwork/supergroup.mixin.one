@@ -1,3 +1,12 @@
+# 2019-08-21
+
+coupons 跟 orders 两个表不再需要了
+
+```
+DROP TABLE IF EXISTS coupons;
+DROP TABLE IF EXISTS orders;
+```
+
 # 2019-07-03
 
 添加了更多支付方式，包括微信支付, 但是需要相关的证书等, config.tpl.yaml 也作了相应的修改。
