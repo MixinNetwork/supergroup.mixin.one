@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS orders;
 添加了更多支付方式，包括微信支付, 但是需要相关的证书等, config.tpl.yaml 也作了相应的修改。
 
 ```
-AlTER TABLE users ADD COLUMN pay_method VARCHAR(512) NOT NULL DEFAULT ''
+AlTER TABLE users ADD COLUMN pay_method VARCHAR(512) NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS orders (
   order_id         VARCHAR(36) PRIMARY KEY CHECK (order_id ~* '^[0-9a-f-]{36,36}$'),
