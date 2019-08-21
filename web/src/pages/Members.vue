@@ -78,12 +78,16 @@ export default {
     async loadMembers(offset=0, query='', append=true) {
       this.maskLoading = true
       this.loading = true
+      let role = window.localStorage.getItem('role')
       let resp = await this.GLOBAL.api.account.subscribers(offset, query)
       if (resp.data.length < 2) {
         this.finished = true
       }
       resp.data = resp.data.map((x) => {
         x.time = dayjs(x.subscribed_at).format('YYYY.MM.DD')
+        if (role !== 'admin') {
+          x.identity_number = '0'
+        }
         return x
       })
       if (append) {

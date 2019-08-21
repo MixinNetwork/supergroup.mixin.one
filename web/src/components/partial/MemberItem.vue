@@ -5,7 +5,7 @@
     </div>
     <div class="cell member-list-info">
       <div class="member-name">{{ member.full_name }}</div>
-        <div class="member-id">{{ member.identity_number }}</div>
+      <div class="member-id" v-if="member.identity_number !== '0'">{{ member.identity_number }}</div>
     </div>
     <div class="cell member-list-role">
       <div class="member-role" :class="member.role === 'admin' ? member.role : ''"></div>
@@ -32,7 +32,7 @@ export default {
   padding: 6px 10px;
   border-bottom: 1px solid #f8f8f8;
   background: #fff;
-  
+
   .cell {
     display: flex;
     flex-direction: column;
