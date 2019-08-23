@@ -18,6 +18,7 @@ const (
 )
 
 const (
+	dropRewardsDDL             = `DROP TABLE IF EXISTS rewards;`
 	dropBroadcastersDDL        = `DROP TABLE IF EXISTS broadcasters;`
 	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
 	dropParticipantsDDL        = `DROP TABLE IF EXISTS participants;`
@@ -46,6 +47,7 @@ func teardownTestContext(ctx context.Context) {
 		dropPacketsDDL,
 		dropPropertiesDDL,
 		dropBroadcastersDDL,
+		dropRewardsDDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {
@@ -75,6 +77,7 @@ func setupTestContext() context.Context {
 		participants_DDL,
 		properties_DDL,
 		broadcasters_DDL,
+		rewards_DDL,
 	}
 	for _, q := range tables {
 		if _, err := db.Exec(q); err != nil {

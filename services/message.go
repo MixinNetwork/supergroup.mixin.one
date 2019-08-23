@@ -341,6 +341,13 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if err != nil {
 		return nil
 	}
+	if data, _ := base64.StdEncoding.DecodeString(transfer.Memo); len(data) > 0 {
+		array := strings.Split(string(data), ":")
+		if len(array) == 2 && array[0] == "REWARD" {
+			_, err := models.CreateReward(ctx, transfer.TraceId, userId, array[1], transfer.AssetId, transfer.Amount)
+			return err
+		}
+	}
 	user, err := models.FindUser(ctx, userId)
 	if user == nil || err != nil {
 		return err
