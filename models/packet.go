@@ -204,6 +204,9 @@ func ShowPacket(ctx context.Context, packetId string) (*Packet, error) {
 var mutexeSet map[string]*sync.Mutex
 
 func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet, error) {
+	if current.State != PaymentStatePaid {
+		return nil, session.ForbiddenError(ctx)
+	}
 	packet, err := ShowPacket(ctx, packetId)
 	if err != nil || packet == nil {
 		return nil, err
