@@ -37,7 +37,7 @@
     "op_unmute": "允许发言",
     "op_members": "成员",
     "op_messages": "消息管理",
-    "op_coupons": "兑换码"
+    "op_reward": "打赏"
   },
   "pay": {
     "title": "入群支付",
