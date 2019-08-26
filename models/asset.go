@@ -136,7 +136,7 @@ func upsertAssets(ctx context.Context, assets []*Asset) error {
 	return err
 }
 
-func readAsset(ctx context.Context, tx *sql.Tx, assetId string) (*Asset, error) {
+func findAssetById(ctx context.Context, tx *sql.Tx, assetId string) (*Asset, error) {
 	query := fmt.Sprintf("SELECT %s FROM assets WHERE asset_id=$1", strings.Join(assetsColumns, ","))
 	row := tx.QueryRowContext(ctx, query, assetId)
 	asset, err := assetFromRow(row)

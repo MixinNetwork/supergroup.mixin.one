@@ -39,6 +39,10 @@ export default {
           label: this.$t('home.op_luckycoin'),
           url: '/packets/prepare'
         }, {
+          icon: require('../assets/images/reward.png'),
+          label: this.$t('home.op_reward'),
+          url: '/broadcasters'
+        }, {
           icon: require('../assets/images/users-circle.png'),
           label: this.$t('home.op_members'),
           url: '/members'

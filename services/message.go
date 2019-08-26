@@ -76,6 +76,7 @@ func (service *MessageService) Run(ctx context.Context) error {
 	go loopPendingMessage(ctx)
 	go handlePendingParticipants(ctx)
 	go handleExpiredPackets(ctx)
+	go handlePendingRewards(ctx)
 
 	for {
 		err := service.loop(ctx)
@@ -341,6 +342,13 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if err != nil {
 		return nil
 	}
+	if data, _ := base64.StdEncoding.DecodeString(transfer.Memo); len(data) > 0 {
+		array := strings.Split(string(data), ":")
+		if len(array) == 2 && array[0] == "REWARD" {
+			_, err := models.CreateReward(ctx, transfer.TraceId, userId, array[1], transfer.AssetId, transfer.Amount)
+			return err
+		}
+	}
 	user, err := models.FindUser(ctx, userId)
 	if user == nil || err != nil {
 		return err
@@ -409,6 +417,31 @@ func handleExpiredPackets(ctx context.Context) {
 
 		if len(packetIds) < limit {
 			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+	}
+}
+
+func handlePendingRewards(ctx context.Context) {
+	var limit = 20
+	for {
+		rewards, err := models.PendingRewards(ctx, limit)
+		if err != nil {
+			session.Logger(ctx).Error(err)
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+
+		for _, reward := range rewards {
+			err = models.SendRewardTransfer(ctx, reward)
+			if err != nil {
+				session.Logger(ctx).Error(reward.RewardId, err)
+				continue
+			}
+		}
+
+		if len(rewards) < limit {
+			time.Sleep(10 * time.Second)
 			continue
 		}
 	}

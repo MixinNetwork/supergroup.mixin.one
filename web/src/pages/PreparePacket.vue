@@ -109,7 +109,6 @@ export default {
         return
       }
 
-      console.log(createResp)
       let pkt = createResp.data
       setTimeout(() => {
         this.waitForPayment(pkt.packet_id)

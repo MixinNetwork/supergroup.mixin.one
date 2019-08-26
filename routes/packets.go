@@ -28,6 +28,7 @@ func registerPackets(router *httptreemux.TreeMux) {
 	router.POST("/packets", impl.create)
 	router.GET("/packets/:id", impl.show)
 	router.POST("/packets/:id/claim", impl.claim)
+	router.GET("/assets", impl.assets)
 }
 
 func (impl *packetsImpl) prepare(w http.ResponseWriter, r *http.Request, params map[string]string) {
@@ -69,5 +70,13 @@ func (impl *packetsImpl) claim(w http.ResponseWriter, r *http.Request, params ma
 		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderPacket(w, r, packet)
+	}
+}
+
+func (impl *packetsImpl) assets(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	if assets, err := middlewares.CurrentUser(r).ListAssets(r.Context()); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderAssets(w, r, assets)
 	}
 }

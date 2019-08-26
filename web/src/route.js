@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
 import Pay from './pages/Pay'
+import Broadcaster from './pages/Broadcaster'
 import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/Packet'
 import Members from './pages/Members'
@@ -14,6 +15,7 @@ Vue.use(VueRouter)
 const routes = [
   { path: '/', component: Home },
   { path: '/pay', component: Pay },
+  { path: '/broadcasters', component: Broadcaster },
   { path: '/packets/prepare', component: PreparePacket },
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },

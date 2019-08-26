@@ -37,7 +37,7 @@
     "op_unmute": "允许发言",
     "op_members": "成员",
     "op_messages": "消息管理",
-    "op_coupons": "兑换码"
+    "op_reward": "打赏"
   },
   "pay": {
     "title": "入群支付",
@@ -56,6 +56,10 @@
     "coupon_placeholder": "兑换码",
     "correct_coupon_code_toast": "已经兑换成功",
     "incorrect_coupon_code_toast": "不正确的兑换码"
+  },
+  "broadcaster": {
+    "title": "打赏",
+    "pay": "支付"
   },
   "prepare_packet": {
     "title": "准备红包",

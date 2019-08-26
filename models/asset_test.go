@@ -49,7 +49,7 @@ func testReadAsset(ctx context.Context, id string) (*Asset, error) {
 	var asset *Asset
 	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
-		asset, err = readAsset(ctx, tx, id)
+		asset, err = findAssetById(ctx, tx, id)
 		return err
 	})
 	return asset, err

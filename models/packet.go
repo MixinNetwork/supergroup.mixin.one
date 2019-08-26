@@ -420,7 +420,7 @@ func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string
 	if err != nil || packet == nil {
 		return nil, err
 	}
-	packet.Asset, err = readAsset(ctx, tx, packet.AssetId)
+	packet.Asset, err = findAssetById(ctx, tx, packet.AssetId)
 	if err != nil {
 		return nil, err
 	}

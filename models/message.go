@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
@@ -20,15 +22,16 @@ const (
 	MessageStatePending = "pending"
 	MessageStateSuccess = "success"
 
-	MessageCategoryMessageRecall = "MESSAGE_RECALL"
-	MessageCategoryPlainText     = "PLAIN_TEXT"
-	MessageCategoryPlainImage    = "PLAIN_IMAGE"
-	MessageCategoryPlainVideo    = "PLAIN_VIDEO"
-	MessageCategoryPlainData     = "PLAIN_DATA"
-	MessageCategoryPlainSticker  = "PLAIN_STICKER"
-	MessageCategoryPlainContact  = "PLAIN_CONTACT"
-	MessageCategoryPlainAudio    = "PLAIN_AUDIO"
-	MessageCategoryAppCard       = "APP_CARD"
+	MessageCategoryMessageRecall  = "MESSAGE_RECALL"
+	MessageCategoryPlainText      = "PLAIN_TEXT"
+	MessageCategoryPlainImage     = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo     = "PLAIN_VIDEO"
+	MessageCategoryPlainData      = "PLAIN_DATA"
+	MessageCategoryPlainSticker   = "PLAIN_STICKER"
+	MessageCategoryPlainContact   = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio     = "PLAIN_AUDIO"
+	MessageCategoryAppCard        = "APP_CARD"
+	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
 )
 
 const messages_DDL = `
@@ -184,6 +187,28 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 	return err
 }
 
+func createSystemRewardMessage(ctx context.Context, tx *sql.Tx, r *Reward, user, receipt *User, asset *Asset) error {
+	label := fmt.Sprintf(config.AppConfig.MessageTemplate.MessageRewardLabel, user.FullName, receipt.FullName, r.Amount, asset.Symbol)
+	if utf8.RuneCountInString(label) > 36 {
+		label = fmt.Sprintf(config.AppConfig.MessageTemplate.MessageRewardLabel, FirstNStringInRune(user.FullName, 5), FirstNStringInRune(receipt.FullName, 5), r.Amount, asset.Symbol)
+	}
+	if utf8.RuneCountInString(label) > 36 {
+		label = fmt.Sprintf(FirstNStringInRune(label, 30))
+	}
+	action := config.AppConfig.Service.HTTPResourceHost + "/broadcasters"
+	colors := []string{"#AA4848 ", "#B0665E ", "#EF8A44 ", "#A09555 ", "#727234 ", "#9CAD23 ", "#AA9100 ", "#C49B4B ", "#A47758 ", "#DF694C ", "#D65859 ", "#C2405A ", "#A75C96 ", "#BD637C ", "#8F7AC5 ", "#7983C2 ", "#728DB8 ", "#5977C2 ", "#5E6DA2 ", "#3D98D0 ", "#5E97A1"}
+	btns, err := json.Marshal([]interface{}{map[string]string{
+		"label":  label,
+		"action": action,
+		"color":  colors[rand.Intn(len(colors))],
+	}})
+	if err != nil {
+		return session.ServerError(ctx, err)
+	}
+	data := base64.StdEncoding.EncodeToString(btns)
+	return createSystemMessage(ctx, tx, MessageCategoryAppButtonGroup, data)
+}
+
 func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
 	b, err := readProhibitedStatus(ctx, tx)
 	if err != nil || b {
@@ -300,4 +325,11 @@ func readLastestMessagesInTx(ctx context.Context, tx *sql.Tx, limit int64) ([]*M
 
 type RecallMessage struct {
 	MessageId string `json:"message_id"`
+}
+
+func FirstNStringInRune(s string, n int) string {
+	if utf8.RuneCountInString(s) < n+3 {
+		return s
+	}
+	return string([]rune(s)[:n]) + "..."
 }

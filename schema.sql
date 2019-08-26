@@ -95,3 +95,25 @@ CREATE TABLE IF NOT EXISTS properties (
   value              VARCHAR(1024) NOT NULL,
   created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS broadcasters (
+	user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+	updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS broadcasters_updatedx ON broadcasters(updated_at);
+
+
+CREATE TABLE IF NOT EXISTS rewards (
+	reward_id           VARCHAR(36) PRIMARY KEY CHECK (reward_id ~* '^[0-9a-f-]{36,36}$'),
+	user_id	            VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+	recipient_id        VARCHAR(36) NOT NULL CHECK (recipient_id ~* '^[0-9a-f-]{36,36}$'),
+	asset_id            VARCHAR(36) NOT NULL CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
+	amount              VARCHAR(128) NOT NULL,
+	paid_at             TIMESTAMP WITH TIME ZONE NOT NULL,
+	created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS rewards_paidx ON rewards(paid_at);
