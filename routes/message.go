@@ -46,7 +46,8 @@ func (impl *messageImpl) recall(w http.ResponseWriter, r *http.Request, params m
 		models.MessageCategoryPlainData,
 		models.MessageCategoryPlainSticker,
 		models.MessageCategoryPlainContact,
-		models.MessageCategoryPlainAudio:
+		models.MessageCategoryPlainAudio,
+		models.MessageCategoryAppButtonGroup:
 	default:
 		views.RenderErrorResponse(w, r, session.ForbiddenError(r.Context()))
 		return
