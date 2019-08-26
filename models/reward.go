@@ -2,14 +2,19 @@ package models
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
+	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/gofrs/uuid"
 )
 
 const rewards_DDL = `
@@ -105,4 +110,65 @@ func readRewardById(ctx context.Context, tx *sql.Tx, id string) (*Reward, error)
 		return nil, nil
 	}
 	return reward, err
+}
+
+func PendingRewards(ctx context.Context, limit int) ([]*Reward, error) {
+	query := fmt.Sprintf("SELECT %s FROM rewards WHERE paid_at=$1 LIMIT %d", strings.Join(rewardColumns, ","), limit)
+	rows, err := session.Database(ctx).QueryContext(ctx, query, time.Time{})
+	if err != nil {
+		return nil, session.TransactionError(ctx, err)
+	}
+	defer rows.Close()
+
+	var rewards []*Reward
+	for rows.Next() {
+		r, err := rewardFromRow(rows)
+		if err != nil {
+			return nil, session.TransactionError(ctx, err)
+		}
+		rewards = append(rewards, r)
+	}
+	return rewards, nil
+}
+
+func SendRewardTransfer(ctx context.Context, reward *Reward) error {
+	traceId, err := generateRewardId(reward.RewardId)
+	if err != nil {
+		return session.ServerError(ctx, err)
+	}
+	if !reward.PaidAt.IsZero() {
+		return nil
+	}
+	in := &bot.TransferInput{
+		AssetId:     reward.AssetId,
+		RecipientId: reward.RecipientId,
+		Amount:      number.FromString(reward.Amount),
+		TraceId:     traceId,
+		Memo:        "",
+	}
+	err = bot.CreateTransfer(ctx, in, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, config.AppConfig.Mixin.SessionAssetPIN, config.AppConfig.Mixin.PinToken)
+	if err != nil {
+		return session.ServerError(ctx, err)
+	}
+	return UpdateReward(ctx, reward.RewardId)
+}
+
+func UpdateReward(ctx context.Context, rewardId string) error {
+	query := "UPDATE rewards SET paid_at=$1 WHERE reward_id=$2"
+	_, err := session.Database(ctx).ExecContext(ctx, query, time.Now(), rewardId)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
+func generateRewardId(rewardId string) (string, error) {
+	h := md5.New()
+	io.WriteString(h, rewardId)
+	io.WriteString(h, "REWARD")
+	sum := h.Sum(nil)
+	sum[6] = (sum[6] & 0x0f) | 0x30
+	sum[8] = (sum[8] & 0x3f) | 0x80
+	id, err := uuid.FromBytes(sum)
+	return id.String(), err
 }

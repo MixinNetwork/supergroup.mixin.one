@@ -116,7 +116,9 @@ export default {
     async pay () {
       let memo = btoa(`REWARD:${this.broadcaster.user_id}`);
       let traceId = uuid.v4();
-      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&trace=${traceId}&amount=${this.amount}&memo=${memo}`;
+      let amount = this.amount;
+      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&trace=${traceId}&amount=${amount}&memo=${memo}`;
+      this.amount = '';
     }
   }
 }

@@ -33,4 +33,13 @@ func TestRewardCRUD(t *testing.T) {
 	reward, err := CreateReward(ctx, bot.UuidNewV4().String(), user.UserId, recipient.UserId, asset.AssetId, "1")
 	assert.Nil(err)
 	assert.NotNil(reward)
+
+	rewards, err := PendingRewards(ctx, 10)
+	assert.Nil(err)
+	assert.Len(rewards, 1)
+	err = UpdateReward(ctx, reward.RewardId)
+	assert.Nil(err)
+	rewards, err = PendingRewards(ctx, 10)
+	assert.Nil(err)
+	assert.Len(rewards, 0)
 }
