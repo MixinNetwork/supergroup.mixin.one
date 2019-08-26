@@ -56,6 +56,10 @@
     "correct_coupon_code_toast": "Coupon code applied",
     "incorrect_coupon_code_toast": "Incorrect coupon code"
   },
+  "broadcaster": {
+    "title": "Reward",
+    "pay": "Pay"
+  },
   "prepare_packet": {
     "title": "Prepare Lucky Coin",
     "welcome": "Share your luck with the group",

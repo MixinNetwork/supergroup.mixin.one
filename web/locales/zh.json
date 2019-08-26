@@ -57,6 +57,10 @@
     "correct_coupon_code_toast": "已经兑换成功",
     "incorrect_coupon_code_toast": "不正确的兑换码"
   },
+  "broadcaster": {
+    "title": "打赏",
+    "pay": "支付"
+  },
   "prepare_packet": {
     "title": "准备红包",
     "welcome": "把你的幸运带给群友",

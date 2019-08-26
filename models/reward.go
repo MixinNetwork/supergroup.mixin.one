@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS rewards (
 	paid_at             TIMESTAMP WITH TIME ZONE NOT NULL,
 	created_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS rewards_paidx ON rewards(paid_at);
 `
 
 type Reward struct {

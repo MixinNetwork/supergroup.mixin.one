@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -195,10 +196,11 @@ func createSystemRewardMessage(ctx context.Context, tx *sql.Tx, r *Reward, user,
 		label = fmt.Sprintf(FirstNStringInRune(label, 30))
 	}
 	action := config.AppConfig.Service.HTTPResourceHost + "/broadcasters"
+	colors := []string{"#AA4848 ", "#B0665E ", "#EF8A44 ", "#A09555 ", "#727234 ", "#9CAD23 ", "#AA9100 ", "#C49B4B ", "#A47758 ", "#DF694C ", "#D65859 ", "#C2405A ", "#A75C96 ", "#BD637C ", "#8F7AC5 ", "#7983C2 ", "#728DB8 ", "#5977C2 ", "#5E6DA2 ", "#3D98D0 ", "#5E97A1"}
 	btns, err := json.Marshal([]interface{}{map[string]string{
 		"label":  label,
 		"action": action,
-		"color":  "#46B8DA",
+		"color":  colors[rand.Intn(len(colors))],
 	}})
 	if err != nil {
 		return session.ServerError(ctx, err)
