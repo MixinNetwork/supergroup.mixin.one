@@ -328,7 +328,7 @@ type RecallMessage struct {
 }
 
 func FirstNStringInRune(s string, n int) string {
-	if utf8.RuneCountInString(s) < n+3 {
+	if utf8.RuneCountInString(s) <= n+3 {
 		return s
 	}
 	return string([]rune(s)[:n]) + "..."
