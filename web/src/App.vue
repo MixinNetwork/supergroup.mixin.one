@@ -16,9 +16,9 @@ export default {
   },
   mounted() {
     this.GLOBAL.api.net.on(401, (payload)=>{
-        let url = `https://mixin.one/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ&response_type=code&return_to=${encodeURIComponent(OAUTH_CALLBACK_URL)}`
-        window.location.href = url
-        })
+      let url = `https://mixin.one/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+MESSAGES:REPRESENT&response_type=code&return_to=${encodeURIComponent(OAUTH_CALLBACK_URL)}`
+      window.location.href = url
+    })
   },
   methods: {
   }

@@ -1,3 +1,7 @@
+# 2019-08-27
+
+大群权限修改，需要添加 MESSAGES:REPRESENT
+
 # 2019-08-26
 
 config.tpl.yaml 添加了新消息模版 `message_reward_label`
