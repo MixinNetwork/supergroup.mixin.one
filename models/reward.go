@@ -139,12 +139,20 @@ func SendRewardTransfer(ctx context.Context, reward *Reward) error {
 	if !reward.PaidAt.IsZero() {
 		return nil
 	}
+	user, err := FindUser(ctx, reward.UserId)
+	if err != nil {
+		return err
+	}
+	memo := fmt.Sprintf(config.AppConfig.MessageTemplate.MessageRewardMemo, user.FullName)
+	if len(memo) > 140 {
+		memo = memo[:120]
+	}
 	in := &bot.TransferInput{
 		AssetId:     reward.AssetId,
 		RecipientId: reward.RecipientId,
 		Amount:      number.FromString(reward.Amount),
 		TraceId:     traceId,
-		Memo:        "",
+		Memo:        memo,
 	}
 	err = bot.CreateTransfer(ctx, in, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, config.AppConfig.Mixin.SessionAssetPIN, config.AppConfig.Mixin.PinToken)
 	if err != nil {

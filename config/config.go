@@ -82,6 +82,7 @@ type Config struct {
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
 		MessageRewardLabel      string `yaml:"message_reward_label"`
+		MessageRewardMemo       string `yaml:"message_reward_memo"`
 	} `yaml:"message_template"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`

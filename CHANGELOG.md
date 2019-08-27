@@ -1,6 +1,6 @@
 # 2019-08-27
 
-大群权限修改，需要添加 MESSAGES:REPRESENT
+大群权限修改，需要添加 MESSAGES:REPRESENT, 添加了新的消息模板 `message_reward_memo`
 
 # 2019-08-26
 
