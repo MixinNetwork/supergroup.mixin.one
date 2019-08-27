@@ -1,5 +1,7 @@
 # 2019-08-26
 
+config.tpl.yaml 添加了新消息模版 `message_reward_label`
+
 支持打赏，添加了两个表
 ```
 CREATE TABLE IF NOT EXISTS broadcasters (

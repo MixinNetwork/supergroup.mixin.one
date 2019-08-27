@@ -87,7 +87,7 @@ export default {
   },
   computed: {
     validated () {
-      if (this.amount && this.selectedAsset) {
+      if (this.broadcaster.user_id && this.amount && this.selectedAsset) {
         return true
       }
       return false
