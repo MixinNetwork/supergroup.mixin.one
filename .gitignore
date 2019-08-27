@@ -8,8 +8,6 @@ web/deploy
 web/node_modules
 supergroup.mixin.one
 config.yaml
-env.dev.sh
-env.prod.sh
 
 !config/config.go
 !config/config.tpl.yaml
