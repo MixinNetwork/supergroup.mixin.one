@@ -1,3 +1,7 @@
+# 2019-09-06
+
+大群发消息配置修改 `limit_message_frequency` 改成 `limit_message_duration`, 值为秒
+
 # 2019-08-27
 
 大群权限修改，需要添加 MESSAGES:REPRESENT, 添加了新的消息模板 `message_reward_memo`

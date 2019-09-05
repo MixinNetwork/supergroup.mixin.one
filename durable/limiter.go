@@ -13,11 +13,12 @@ func Allow(key string) bool {
 	if config.AppConfig.Service.Environment == "test" {
 		return true
 	}
-	if !config.AppConfig.System.LimitMessageFrequency {
+	duration := config.AppConfig.System.LimitMessageDuration
+	if duration <= 0 {
 		return true
 	}
 	if limiters[key] == nil {
-		limiters[key] = rate.NewLimiter(rate.Every(3*time.Minute), 1)
+		limiters[key] = rate.NewLimiter(rate.Every(time.Duration(duration)*time.Second), 1)
 	}
 	return limiters[key].Allow()
 }

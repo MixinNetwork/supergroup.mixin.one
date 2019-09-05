@@ -17,7 +17,7 @@ system:
   image_message_enable: true
   video_message_enable: false
   contact_message_enable: true
-  limit_message_frequency: false
+  limit_message_duration: 0 # 多久发一条消息，0 为不限制
   detect_image: false
   detect_link: false
   prohibited_message: true
