@@ -248,6 +248,9 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 }
 
 func createSystemDistributedMessage(ctx context.Context, user *User, category, data string) error {
+	if len(data) == 0 {
+		return nil
+	}
 	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, MessageCategoryPlainText, data)
 	if err != nil {
 		return session.TransactionError(ctx, err)
