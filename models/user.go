@@ -313,8 +313,10 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 			}
 			msg.Data = base64.StdEncoding.EncodeToString(data)
 		}
-
 		messageId := UniqueConversationId(user.UserId, msg.MessageId)
+		if len(msg.Data) == 0 {
+			continue
+		}
 		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
 		if err != nil {
 			session.TransactionError(ctx, err)
