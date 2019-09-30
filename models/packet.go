@@ -256,7 +256,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 				}
 				b, err := readProhibitedStatus(ctx, tx)
 				if err == nil && !b {
-					dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, packet.UserId, "PLAIN_TEXT", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.GroupOpenedRedPacket, current.FullName))))
+					dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, packet.UserId, MessageCategoryPlainText, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.GroupOpenedRedPacket, current.FullName))))
 					if err != nil {
 						return err
 					}

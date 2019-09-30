@@ -25,7 +25,7 @@ func TestMessageCRUD(t *testing.T) {
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	user := &User{UserId: id, ActiveAt: time.Now()}
 	data := base64.StdEncoding.EncodeToString([]byte("hello"))
-	message, err := CreateMessage(ctx, user, uid, "PLAIN_TEXT", "", data, time.Now(), time.Now())
+	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	message, err = FindMessage(ctx, message.MessageId)
@@ -41,15 +41,15 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 1)
 
-	message, err = CreateMessage(ctx, &User{UserId: bot.UuidNewV4().String(), ActiveAt: time.Now()}, bot.UuidNewV4().String(), "PLAIN_TEXT", "", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, &User{UserId: bot.UuidNewV4().String(), ActiveAt: time.Now()}, bot.UuidNewV4().String(), MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
-	assert.Equal("PLAIN_TEXT", message.Category)
+	assert.Equal(MessageCategoryPlainText, message.Category)
 	assert.True(message.LastDistributeAt.Equal(genesisStartedAt()))
 	message, err = testReadMessage(ctx, message.MessageId)
 	assert.Nil(err)
 	assert.NotNil(message)
-	assert.Equal("PLAIN_TEXT", message.Category)
+	assert.Equal(MessageCategoryPlainText, message.Category)
 	assert.True(message.LastDistributeAt.Equal(genesisStartedAt()))
 
 	messages, err = PendingMessages(ctx, 100)
@@ -108,7 +108,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 0)
 
-	message, err = CreateMessage(ctx, user, uid, "PLAIN_TEXT", "", data, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	err = message.Leapfrog(ctx, "ONLY TEST")

@@ -218,7 +218,7 @@ func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error 
 	message := &Message{
 		MessageId: bot.UuidNewV4().String(),
 		UserId:    config.AppConfig.Mixin.ClientId,
-		Category:  "PLAIN_TEXT",
+		Category:  MessageCategoryPlainText,
 		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName))),
 		CreatedAt: t,
 		UpdatedAt: t,
@@ -274,7 +274,7 @@ func LastestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error
 		if err != nil {
 			return nil, session.TransactionError(ctx, err)
 		}
-		if m.Category == "PLAIN_TEXT" {
+		if m.Category == MessageCategoryPlainText {
 			data, _ := base64.StdEncoding.DecodeString(m.Data)
 			m.Data = string(data)
 		} else {

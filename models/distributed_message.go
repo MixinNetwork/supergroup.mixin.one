@@ -227,7 +227,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
 		values.WriteString(",")
-		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, "PLAIN_TEXT", data, dm.Status))
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Status))
 	}
 
 	message.LastDistributeAt = time.Now()
@@ -248,7 +248,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 }
 
 func createSystemDistributedMessage(ctx context.Context, user *User, category, data string) error {
-	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, "PLAIN_TEXT", data)
+	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, MessageCategoryPlainText, data)
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}

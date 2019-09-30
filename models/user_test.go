@@ -59,7 +59,7 @@ func TestUserCRUD(t *testing.T) {
 
 	uid := bot.UuidNewV4().String()
 	data := base64.StdEncoding.EncodeToString([]byte("hello"))
-	message, err := CreateMessage(ctx, user, uid, "PLAIN_TEXT", "", data, time.Now(), time.Now())
+	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	err = message.Distribute(ctx)
