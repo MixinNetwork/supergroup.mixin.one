@@ -102,6 +102,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		avatarURL = "https://images.mixin.one/E2y0BnTopFK9qey0YI-8xV3M82kudNnTaGw0U5SU065864SsewNUo6fe9kDF1HIzVYhXqzws4lBZnLj1lPsjk-0=s128"
 	}
 	identity, _ := strconv.ParseInt(identityNumber, 10, 64)
+	if identity <= 0 || (identity > 7000000000 && identity < 8000000000) || identity == 7000 {
+		return nil, session.ForbiddenError(ctx)
+	}
 	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), accessToken)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
