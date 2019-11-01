@@ -65,6 +65,11 @@ func BadDataError(ctx context.Context) Error {
 	return createError(ctx, http.StatusAccepted, 10002, description, nil)
 }
 
+func AssetForbiddenError(ctx context.Context) Error {
+	description := "Asset access forbidden."
+	return createError(ctx, http.StatusAccepted, 10003, description, nil)
+}
+
 func InsufficientAccountBalanceError(ctx context.Context) Error {
 	description := "Insufficient balance."
 	return createError(ctx, http.StatusAccepted, 20117, description, nil)

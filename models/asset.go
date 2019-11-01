@@ -56,6 +56,9 @@ func assetFromRow(row durable.Row) (*Asset, error) {
 func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 	list, err := bot.AssetList(ctx, current.AccessToken)
 	if err != nil {
+		if serr, b := session.ParseError(err.Error()); b && serr.Code == 403 {
+			return nil, session.AssetForbiddenError(ctx)
+		}
 		return nil, err
 	}
 	var assets []*Asset
@@ -105,6 +108,9 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, error) {
 	a, err := bot.AssetShow(ctx, assetId, current.AccessToken)
 	if err != nil {
+		if serr, b := session.ParseError(err.Error()); b && serr.Code == 403 {
+			return nil, session.AssetForbiddenError(ctx)
+		}
 		return nil, err
 	}
 	asset := &Asset{
