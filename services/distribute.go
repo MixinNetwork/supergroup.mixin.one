@@ -62,7 +62,7 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 			continue
 		}
 		if gshard == shard {
-			session.Logger(ctx).Infof("PendingActiveDistributedMessages UpdateMessagesStatus TIME::: %d", time.Now().Sub(t))
+			session.Logger(ctx).Infof("PendingActiveDistributedMessages UpdateMessagesStatus TIME::: %v", time.Now().Sub(t))
 		}
 	}
 }
