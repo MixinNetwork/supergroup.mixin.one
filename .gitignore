@@ -1,6 +1,6 @@
 .DS_Store
 config/*
-deploy.sh
+deploy
 nginx.conf
 tasks
 web/dist
