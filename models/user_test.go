@@ -75,7 +75,7 @@ func TestUserCRUD(t *testing.T) {
 	assert.Len(messages, 1)
 	dms, err := testReadDistributedMessages(ctx)
 	assert.Nil(err)
-	assert.Len(dms, 1)
+	assert.Len(dms, 0)
 
 	err = user.Payment(ctx)
 	assert.Nil(err)
@@ -126,7 +126,7 @@ func TestBlacklistCRUD(t *testing.T) {
 	id := bot.UuidNewV4().String()
 	list, err := admin.CreateBlacklist(ctx, id)
 	assert.Nil(err)
-	assert.Nil(list)
+	assert.NotNil(list)
 	list, err = readBlacklist(ctx, id)
 	assert.Nil(err)
 	assert.Nil(list)

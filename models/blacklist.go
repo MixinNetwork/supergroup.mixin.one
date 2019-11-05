@@ -36,7 +36,7 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	b := &Blacklist{UserId: userId}
 	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		u, err := findUserById(ctx, tx, userId)
-		if err != nil || user == nil {
+		if err != nil || u == nil {
 			return err
 		}
 		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, ID: %d", u.FullName, u.IdentityNumber)))
