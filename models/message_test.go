@@ -99,7 +99,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(0, count)
 	query := "UPDATE distributed_messages SET created_at=$1"
-	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-13*time.Hour))
+	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-96*time.Hour))
 	assert.Nil(err)
 	count, err = testCleanUpExpiredDistributedMessages(ctx)
 	assert.Nil(err)

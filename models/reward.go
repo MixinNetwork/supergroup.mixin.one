@@ -55,7 +55,7 @@ func rewardFromRow(row durable.Row) (*Reward, error) {
 
 func CreateReward(ctx context.Context, traceId, userId, recipientId, assetId, amount string) (*Reward, error) {
 	var reward *Reward
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		r, err := readRewardById(ctx, tx, traceId)
 		if err != nil {
 			return err

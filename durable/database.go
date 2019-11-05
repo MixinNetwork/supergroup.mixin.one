@@ -15,8 +15,8 @@ func NewDatabase(ctx context.Context, db *sql.DB) (*Database, error) {
 	return &Database{db}, db.PingContext(ctx)
 }
 
-func (d *Database) RunInTransaction(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) error {
-	tx, err := d.BeginTx(ctx, nil)
+func (d *Database) RunInTransaction(ctx context.Context, opts *sql.TxOptions, fn func(ctx context.Context, tx *sql.Tx) error) error {
+	tx, err := d.BeginTx(ctx, opts)
 	if err != nil {
 		return err
 	}

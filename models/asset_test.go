@@ -47,7 +47,7 @@ func TestAssetCRUD(t *testing.T) {
 
 func testReadAsset(ctx context.Context, id string) (*Asset, error) {
 	var asset *Asset
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
 		asset, err = findAssetById(ctx, tx, id)
 		return err

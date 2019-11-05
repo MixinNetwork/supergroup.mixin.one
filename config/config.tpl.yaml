@@ -1,6 +1,6 @@
 service:
   name: "Mixin 中文群"
-  enviroment: "production or development"
+  enviroment: "production" # or development
   port: 7001
   host: "https://you-domain-name"
 database:
@@ -17,10 +17,10 @@ system:
   image_message_enable: true
   video_message_enable: false
   contact_message_enable: true
-  limit_message_duration: 0 # 多久发一条消息，0 为不限制
+  limit_message_duration: 0 # seconds: 60, 0 表示不限制
+  limit_message_number: 0 # number: 5 60s 5 条
   detect_image: false
   detect_link: false
-  prohibited_message: true
   operator_list:
     - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
     - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
@@ -43,15 +43,15 @@ appearance:
           url: "https://.."
 message_template:
   welcome_message        : "欢迎加入 Mixin 中文群"
+  message_tips_guest     : "您需要先点击机器图标授权。"
+  message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
   group_redpacket        : "中文群红包"
   group_redpacket_short_desc: "来自无名氏的红包"
   group_redpacket_desc    : "来自 %s 的红包"
   group_opened_redpacket  : "%s 打开了你的红包"
   message_prohibit        : "群主开启了禁言，暂时不能发言了。"
   message_allow           : "群主关闭了禁言，你可以发言了。"
-  message_tips_guest     : "您需要先点击机器图标授权。"
   message_tips_join      : "%s 加入了群组"
-  message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
   message_tips_help_btn   : "点击加入群组"
   message_tips_unsubscribe: "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
   message_reward_label: "%s 给 %s 转了 %s %s"

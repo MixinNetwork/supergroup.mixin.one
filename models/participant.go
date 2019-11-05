@@ -86,7 +86,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		packet, err := readPacketWithAssetAndUser(ctx, tx, packetId)
 		if err != nil {
 			return err

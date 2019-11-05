@@ -48,7 +48,7 @@ func TestPropertyCRUD(t *testing.T) {
 
 func testReadPropertyAsBool(ctx context.Context, name string) (bool, error) {
 	var b bool
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
 		b, err = readPropertyAsBool(ctx, tx, name)
 		return err

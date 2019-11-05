@@ -25,6 +25,8 @@ func TestPacketCRUD(t *testing.T) {
 	sum, err := user.Prepare(ctx)
 	assert.Nil(err)
 	assert.Equal(int64(1), sum)
+	err = user.Payment(ctx)
+	assert.Nil(err)
 
 	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "Li", "http://localhost")
 	assert.Nil(err)
@@ -34,6 +36,8 @@ func TestPacketCRUD(t *testing.T) {
 	sum, err = user.Prepare(ctx)
 	assert.Nil(err)
 	assert.Equal(int64(2), sum)
+	err = li.Payment(ctx)
+	assert.Nil(err)
 
 	asset := &Asset{
 		AssetId:  bot.UuidNewV4().String(),
@@ -107,7 +111,7 @@ func TestPacketCRUD(t *testing.T) {
 
 func testReadPacketWithRelation(ctx context.Context, packetId string) (*Packet, error) {
 	var packet *Packet
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
 		packet, err = readPacketWithAssetAndUser(ctx, tx, packetId)
 		return err

@@ -80,16 +80,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 	if len(data) > 5*1024 {
 		return nil, nil
 	}
-	if user.UserId != config.AppConfig.Mixin.ClientId && !user.isAdmin() {
-		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
-			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
-			if err := createSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text); err != nil {
-				return nil, err
-			}
-			return nil, nil
-		}
-	}
-	if !user.isAdmin() {
+	if !user.isAdmin() && user.UserId != config.AppConfig.Mixin.ClientId {
 		b, err := ReadProhibitedProperty(ctx)
 		if err != nil {
 			return nil, err
@@ -105,13 +96,52 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		if category == MessageCategoryPlainContact && !config.AppConfig.System.ContactMessageEnable {
 			return nil, nil
 		}
-	}
-	if category == MessageCategoryPlainAudio {
-		if !user.isAdmin() {
+		if category == MessageCategoryPlainAudio && !config.AppConfig.System.AudioMessageEnable {
 			return nil, nil
 		}
-		if !config.AppConfig.System.AudioMessageEnable {
+		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
+			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
+			err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+				err := createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, text)
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
 			return nil, nil
+		}
+	}
+
+	if user.isAdmin() && category == MessageCategoryPlainText && quoteMessageId != "" {
+		if id, _ := bot.UuidFromString(quoteMessageId); id.String() == quoteMessageId {
+			bytes, err := base64.StdEncoding.DecodeString(data)
+			if err != nil {
+				return nil, err
+			}
+			str := strings.ToUpper(strings.TrimSpace(string(bytes)))
+			if str == "BAN" || str == "DELETE" || str == "KICK" {
+				dm, err := FindDistributedMessage(ctx, quoteMessageId)
+				if err != nil || dm == nil {
+					return nil, err
+				}
+				if str == "BAN" {
+					_, err = user.CreateBlacklist(ctx, dm.UserId)
+					if err != nil {
+						return nil, err
+					}
+				}
+				if str == "KICK" {
+					err = user.DeleteUser(ctx, dm.UserId)
+					if err != nil {
+						return nil, err
+					}
+				}
+				if str == "DELETE" {
+					quoteMessageId = ""
+					category = MessageCategoryMessageRecall
+					data = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
+				}
+			}
 		}
 	}
 

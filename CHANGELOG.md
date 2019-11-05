@@ -1,3 +1,9 @@
+# 2019-11-05
+
+配置文件: config.tpl.yaml 
+删除了: prohibited_message
+增加了: limit_message_number, 跟原有的 limit_message_duration 可以控制发消息频率
+
 # 2019-09-06
 
 大群发消息配置修改 `limit_message_frequency` 改成 `limit_message_duration`, 值为秒

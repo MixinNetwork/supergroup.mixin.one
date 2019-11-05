@@ -44,30 +44,24 @@ type Property struct {
 }
 
 func CreateProperty(ctx context.Context, name string, value bool) (*Property, error) {
-	v := config.AppConfig.System.ProhibitedMessageEnabled
-	if v {
-		v = value
-	}
 	property := &Property{
 		Name:      name,
-		Value:     fmt.Sprint(v),
+		Value:     fmt.Sprint(value),
 		CreatedAt: time.Now(),
 	}
 	params, positions := compileTableQuery(propertiesColumns)
 	query := fmt.Sprintf("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", params, positions)
-	session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, property.values()...)
 		if err != nil {
 			return err
 		}
 		data := config.AppConfig
-		if data.System.ProhibitedMessageEnabled {
-			text := data.MessageTemplate.MessageAllow
-			if value {
-				text = data.MessageTemplate.MessageProhibit
-			}
-			return createSystemMessage(ctx, tx, MessageCategoryPlainText, base64.StdEncoding.EncodeToString([]byte(text)))
+		text := data.MessageTemplate.MessageAllow
+		if value {
+			text = data.MessageTemplate.MessageProhibit
 		}
+		return createSystemMessage(ctx, tx, MessageCategoryPlainText, base64.StdEncoding.EncodeToString([]byte(text)))
 		return nil
 	})
 	_, err := session.Database(ctx).ExecContext(ctx, query, property.values()...)
@@ -102,24 +96,18 @@ func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, err
 }
 
 func ReadProhibitedProperty(ctx context.Context) (bool, error) {
-	if config.AppConfig.System.ProhibitedMessageEnabled {
-		var b bool
-		err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-			var err error
-			b, err = readPropertyAsBool(ctx, tx, ProhibitedMessage)
-			return err
-		})
-		if err != nil {
-			return false, session.TransactionError(ctx, err)
-		}
-		return b, nil
+	var b bool
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		b, err = readPropertyAsBool(ctx, tx, ProhibitedMessage)
+		return err
+	})
+	if err != nil {
+		return false, session.TransactionError(ctx, err)
 	}
-	return false, nil
+	return b, nil
 }
 
 func readProhibitedStatus(ctx context.Context, tx *sql.Tx) (bool, error) {
-	if config.AppConfig.System.ProhibitedMessageEnabled {
-		return readPropertyAsBool(ctx, tx, ProhibitedMessage)
-	}
-	return false, nil
+	return readPropertyAsBool(ctx, tx, ProhibitedMessage)
 }
