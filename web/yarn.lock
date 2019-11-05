@@ -5167,7 +5167,7 @@ node-releases@^1.1.38:
   dependencies:
     semver "^6.3.0"
 
-node-sass@^4.12.0:
+node-sass@^4.13.0:
   version "4.13.0"
   resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.13.0.tgz#b647288babdd6a1cb726de4545516b31f90da066"
   integrity sha512-W1XBrvoJ1dy7VsvTAS5q1V45lREbTlZQqFbiHb3R3OTTCma0XBtuG6xZ6Z4506nR4lmHPTqVRwxT6KgtWC97CA==
@@ -7760,10 +7760,10 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-vant@^2.2.10:
-  version "2.2.10"
-  resolved "https://registry.yarnpkg.com/vant/-/vant-2.2.10.tgz#ac0aa43e7f27e56a7209774f87b87ad936083b51"
-  integrity sha512-O8HhrwMkqwA3fYFDwHLxFNh7ckAafao+4gF0hIdwSjypvEdbd6jgtPep0k3Z+CzPXkvPNUV5XCwR3fSH0AIgKw==
+vant@^2.2.11:
+  version "2.2.11"
+  resolved "https://registry.yarnpkg.com/vant/-/vant-2.2.11.tgz#f13909be51448c869ae9eedfbe43d4ea03078ed6"
+  integrity sha512-oRxU+Z6zhxbxv8vhKZi7vqEmOYDxGaC9pKda/+45tfeboJGmu5kNyPxEg/KQ0sg8FpV4YIv4k5H1ZP9bSyaUsw==
   dependencies:
     "@babel/runtime" "7.x"
     "@vant/icons" "1.1.15"
