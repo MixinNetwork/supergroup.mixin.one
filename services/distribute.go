@@ -14,25 +14,16 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-var gshard string
-
 func distribute(ctx context.Context) {
 	limit := int64(80)
 	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
 		shard := shardId(config.AppConfig.System.MessageShardModifier, i)
-		if i == 0 {
-			gshard = shard
-		}
 		go pendingActiveDistributedMessages(ctx, shard, limit)
 	}
 }
 
 func pendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) {
-	var t time.Time
 	for {
-		if gshard == shard {
-			t = time.Now()
-		}
 		_, err := models.CleanUpExpiredDistributedMessages(ctx, shard)
 		if err != nil {
 			session.Logger(ctx).Errorf("CleanUpExpiredDistributedMessages ERROR: %+v", err)
@@ -60,9 +51,6 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
-		}
-		if gshard == shard {
-			session.Logger(ctx).Infof("PendingActiveDistributedMessages UpdateMessagesStatus TIME::: %v", time.Now().Sub(t))
 		}
 	}
 }
