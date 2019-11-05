@@ -14,7 +14,7 @@ func Allow(key string) bool {
 		return true
 	}
 	system := config.AppConfig.System
-	if system.LimitMessageDuration <= 0 {
+	if system.LimitMessageDuration <= 0 || system.LimitMessageNumber <= 0 {
 		return true
 	}
 	if limiters[key] == nil {
