@@ -141,6 +141,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 					category = MessageCategoryMessageRecall
 					data = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
 				}
+				return nil, nil
 			}
 		}
 	}
