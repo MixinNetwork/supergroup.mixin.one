@@ -109,7 +109,7 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 	if httpPool[key] == nil {
 		httpPool[key] = &http.Client{Timeout: 3 * time.Second}
 	}
-	req, err := http.NewRequest(method, "https://api.mixin.one"+path, bytes.NewReader(body))
+	req, err := http.NewRequest(method, "https://mixin-api.zeromesh.net"+path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
