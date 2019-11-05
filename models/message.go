@@ -129,20 +129,16 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 					if err != nil {
 						return nil, err
 					}
-					return nil, nil
 				}
 				if str == "KICK" {
 					err = user.DeleteUser(ctx, dm.UserId)
 					if err != nil {
 						return nil, err
 					}
-					return nil, nil
 				}
-				if str == "DELETE" {
-					quoteMessageId = ""
-					category = MessageCategoryMessageRecall
-					data = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
-				}
+				quoteMessageId = ""
+				category = MessageCategoryMessageRecall
+				data = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
 			}
 		}
 	}
