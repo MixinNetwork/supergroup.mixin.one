@@ -21,7 +21,6 @@ system:
   limit_message_number: 0 # number: 5 60s 5 条
   detect_image: false
   detect_link: false
-  prohibited_message: true
   operator_list:
     - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
     - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
