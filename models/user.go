@@ -148,7 +148,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	user.AuthenticationToken = authenticationToken
 
 	if user.isNew {
-		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 			if user.State == PaymentStatePaid {
 				if err := createSystemJoinMessage(ctx, tx, user); err != nil {
 					return err
@@ -264,7 +264,7 @@ func (user *User) Unsubscribe(ctx context.Context) error {
 }
 
 func (user *User) Payment(ctx context.Context) error {
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		return user.paymentInTx(ctx, tx, PayMethodMixin)
 	})
 	if err != nil {
@@ -388,7 +388,19 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 	if !config.AppConfig.System.Operators[user.UserId] {
 		return nil
 	}
-	_, err := session.Database(ctx).ExecContext(ctx, fmt.Sprintf("DELETE FROM users WHERE user_id=$1"), id)
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		u, err := findUserById(ctx, tx, id)
+		if err != nil || u == nil {
+			return err
+		}
+		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
+		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE user_id=$1", u.UserId)
+		return err
+	})
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
@@ -439,7 +451,7 @@ func generateAuthenticationToken(ctx context.Context, userId, accessToken string
 
 func FindUser(ctx context.Context, userId string) (*User, error) {
 	var user *User
-	err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
 		user, err = findUserById(ctx, tx, userId)
 		return err

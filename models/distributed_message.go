@@ -168,7 +168,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 			message.LastDistributeAt = time.Now()
 			message.State = MessageStateSuccess
 		}
-		err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 			_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
 			if err != nil {
 				return err
@@ -232,7 +232,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 
 	message.LastDistributeAt = time.Now()
 	message.State = MessageStateSuccess
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
 		if err != nil {
 			return err
@@ -247,7 +247,7 @@ func (message *Message) Leapfrog(ctx context.Context, reason string) error {
 	return nil
 }
 
-func createSystemDistributedMessage(ctx context.Context, user *User, category, data string) error {
+func createSystemDistributedMessage(ctx context.Context, tx *sql.Tx, user *User, category, data string) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -258,7 +258,7 @@ func createSystemDistributedMessage(ctx context.Context, user *User, category, d
 	var values bytes.Buffer
 	values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 	query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-	_, err = session.Database(ctx).ExecContext(ctx, query)
+	_, err = tx.ExecContext(ctx, query)
 	return err
 }
 
@@ -294,7 +294,7 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 
 func CleanUpExpiredDistributedMessages(ctx context.Context, shard string) (int64, error) {
 	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE shard=$1 AND status=$2 AND created_at<$3")
-	r, err := session.Database(ctx).ExecContext(ctx, query, shard, MessageStatusDelivered, time.Now().Add(-12*time.Hour))
+	r, err := session.Database(ctx).ExecContext(ctx, query, shard, MessageStatusDelivered, time.Now().Add(-72*time.Hour))
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}

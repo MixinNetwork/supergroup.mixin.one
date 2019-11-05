@@ -3,6 +3,8 @@ package models
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
+	"fmt"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
@@ -31,28 +33,28 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 		return nil, nil
 	}
 
-	err = session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		user, err = findUserById(ctx, tx, userId)
-		if err != nil {
-			return err
-		} else if user == nil {
-			userId = ""
-			return nil
-		}
-		_, err := tx.ExecContext(ctx, "INSERT INTO blacklists (user_id) VALUES ($1)", user.UserId)
-		if err != nil {
+	b := &Blacklist{UserId: userId}
+	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		u, err := findUserById(ctx, tx, userId)
+		if err != nil || user == nil {
 			return err
 		}
-		_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE user_id=$1", user.UserId)
+		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, ID: %d", u.FullName, u.IdentityNumber)))
+		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, "INSERT INTO blacklists (user_id) VALUES ($1)", u.UserId)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE user_id=$1", u.UserId)
 		return err
 	})
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	if userId == "" {
-		return nil, nil
-	}
-	return &Blacklist{UserId: userId}, nil
+	return b, nil
 }
 
 func readBlacklist(ctx context.Context, userId string) (*Blacklist, error) {

@@ -53,11 +53,12 @@ type Config struct {
 		VideoMessageEnable       bool     `yaml:"video_message_enable"`
 		ContactMessageEnable     bool     `yaml:"contact_message_enable"`
 		LimitMessageDuration     int64    `yaml:"limit_message_duration"`
+		LimitMessageNumber       int      `yaml:"limit_message_number"`
 		DetectQRCodeEnabled      bool     `yaml:"detect_image"`
 		DetectLinkEnabled        bool     `yaml:"detect_link"`
+		ProhibitedMessageEnabled bool     `yaml:"prohibited_message"`
 		OperatorList             []string `yaml:"operator_list"`
 		Operators                map[string]bool
-		ProhibitedMessageEnabled bool           `yaml:"prohibited_message"`
 		PayToJoin                bool           `yaml:"pay_to_join"`
 		AccpetPaymentAssetList   []PaymentAsset `yaml:"accept_asset_list"`
 	} `yaml:"system"`
@@ -67,22 +68,22 @@ type Config struct {
 	} `yaml:"appearance"`
 	MessageTemplate struct {
 		WelcomeMessage          string `yaml:"welcome_message"`
+		MessageTipsGuest        string `yaml:"message_tips_guest"`
+		MessageTipsHelp         string `yaml:"message_tips_help"`
 		GroupRedPacket          string `yaml:"group_redpacket"`
 		GroupRedPacketShortDesc string `yaml:"group_redpacket_short_desc"`
 		GroupRedPacketDesc      string `yaml:"group_redpacket_desc"`
 		GroupOpenedRedPacket    string `yaml:"group_opened_redpacket"`
-		MessageTipsGuest        string `yaml:"message_tips_guest"`
 		MessageProhibit         string `yaml:"message_prohibit"`
 		MessageAllow            string `yaml:"message_allow"`
 		MessageTipsJoin         string `yaml:"message_tips_join"`
-		MessageTipsHelp         string `yaml:"message_tips_help"`
 		MessageTipsHelpBtn      string `yaml:"message_tips_help_btn"`
 		MessageTipsUnsubscribe  string `yaml:"message_tips_unsubscribe"`
+		MessageRewardLabel      string `yaml:"message_reward_label"`
+		MessageRewardMemo       string `yaml:"message_reward_memo"`
 		MessageTipsTooMany      string `yaml:"message_tips_too_many"`
 		MessageCommandsInfo     string `yaml:"message_commands_info"`
 		MessageCommandsInfoResp string `yaml:"message_commands_info_resp"`
-		MessageRewardLabel      string `yaml:"message_reward_label"`
-		MessageRewardMemo       string `yaml:"message_reward_memo"`
 	} `yaml:"message_template"`
 	Mixin struct {
 		ClientId        string `yaml:"client_id"`

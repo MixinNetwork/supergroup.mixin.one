@@ -55,7 +55,7 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 	}
 	params, positions := compileTableQuery(propertiesColumns)
 	query := fmt.Sprintf("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", params, positions)
-	session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, property.values()...)
 		if err != nil {
 			return err
@@ -104,7 +104,7 @@ func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, err
 func ReadProhibitedProperty(ctx context.Context) (bool, error) {
 	if config.AppConfig.System.ProhibitedMessageEnabled {
 		var b bool
-		err := session.Database(ctx).RunInTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 			var err error
 			b, err = readPropertyAsBool(ctx, tx, ProhibitedMessage)
 			return err
@@ -118,8 +118,5 @@ func ReadProhibitedProperty(ctx context.Context) (bool, error) {
 }
 
 func readProhibitedStatus(ctx context.Context, tx *sql.Tx) (bool, error) {
-	if config.AppConfig.System.ProhibitedMessageEnabled {
-		return readPropertyAsBool(ctx, tx, ProhibitedMessage)
-	}
-	return false, nil
+	return readPropertyAsBool(ctx, tx, ProhibitedMessage)
 }
