@@ -15,7 +15,7 @@ func ConnectMixinBlaze(clientId, sessionId, sessionKey string) (*websocket.Conn,
 	}
 	header := make(http.Header)
 	header.Add("Authorization", "Bearer "+token)
-	u := url.URL{Scheme: "wss", Host: "blaze.mixin.one", Path: "/"}
+	u := url.URL{Scheme: "wss", Host: "mixin-blaze.zeromesh.net", Path: "/"}
 	dialer := &websocket.Dialer{
 		Subprotocols: []string{"Mixin-Blaze-1"},
 	}
