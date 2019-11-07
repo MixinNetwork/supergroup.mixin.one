@@ -57,7 +57,7 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 	return b, nil
 }
 
-func readBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
+func ReadBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
 	var b Blacklist
 	err := session.Database(ctx).QueryRowContext(ctx, "SELECT user_id from blacklists WHERE user_id=$1", userId).Scan(&b.UserId)
 	if err == sql.ErrNoRows {

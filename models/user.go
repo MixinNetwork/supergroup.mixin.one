@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	PaymentStateBlocked = "blocked"
 	PaymentStatePending = "pending"
 	PaymentStatePaid    = "paid"
 
@@ -123,7 +124,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			isNew:          true,
 		}
 		if !config.AppConfig.System.PayToJoin {
-			item, err := readBlacklist(ctx, user.UserId)
+			item, err := ReadBlacklist(ctx, user.UserId)
 			if err != nil {
 				return nil, session.TransactionError(ctx, err)
 			} else if item != nil {

@@ -134,6 +134,10 @@ export default {
       })
       this.websiteInfo = await this.GLOBAL.api.website.amount()
       this.meInfo = await this.GLOBAL.api.account.me()
+      if (this.meInfo.data.state === 'blocked') {
+        this.$router.push('/blocking')
+        return
+      }
       if (this.meInfo.data.state === 'pending') {
         this.$router.push('/pay')
         return

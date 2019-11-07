@@ -63,7 +63,12 @@ func (impl *usersImpl) update(w http.ResponseWriter, r *http.Request, params map
 }
 
 func (impl *usersImpl) me(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-	views.RenderAccount(w, r, middlewares.CurrentUser(r))
+	user := middlewares.CurrentUser(r)
+	b, _ := models.ReadBlacklist(r.Context(), user.UserId)
+	if b != nil {
+		user.State = models.PaymentStateBlocked
+	}
+	views.RenderAccount(w, r, user)
 }
 
 func (impl *usersImpl) subscribers(w http.ResponseWriter, r *http.Request, _ map[string]string) {
