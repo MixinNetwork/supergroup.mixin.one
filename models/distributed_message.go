@@ -292,17 +292,13 @@ func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) e
 	return nil
 }
 
-func CleanUpExpiredDistributedMessages(ctx context.Context, shard string) (int64, error) {
-	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE shard=$1 AND status=$2 AND created_at<$3")
-	r, err := session.Database(ctx).ExecContext(ctx, query, shard, MessageStatusDelivered, time.Now().Add(-72*time.Hour))
+func ClearUpExpiredDistributedMessages(ctx context.Context, shards []string) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM distributed_messages WHERE message_id IN (SELECT message_id FROM distributed_messages WHERE shard = ANY($1) AND status=$2 AND created_at<$3 LIMIT 100)")
+	r, err := session.Database(ctx).ExecContext(ctx, query, pq.StringArray(shards), MessageStatusDelivered, time.Now().Add(-72*time.Hour))
 	if err != nil {
 		return 0, session.TransactionError(ctx, err)
 	}
-	count, err := r.RowsAffected()
-	if err != nil {
-		return 0, session.TransactionError(ctx, err)
-	}
-	return count, nil
+	return r.RowsAffected()
 }
 
 func FindDistributedMessageRecipientId(ctx context.Context, id string) (string, error) {

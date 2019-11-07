@@ -73,10 +73,11 @@ type MessageContext struct {
 
 func (service *MessageService) Run(ctx context.Context) error {
 	go distribute(ctx)
-	go loopPendingMessage(ctx)
+	go loopPendingMessages(ctx)
 	go handlePendingParticipants(ctx)
 	go handleExpiredPackets(ctx)
 	go handlePendingRewards(ctx)
+	go loopPendingSuccessMessages(ctx)
 
 	for {
 		err := service.loop(ctx)

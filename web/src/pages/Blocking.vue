@@ -9,7 +9,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 12rem;
+  font-size: 10rem;
+  font-weight: 200;
   height: 100vh;
   padding-bottom: 16rem;
   box-sizing: border-box;

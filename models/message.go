@@ -275,6 +275,15 @@ func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	return messages, nil
 }
 
+func LoopClearUpSuccessMessages(ctx context.Context) (int64, error) {
+	query := fmt.Sprintf("DELETE FROM messages WHERE message_id IN (SELECT message_id FROM messages WHERE state='success' AND updated_at<$1 LIMIT 100)")
+	r, err := session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-365*24*time.Hour))
+	if err != nil {
+		return 0, session.ServerError(ctx, err)
+	}
+	return r.RowsAffected()
+}
+
 func FindMessage(ctx context.Context, id string) (*Message, error) {
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE message_id=$1", strings.Join(messagesCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, id)

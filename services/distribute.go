@@ -16,20 +16,28 @@ import (
 
 func distribute(ctx context.Context) {
 	limit := int64(80)
-	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
-		shard := shardId(config.AppConfig.System.MessageShardModifier, i)
+	system := config.AppConfig.System
+	shards := make([]string, system.MessageShardSize)
+	for i := int64(0); i < system.MessageShardSize; i++ {
+		shard := shardId(system.MessageShardModifier, i)
+		shards[i] = shard
 		go pendingActiveDistributedMessages(ctx, shard, limit)
+	}
+	for {
+		count, err := models.ClearUpExpiredDistributedMessages(ctx, shards)
+		if err != nil {
+			session.Logger(ctx).Errorf("ClearUpExpiredDistributedMessages ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		if count < 100 {
+			time.Sleep(time.Minute)
+		}
 	}
 }
 
 func pendingActiveDistributedMessages(ctx context.Context, shard string, limit int64) {
 	for {
-		_, err := models.CleanUpExpiredDistributedMessages(ctx, shard)
-		if err != nil {
-			session.Logger(ctx).Errorf("CleanUpExpiredDistributedMessages ERROR: %+v", err)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
 		messages, err := models.PendingActiveDistributedMessages(ctx, shard, limit)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages ERROR: %+v", err)

@@ -25,7 +25,7 @@ type Attachment struct {
 	AttachmentId string `json:"attachment_id"`
 }
 
-func loopPendingMessage(ctx context.Context) {
+func loopPendingMessages(ctx context.Context) {
 	limit := 5
 	for {
 		messages, err := models.PendingMessages(ctx, int64(limit))
@@ -67,6 +67,20 @@ func loopPendingMessage(ctx context.Context) {
 		}
 		if len(messages) < limit {
 			time.Sleep(500 * time.Millisecond)
+		}
+	}
+}
+
+func loopPendingSuccessMessages(ctx context.Context) {
+	for {
+		count, err := models.LoopClearUpSuccessMessages(ctx)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			session.Logger(ctx).Errorf("PendingMessages ERROR: %+v", err)
+			continue
+		}
+		if count < 100 {
+			time.Sleep(10 * time.Minute)
 		}
 	}
 }
