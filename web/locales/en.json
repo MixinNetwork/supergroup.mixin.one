@@ -71,7 +71,7 @@
     "amount": "Amount",
     "shares": "People",
     "memo": "Memo",
-    "default_memo": "Long {symbol}, short the world",
+    "default_memo": "Mixin is the best wallet for {symbol}",
     "pay": "Pay and Share"
   },
   "packet": {

@@ -72,7 +72,7 @@
     "amount": "金额",
     "shares": "红包数",
     "memo": "祝福",
-    "default_memo": "沧海桑田，唯有 {symbol} 长久相伴",
+    "default_memo": "Mixin 是最牛逼的 {symbol} 钱包",
     "pay": "支付红包"
   },
   "packet": {
