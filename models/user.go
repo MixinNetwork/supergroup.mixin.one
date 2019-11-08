@@ -241,6 +241,9 @@ func (user *User) UpdateProfile(ctx context.Context, fullName string) error {
 }
 
 func (user *User) Subscribe(ctx context.Context) error {
+	if user.State == PaymentStatePending {
+		return nil
+	}
 	if user.SubscribedAt.After(genesisStartedAt()) {
 		return nil
 	}
