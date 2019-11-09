@@ -54,7 +54,8 @@
     "method_coupon": "Apply a Coupon Code",
     "coupon_placeholder": "Coupon Code",
     "correct_coupon_code_toast": "Coupon code applied",
-    "incorrect_coupon_code_toast": "Incorrect coupon code"
+    "incorrect_coupon_code_toast": "Incorrect coupon code",
+    "notice": "* Please follow the rules, otherwise will be kicked out, and the fee wouldn't be retruned."
   },
   "broadcaster": {
     "title": "Reward",

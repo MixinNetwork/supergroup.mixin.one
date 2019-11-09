@@ -55,7 +55,8 @@
     "method_coupon": "使用兑换码",
     "coupon_placeholder": "兑换码",
     "correct_coupon_code_toast": "已经兑换成功",
-    "incorrect_coupon_code_toast": "不正确的兑换码"
+    "incorrect_coupon_code_toast": "不正确的兑换码",
+    "notice": "* 请遵守规则，如果被踢，门票不退回"
   },
   "broadcaster": {
     "title": "打赏",

@@ -24,6 +24,9 @@
         </van-cell>
       </div>
     </van-panel>
+    <div class='notice'>
+    {{$t('pay.notice')}}
+    </div>
   </div>
   </loading>
 </template>
@@ -105,5 +108,8 @@ export default {
 <style scoped>
 .container {
   padding-top: 60px;
+}
+.notice {
+  margin-top: 1.6rem;
 }
 </style>
