@@ -163,7 +163,20 @@ func (message *Message) Distribute(ctx context.Context) error {
 				if err != nil {
 					return err
 				}
-				_, err = stmt.Exec(messageId, conversationId, user.UserId, message.UserId, message.MessageId, quoteMessageId, shard, message.Category, message.Data, MessageStatusSent, time.Now())
+				dm := &DistributedMessage{
+					MessageId:      messageId,
+					ConversationId: conversationId,
+					RecipientId:    user.UserId,
+					UserId:         message.UserId,
+					ParentId:       message.MessageId,
+					QuoteMessageId: quoteMessageId,
+					Shard:          shard,
+					Category:       message.Category,
+					Data:           message.Data,
+					Status:         MessageStatusSent,
+					CreatedAt:      time.Now(),
+				}
+				_, err = stmt.Exec(dm.values()...)
 				if err != nil {
 					return err
 				}
