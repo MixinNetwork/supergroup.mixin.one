@@ -114,20 +114,26 @@ func (message *Message) Distribute(ctx context.Context) error {
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
-		var last time.Time
-		var values bytes.Buffer
-		if len(users) > 0 {
-			messageIds := make([]string, len(users))
-			for i, user := range users {
-				messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
-			}
-			set, err := readDistributedMessagesByIds(ctx, messageIds)
+		if len(users) < 1 {
+			break
+		}
+		messageIds := make([]string, len(users))
+		for i, user := range users {
+			messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
+		}
+		set, err := readDistributedMessagesByIds(ctx, messageIds)
+		if err != nil {
+			return session.TransactionError(ctx, err)
+		}
+
+		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+			stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
 			if err != nil {
-				return session.TransactionError(ctx, err)
+				return err
 			}
-			i := 0
+			defer stmt.Close()
 			for _, user := range users {
-				last = user.SubscribedAt
+				message.LastDistributeAt = user.SubscribedAt
 				if user.UserId == message.UserId {
 					continue
 				}
@@ -152,38 +158,31 @@ func (message *Message) Distribute(ctx context.Context) error {
 					}
 					message.Data = base64.StdEncoding.EncodeToString(data)
 				}
-				dm, err := createDistributeMessage(ctx, messageId, message.MessageId, quoteMessageId, message.UserId, user.UserId, message.Category, message.Data)
+				conversationId := UniqueConversationId(config.AppConfig.Mixin.ClientId, user.UserId)
+				shard, err := shardId(conversationId, user.UserId)
 				if err != nil {
-					session.TransactionError(ctx, err)
+					return err
 				}
-				if i > 0 {
-					values.WriteString(",")
+				_, err = stmt.Exec(messageId, conversationId, user.UserId, message.UserId, message.MessageId, quoteMessageId, shard, message.Category, message.Data, MessageStatusSent, time.Now())
+				if err != nil {
+					return err
 				}
-				i += 1
-				values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
 			}
-			message.LastDistributeAt = last
-		}
-		if len(users) < DistributeSubscriberLimit {
-			message.LastDistributeAt = time.Now()
-			message.State = MessageStateSuccess
-		}
-		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-			_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
+			_, err = stmt.Exec()
 			if err != nil {
 				return err
 			}
-			v := values.String()
-			if v != "" {
-				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-				_, err = tx.ExecContext(ctx, query)
-				return err
+			if len(users) < DistributeSubscriberLimit {
+				message.LastDistributeAt = time.Now()
+				message.State = MessageStateSuccess
 			}
-			return nil
+			_, err = tx.ExecContext(ctx, "UPDATE messages SET (last_distribute_at, state)=($1, $2) WHERE message_id=$3", message.LastDistributeAt, message.State, message.MessageId)
+			return err
 		})
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
+
 		if message.State == MessageStateSuccess {
 			break
 		}
