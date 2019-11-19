@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.41.0
-	github.com/MixinNetwork/bot-api-go-client v1.1.1
+	github.com/MixinNetwork/bot-api-go-client v1.1.4
 	github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef
 	github.com/bugsnag/bugsnag-go v1.5.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

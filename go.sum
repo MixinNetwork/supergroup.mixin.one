@@ -9,6 +9,8 @@ github.com/MixinNetwork/bot-api-go-client v1.0.0 h1:vQHhH5e4Jf5So22Vmp9wNgqm7rj3
 github.com/MixinNetwork/bot-api-go-client v1.0.0/go.mod h1:u4YX7Clfft3VS56J6FLVz+KSb3LH3RFcytMrFe1l5xc=
 github.com/MixinNetwork/bot-api-go-client v1.1.1 h1:z48uE7VutwzS6h7hl9vOGR4kcz2B9E0cRwfBtfgn75Y=
 github.com/MixinNetwork/bot-api-go-client v1.1.1/go.mod h1:u4YX7Clfft3VS56J6FLVz+KSb3LH3RFcytMrFe1l5xc=
+github.com/MixinNetwork/bot-api-go-client v1.1.4 h1:gGVexkOZ2hOVK0LWOetWIxUXQC/yK2PCu3tUgAOsuwk=
+github.com/MixinNetwork/bot-api-go-client v1.1.4/go.mod h1:u4YX7Clfft3VS56J6FLVz+KSb3LH3RFcytMrFe1l5xc=
 github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef h1:voLSevPsupH+UzSIhDZWKAnnw9NdCROYnRLuVB/de1E=
 github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef/go.mod h1:yED1WX0flPw5EBTLHye6ob3FnurCNk/Yk5NUe5VVWzg=
 github.com/bugsnag/bugsnag-go v1.5.2 h1:fdaGJJEReigPzSE6HajOhpJwE2IEP/TdHDHXKGeOJtc=
