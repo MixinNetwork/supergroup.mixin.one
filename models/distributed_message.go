@@ -263,7 +263,7 @@ func createSystemDistributedMessage(ctx context.Context, tx *sql.Tx, user *User,
 	if len(data) == 0 {
 		return nil
 	}
-	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, MessageCategoryPlainText, data)
+	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, data)
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
