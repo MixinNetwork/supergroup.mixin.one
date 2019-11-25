@@ -91,6 +91,10 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		if err != nil {
 			return err
 		}
+		if packet == nil {
+			_, err = tx.ExecContext(ctx, "DELETE FROM packets WHERE packet_id=$1", packetId)
+			return err
+		}
 		memo := fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
 		if strings.TrimSpace(packet.User.FullName) == "" {
 			memo = config.AppConfig.MessageTemplate.GroupRedPacketShortDesc
