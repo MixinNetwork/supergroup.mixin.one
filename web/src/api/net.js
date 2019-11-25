@@ -14,6 +14,7 @@ let instance = axios.create({
 
 let HANDLERS = {
   401: [],
+  404: [],
   500: [],
   10003: [],
 }

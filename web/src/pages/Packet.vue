@@ -94,6 +94,9 @@ export default {
     }
   },
   async mounted () {
+    this.GLOBAL.api.net.on(404, (payload)=>{
+      window.location.href = '/404';
+    })
     this.loading = true
     let pktId = this.$route.params.id
     let pktInfo = await this.GLOBAL.api.packet.show(pktId)
