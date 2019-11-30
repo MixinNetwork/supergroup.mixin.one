@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "axios": "^0.19.0",
-    "core-js": "^3.4.1",
+    "core-js": "^3.4.4",
     "dayjs": "^1.8.17",
     "file-saver": "^2.0.2",
     "uuid": "^3.3.3",
@@ -23,7 +23,7 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.0.5",
     "@vue/cli-service": "^4.0.5",
-    "babel-plugin-import": "^1.12.2",
+    "babel-plugin-import": "^1.13.0",
     "node-sass": "^4.13.0",
     "sass-loader": "^8.0.0",
     "vue-template-compiler": "^2.6.10"
