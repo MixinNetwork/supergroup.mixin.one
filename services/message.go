@@ -115,6 +115,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		return session.BlazeServerError(ctx, err)
 	}
 
+	messages := make([]map[string]interface{}, 0)
 	for {
 		select {
 		case <-mc.ReadDone:
@@ -140,10 +141,21 @@ func (service *MessageService) loop(ctx context.Context) error {
 				}
 			}
 
-			params := map[string]interface{}{"message_id": msg.MessageId, "status": "READ"}
-			err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPT", params)
-			if err != nil {
-				return session.BlazeServerError(ctx, err)
+			messages = append(messages, map[string]interface{}{"message_id": msg.MessageId, "status": "READ"})
+			if len(messages) >= 80 {
+				err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{"messages": messages})
+				if err != nil {
+					return session.BlazeServerError(ctx, err)
+				}
+				messages = make([]map[string]interface{}, 0)
+			}
+		case <-time.After(1 * time.Second):
+			if len(messages) > 0 {
+				err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{"messages": messages})
+				if err != nil {
+					return session.BlazeServerError(ctx, err)
+				}
+				messages = make([]map[string]interface{}, 0)
 			}
 		}
 	}
