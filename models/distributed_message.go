@@ -9,16 +9,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/big"
+	"net/http"
 	"strings"
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/interceptors"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
+	"mvdan.cc/xurls"
 )
 
 const (
@@ -90,6 +94,25 @@ func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMess
 }
 
 func (message *Message) Distribute(ctx context.Context) error {
+	system := config.AppConfig.System
+	if !system.Operators[message.UserId] {
+		if system.DetectLinkEnabled && message.Category == MessageCategoryPlainText {
+			data, err := base64.StdEncoding.DecodeString(message.Data)
+			if err != nil {
+				return err
+			}
+			if xurls.Relaxed.Match(data) {
+				return message.Leapfrog(ctx, "Message contains link")
+			}
+		}
+		if system.DetectQRCodeEnabled && message.Category == MessageCategoryPlainImage {
+			b, reason := messageQRFilter(ctx, message)
+			if !b {
+				return message.Leapfrog(ctx, reason)
+			}
+		}
+	}
+
 	var recallMessage RecallMessage
 	if message.Category == MessageCategoryMessageRecall {
 		data, err := base64.StdEncoding.DecodeString(message.Data)
@@ -384,4 +407,55 @@ func shardId(cid, uid string) (string, error) {
 	s[8] = (s[8] & 0x3f) | 0x80
 	sid, err := uuid.FromBytes(s)
 	return sid.String(), err
+}
+
+type Attachment struct {
+	AttachmentId string `json:"attachment_id"`
+}
+
+func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
+	var a Attachment
+	src, err := base64.StdEncoding.DecodeString(message.Data)
+	if err != nil {
+		return false, "message.Data format error is not Base64"
+	}
+	err = json.Unmarshal(src, &a)
+	if err != nil {
+		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
+		return false, "message.Data Unmarshal error"
+	}
+	attachment, err := bot.AttachemntShow(ctx, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, a.AttachmentId)
+	if err != nil {
+		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
+	}
+
+	url := strings.Replace(attachment.ViewURL, "assets.zeromesh.net", "s3.cn-north-1.amazonaws.com.cn", 0)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return true, ""
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	resp, _ := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return true, ""
+	}
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+		return true, ""
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return true, ""
+	}
+	if b, err := interceptors.CheckQRCode(ctx, data); b {
+		if err != nil {
+			return true, ""
+		}
+		return false, "Image contains QR Code"
+	}
+	if b, err := interceptors.CheckSex(ctx, data); b {
+		return false, fmt.Sprintf("CheckSex: %+v", err)
+	}
+	return true, ""
 }
