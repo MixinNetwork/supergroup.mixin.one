@@ -13,7 +13,7 @@
     "file-saver": "^2.0.2",
     "uuid": "^3.3.3",
     "vant": "^2.3.0",
-    "vue": "^2.6.10",
+    "vue": "^2.6.11",
     "vue-i18n": "^8.15.3",
     "vue-infinite-loading": "^2.4.4",
     "vue-qr": "^2.2.1",
@@ -26,6 +26,6 @@
     "babel-plugin-import": "^1.13.0",
     "node-sass": "^4.13.0",
     "sass-loader": "^8.0.0",
-    "vue-template-compiler": "^2.6.10"
+    "vue-template-compiler": "^2.6.11"
   }
 }
