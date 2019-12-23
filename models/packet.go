@@ -27,7 +27,8 @@ const (
 	PacketStateExpired  = "EXPIRED"
 	PacketStateRefunded = "REFUNDED"
 
-	shareShardId = "c94ac88f-4671-3976-b60a-09064f1811e8"
+	PacketSizeLimit = 500
+	shareShardId    = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
 const packets_DDL = `
@@ -72,6 +73,9 @@ type Packet struct {
 
 func (current *User) Prepare(ctx context.Context) (int64, error) {
 	sum, err := SubscribersCount(ctx)
+	if sum > PacketSizeLimit {
+		sum = PacketSizeLimit
+	}
 	return sum, err
 }
 
