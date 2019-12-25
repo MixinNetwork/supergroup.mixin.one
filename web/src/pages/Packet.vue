@@ -3,8 +3,10 @@
   <div class="packet-page" :class="isClose ? '' : 'open'">
     <div class="packet header">
       <div class="user avatar">
-        <img v-if="hasAvatar" :src="user ? user.avatar_url : '#'" alt="user avatar"/>
-        <p v-else>{{firstLetter}}</p>
+        <a :href="'https://mixin.one/users/'+user.user_id">
+          <img v-if="hasAvatar" :src="user ? user.avatar_url : '#'" alt="user avatar"/>
+          <p v-else>{{firstLetter}}</p>
+        </a>
       </div>
       <h1 class="user name">{{user ? user.full_name : '...'}}</h1>
       <h2 class="greeting" v-if="pktData">
