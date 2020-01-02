@@ -30,6 +30,7 @@ const (
 	MessageCategoryPlainSticker   = "PLAIN_STICKER"
 	MessageCategoryPlainContact   = "PLAIN_CONTACT"
 	MessageCategoryPlainAudio     = "PLAIN_AUDIO"
+	MessageCategoryPlainLive      = "PLAIN_LIVE"
 	MessageCategoryAppCard        = "APP_CARD"
 	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
 )
@@ -91,6 +92,9 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, nil
 		}
 		if category == MessageCategoryPlainVideo && !config.AppConfig.System.VideoMessageEnable {
+			return nil, nil
+		}
+		if category == MessageCategoryPlainLive && !config.AppConfig.System.LiveMessageEnable {
 			return nil, nil
 		}
 		if category == MessageCategoryPlainContact && !config.AppConfig.System.ContactMessageEnable {

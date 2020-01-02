@@ -16,6 +16,7 @@ system:
   audio_message_enable: false
   image_message_enable: true
   video_message_enable: false
+  live_message_enable: false
   contact_message_enable: true
   limit_message_duration: 0 # seconds: 60, 0 表示不限制
   limit_message_number: 0 # number: 5 60s 5 条
