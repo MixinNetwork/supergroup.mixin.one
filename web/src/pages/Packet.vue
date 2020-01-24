@@ -32,7 +32,7 @@
       <div v-if="!isClose" class="packet history">
         <h4>{{$t('packet.opened', {opened_count: pktData.opened_count, total_count: pktData.total_count})}},
           {{pktData.opened_amount}}/{{pktData.amount}} {{asset.symbol}}</h4>
-        <ul >
+        <ul>
           <li v-for="user in pktData.participants">
             <div class="user avatar">
               <p v-if="user.firstLetter">{{user.firstLetter}}</p>
@@ -267,6 +267,7 @@ export default {
 }
 
 .packet.history {
+  background: white;
   padding: 16px;
 
   h4 {
