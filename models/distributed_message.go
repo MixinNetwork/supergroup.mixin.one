@@ -137,9 +137,6 @@ func (message *Message) Distribute(ctx context.Context) error {
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
-		if len(users) < 1 {
-			break
-		}
 		messageIds := make([]string, len(users))
 		for i, user := range users {
 			messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
