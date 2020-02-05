@@ -60,7 +60,7 @@ type Config struct {
 		DetectQRCodeEnabled    bool     `yaml:"detect_image"`
 		DetectLinkEnabled      bool     `yaml:"detect_link"`
 		OperatorList           []string `yaml:"operator_list"`
-		Operators              map[string]bool
+		Operators              map[string]bool `yaml:"-"`
 		PayToJoin              bool           `yaml:"pay_to_join"`
 		AccpetPaymentAssetList []PaymentAsset `yaml:"accept_asset_list"`
 	} `yaml:"system"`
