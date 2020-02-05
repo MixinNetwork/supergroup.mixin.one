@@ -115,7 +115,7 @@ var httpPool map[string]*http.Client = make(map[string]*http.Client, 0)
 
 func request(ctx context.Context, key, method, path string, body []byte, accessToken string) ([]byte, error) {
 	if httpPool[key] == nil {
-		httpPool[key] = &http.Client{Timeout: 3 * time.Second}
+		httpPool[key] = &http.Client{Timeout: 6 * time.Second}
 	}
 	req, err := http.NewRequest(method, "https://mixin-api.zeromesh.net"+path, bytes.NewReader(body))
 	if err != nil {
