@@ -96,6 +96,7 @@ export default {
     }
   },
   async mounted () {
+    document.querySelector("meta[name=theme-color]").setAttribute('content', '#46B8DA');
     this.GLOBAL.api.net.on(404, (payload)=>{
       window.location.href = '/404';
     })
