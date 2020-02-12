@@ -10,6 +10,8 @@ import (
 )
 
 func RegisterRoutes(router *httptreemux.TreeMux) {
+	registerHanders(router)
+
 	router.GET("/", root)
 	router.GET("/_hc", healthCheck)
 	registerUsers(router)

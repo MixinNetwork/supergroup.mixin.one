@@ -16,7 +16,6 @@ import (
 func StartServer(database *durable.Database) error {
 	logger := durable.NewLoggerClient()
 	router := httptreemux.New()
-	routes.RegisterHanders(router)
 	routes.RegisterRoutes(router)
 	handler := middlewares.Authenticate(router)
 	handler = middlewares.Constraint(handler)

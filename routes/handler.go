@@ -10,7 +10,7 @@ import (
 	"github.com/dimfeld/httptreemux"
 )
 
-func RegisterHanders(router *httptreemux.TreeMux) {
+func registerHanders(router *httptreemux.TreeMux) {
 	router.MethodNotAllowedHandler = func(w http.ResponseWriter, r *http.Request, _ map[string]httptreemux.HandlerFunc) {
 		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	}
