@@ -47,22 +47,22 @@ type Config struct {
 		Name     string `yaml:"database_name"`
 	} `yaml:"database"`
 	System struct {
-		MessageShardModifier   string   `yaml:"message_shard_modifier"`
-		MessageShardSize       int64    `yaml:"message_shard_size"`
-		PriceAssetsEnable      bool     `yaml:"price_asset_enable"`
-		AudioMessageEnable     bool     `yaml:"audio_message_enable"`
-		ImageMessageEnable     bool     `yaml:"image_message_enable"`
-		VideoMessageEnable     bool     `yaml:"video_message_enable"`
-		LiveMessageEnable      bool     `yaml:"live_message_enable"`
-		ContactMessageEnable   bool     `yaml:"contact_message_enable"`
-		LimitMessageDuration   int64    `yaml:"limit_message_duration"`
-		LimitMessageNumber     int      `yaml:"limit_message_number"`
-		DetectQRCodeEnabled    bool     `yaml:"detect_image"`
-		DetectLinkEnabled      bool     `yaml:"detect_link"`
-		OperatorList           []string `yaml:"operator_list"`
+		MessageShardModifier   string          `yaml:"message_shard_modifier"`
+		MessageShardSize       int64           `yaml:"message_shard_size"`
+		PriceAssetsEnable      bool            `yaml:"price_asset_enable"`
+		AudioMessageEnable     bool            `yaml:"audio_message_enable"`
+		ImageMessageEnable     bool            `yaml:"image_message_enable"`
+		VideoMessageEnable     bool            `yaml:"video_message_enable"`
+		LiveMessageEnable      bool            `yaml:"live_message_enable"`
+		ContactMessageEnable   bool            `yaml:"contact_message_enable"`
+		LimitMessageDuration   int64           `yaml:"limit_message_duration"`
+		LimitMessageNumber     int             `yaml:"limit_message_number"`
+		DetectQRCodeEnabled    bool            `yaml:"detect_image"`
+		DetectLinkEnabled      bool            `yaml:"detect_link"`
+		OperatorList           []string        `yaml:"operator_list"`
 		Operators              map[string]bool `yaml:"-"`
-		PayToJoin              bool           `yaml:"pay_to_join"`
-		AccpetPaymentAssetList []PaymentAsset `yaml:"accept_asset_list"`
+		PayToJoin              bool            `yaml:"pay_to_join"`
+		AccpetPaymentAssetList []PaymentAsset  `yaml:"accept_asset_list"`
 	} `yaml:"system"`
 	Appearance struct {
 		HomeWelcomeMessage string          `yaml:"home_welcome_message"`

@@ -451,8 +451,5 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 		}
 		return false, "Image contains QR Code"
 	}
-	if b, err := interceptors.CheckSex(ctx, data); b {
-		return false, fmt.Sprintf("CheckSex: %+v", err)
-	}
 	return true, ""
 }
