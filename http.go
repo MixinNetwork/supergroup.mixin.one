@@ -9,7 +9,6 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
 	"github.com/MixinNetwork/supergroup.mixin.one/routes"
 	"github.com/dimfeld/httptreemux"
-	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gorilla/handlers"
 	"github.com/unrolled/render"
 )
@@ -26,5 +25,5 @@ func StartServer(database *durable.Database) error {
 	handler = middlewares.Log(handler, logger, "http")
 	handler = handlers.ProxyHeaders(handler)
 
-	return gracehttp.Serve(&http.Server{Addr: fmt.Sprintf(":%d", config.AppConfig.Service.HTTPListenPort), Handler: handler})
+	return http.ListenAndServe(fmt.Sprintf(":%d", config.AppConfig.Service.HTTPListenPort), handler)
 }
