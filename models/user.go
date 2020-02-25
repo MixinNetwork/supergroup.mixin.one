@@ -290,16 +290,13 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		return nil
 	}
 
-	messages, err := readLastestMessagesInTx(ctx, tx, 10)
+	messages, err := readLastestMessagesInTx(ctx, tx, user.UserId, 10)
 	if err != nil {
 		return err
 	}
 	sort.Slice(messages, func(i, j int) bool { return messages[i].CreatedAt.Before(messages[j].CreatedAt) })
 	var values bytes.Buffer
 	for i, msg := range messages {
-		if msg.UserId == user.UserId {
-			continue
-		}
 		if msg.Category == MessageCategoryMessageRecall {
 			var recallMessage RecallMessage
 			data, err := base64.StdEncoding.DecodeString(msg.Data)
