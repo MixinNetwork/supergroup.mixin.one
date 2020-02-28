@@ -1,12 +1,10 @@
 package config
 
 import (
-	"context"
 	"io/ioutil"
 	"log"
 	"path"
 
-	"github.com/MixinNetwork/bot-api-go-client"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -120,12 +118,6 @@ func LoadConfig(dir string) {
 	AppConfig.System.Operators = make(map[string]bool)
 	for _, op := range AppConfig.System.OperatorList {
 		AppConfig.System.Operators[op] = true
-	}
-
-	mixin := AppConfig.Mixin
-	_, err = bot.UpdatePreference(context.Background(), mixin.ClientId, mixin.SessionId, mixin.SessionKey, "", "CONTACTS", "", 0)
-	if err != nil {
-		log.Panicln(err)
 	}
 }
 

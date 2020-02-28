@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
@@ -14,6 +16,12 @@ import (
 )
 
 func StartServer(database *durable.Database) error {
+	mixin := config.AppConfig.Mixin
+	_, err := bot.UpdatePreference(context.Background(), mixin.ClientId, mixin.SessionId, mixin.SessionKey, "", "CONTACTS", "", 0)
+	if err != nil {
+		return err
+	}
+
 	logger := durable.NewLoggerClient()
 	router := httptreemux.New()
 	routes.RegisterRoutes(router)
