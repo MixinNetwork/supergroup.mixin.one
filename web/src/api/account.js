@@ -1,4 +1,4 @@
-const api = require('./net').default
+import api from './net'
 
 const Account = {
   me: async function () {

@@ -1,6 +1,6 @@
-const api = require('./net').default
+import api from './net'
 
-let Broadcaster = {
+const Broadcaster = {
   index: async function () {
     return await api.get('/broadcasters', {});
   },

@@ -1,6 +1,6 @@
-const api = require('./net').default
+import api from './net'
 
-let Property = {
+const Property = {
   async create (state) {
     return await api.post('/properties', {'value': state}, {})
   }

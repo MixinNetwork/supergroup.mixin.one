@@ -1,6 +1,6 @@
-const api = require('./net').default
+import api from './net'
 
-let Packet = {
+const Packet = {
   async prepare () {
     return await api.get('/packets/prepare', {});
   },
