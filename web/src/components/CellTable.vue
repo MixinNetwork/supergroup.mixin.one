@@ -1,7 +1,7 @@
 <template>
   <div class="cell-table">
-    <van-row class="table-row" v-for="group in groupedItems">
-      <van-col span="6" v-for="item in group">
+    <van-row class="table-row" v-for="(group, index) in groupedItems" :key="index">
+      <van-col span="6" v-for="item in group" :key="item.label">
         <a v-if="item.url" class="item" :href="item.url">
           <img :src="item.icon"/>
           <span>{{item.label}}</span>
