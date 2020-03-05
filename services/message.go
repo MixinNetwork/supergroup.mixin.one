@@ -390,6 +390,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 		description = fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, name)
 	}
 	card, err := json.Marshal(map[string]string{
+		"app_id":      config.AppConfig.Mixin.ClientId,
 		"icon_url":    "https://images.mixin.one/X44V48LK9oEBT3izRGKqdVSPfiH5DtYTzzF0ch5nP-f7tO4v0BTTqVhFEHqd52qUeuVas-BSkLH1ckxEI51-jXmF=s256",
 		"title":       config.AppConfig.MessageTemplate.GroupRedPacket,
 		"description": description,
