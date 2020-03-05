@@ -36,7 +36,6 @@ import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
 import Loading from '../components/Loading'
 import Row from '@/components/Nav'
-import uuid from 'uuid'
 import {Toast} from 'vant'
 import { CLIENT_ID, WEB_ROOT } from '@/constants'
 

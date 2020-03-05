@@ -40,7 +40,7 @@ import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
 import Row from '@/components/Nav'
 import Loading from '@/components/Loading'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import {Toast} from 'vant'
 import { CLIENT_ID } from '@/constants'
 
@@ -97,7 +97,7 @@ export default {
         amount: this.form.amount,
         total_count: parseInt(this.form.shares),
         greeting: this.form.memo,
-        conversation_id: uuid.v4(),
+        conversation_id: uuid(),
         asset_id: this.selectedAsset.asset_id
       }
 

@@ -46,7 +46,7 @@
 import Loading from '@/components/Loading'
 import NavBar from '@/components/Nav'
 import RowSelect from '@/components/RowSelect'
-import uuid from 'uuid'
+import { v4 as uuid } from 'uuid'
 import { CLIENT_ID } from '@/constants'
 
 export default {
@@ -115,7 +115,7 @@ export default {
     },
     async pay () {
       let memo = btoa(`REWARD:${this.broadcaster.user_id}`);
-      let traceId = uuid.v4();
+      let traceId = uuid();
       let amount = this.amount;
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&trace=${traceId}&amount=${amount}&memo=${memo}`;
       this.amount = '';
