@@ -26,11 +26,11 @@ const (
 	MessageCategoryPlainText      = "PLAIN_TEXT"
 	MessageCategoryPlainImage     = "PLAIN_IMAGE"
 	MessageCategoryPlainVideo     = "PLAIN_VIDEO"
+	MessageCategoryPlainLive      = "PLAIN_LIVE"
 	MessageCategoryPlainData      = "PLAIN_DATA"
 	MessageCategoryPlainSticker   = "PLAIN_STICKER"
 	MessageCategoryPlainContact   = "PLAIN_CONTACT"
 	MessageCategoryPlainAudio     = "PLAIN_AUDIO"
-	MessageCategoryPlainLive      = "PLAIN_LIVE"
 	MessageCategoryAppCard        = "APP_CARD"
 	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
 )
@@ -79,6 +79,9 @@ type Message struct {
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 {
+		return nil, nil
+	}
+	if !whitelistCategories[category] {
 		return nil, nil
 	}
 	if !user.isAdmin() && user.UserId != config.AppConfig.Mixin.ClientId {
@@ -376,4 +379,18 @@ func FirstNStringInRune(s string, n int) string {
 		return s
 	}
 	return string([]rune(s)[:n]) + "..."
+}
+
+var whitelistCategories = map[string]bool{
+	MessageCategoryMessageRecall:  true,
+	MessageCategoryPlainText:      true,
+	MessageCategoryPlainImage:     true,
+	MessageCategoryPlainVideo:     true,
+	MessageCategoryPlainLive:      true,
+	MessageCategoryPlainData:      true,
+	MessageCategoryPlainSticker:   true,
+	MessageCategoryPlainContact:   true,
+	MessageCategoryPlainAudio:     true,
+	MessageCategoryAppCard:        true,
+	MessageCategoryAppButtonGroup: true,
 }
