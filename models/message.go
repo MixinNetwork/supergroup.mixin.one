@@ -303,7 +303,7 @@ func FindMessage(ctx context.Context, id string) (*Message, error) {
 	return message, nil
 }
 
-func LastestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error) {
+func LatestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error) {
 	query := "SELECT messages.message_id,messages.category,messages.data,messages.created_at,users.full_name FROM messages LEFT JOIN users ON messages.user_id=users.user_id ORDER BY updated_at DESC LIMIT $1"
 	rows, err := session.Database(ctx).QueryContext(ctx, query, limit)
 	if err != nil {
@@ -329,7 +329,7 @@ func LastestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error
 	return messages, nil
 }
 
-func readLastestMessages(ctx context.Context, limit int64) ([]*Message, error) {
+func readLatestMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	var messages []*Message
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 ORDER BY updated_at DESC LIMIT $2", strings.Join(messagesCols, ","))
 	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStateSuccess, limit)
@@ -348,7 +348,7 @@ func readLastestMessages(ctx context.Context, limit int64) ([]*Message, error) {
 	return messages, nil
 }
 
-func readLastestMessagesInTx(ctx context.Context, tx *sql.Tx, userId string, limit int64) ([]*Message, error) {
+func readLatestMessagesInTx(ctx context.Context, tx *sql.Tx, userId string, limit int64) ([]*Message, error) {
 	var messages []*Message
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 ORDER BY updated_at DESC LIMIT $2", strings.Join(messagesCols, ","))
 	rows, err := tx.QueryContext(ctx, query, MessageStateSuccess, limit)

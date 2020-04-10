@@ -290,7 +290,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		return nil
 	}
 
-	messages, err := readLastestMessagesInTx(ctx, tx, user.UserId, 10)
+	messages, err := readLatestMessagesInTx(ctx, tx, user.UserId, 10)
 	if err != nil {
 		return err
 	}
