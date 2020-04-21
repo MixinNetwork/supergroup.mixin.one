@@ -127,7 +127,7 @@ func TestBlacklistCRUD(t *testing.T) {
 	list, err := admin.CreateBlacklist(ctx, id)
 	assert.Nil(err)
 	assert.NotNil(list)
-	list, err = readBlacklist(ctx, id)
+	list, err = ReadBlacklist(ctx, id)
 	assert.Nil(err)
 	assert.Nil(list)
 
@@ -137,7 +137,7 @@ func TestBlacklistCRUD(t *testing.T) {
 	list, err = admin.CreateBlacklist(ctx, li.UserId)
 	assert.Nil(err)
 	assert.NotNil(list)
-	list, err = readBlacklist(ctx, li.UserId)
+	list, err = ReadBlacklist(ctx, li.UserId)
 	assert.Nil(err)
 	assert.NotNil(list)
 

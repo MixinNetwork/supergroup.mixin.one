@@ -81,7 +81,7 @@ func TestPacketCRUD(t *testing.T) {
 	assert.Equal(int64(0), packet.RemainingCount)
 	assert.Equal("0", packet.RemainingAmount)
 	assert.Len(packet.Participants, 2)
-	packet, err = li.createPacket(ctx, asset, number.FromString("1"), 2, "Hello Packet")
+	packet, err = li.createPacket(ctx, asset, number.FromString("1"), 2, "Hello Packet Hello Packet Hello Packet Hello Packet Hello")
 	assert.Nil(err)
 	assert.NotNil(packet)
 	packet, err = PayPacket(ctx, packet.PacketId, asset.AssetId, "1")

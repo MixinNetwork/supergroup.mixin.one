@@ -118,7 +118,7 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 		return nil, session.BadDataError(ctx)
 	}
 	if utf8.RuneCountInString(greeting) > 36 {
-		return nil, session.BadDataError(ctx)
+		greeting = string([]rune(greeting)[:36])
 	}
 	amount = amount.RoundFloor(8)
 	if number.FromString(asset.Balance).Cmp(amount) < 0 {

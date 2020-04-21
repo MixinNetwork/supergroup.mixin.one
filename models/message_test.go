@@ -95,15 +95,9 @@ func TestMessageCRUD(t *testing.T) {
 
 	err = UpdateMessagesStatus(ctx, dms)
 	assert.Nil(err)
-	count, err := testCleanUpExpiredDistributedMessages(ctx)
-	assert.Nil(err)
-	assert.Equal(0, count)
 	query := "UPDATE distributed_messages SET created_at=$1"
 	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-96*time.Hour))
 	assert.Nil(err)
-	count, err = testCleanUpExpiredDistributedMessages(ctx)
-	assert.Nil(err)
-	assert.Equal(3, count)
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)
 	assert.Len(dms, 0)
@@ -117,10 +111,10 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 4)
 
-	messages, err = readLastestMessages(ctx, 10)
+	messages, err = readLatestMessages(ctx, 10)
 	assert.Nil(err)
 	assert.Len(messages, 2)
-	messages, err = LastestMessageWithUser(ctx, 10)
+	messages, err = LatestMessageWithUser(ctx, 10)
 	assert.Nil(err)
 	assert.Len(messages, 2)
 }
@@ -143,19 +137,6 @@ func testReadDistributedMessages(ctx context.Context) ([]*DistributedMessage, er
 		dms = append(dms, messages...)
 	}
 	return dms, nil
-}
-
-func testCleanUpExpiredDistributedMessages(ctx context.Context) (int, error) {
-	count := 0
-	for i := int64(0); i < config.AppConfig.System.MessageShardSize; i++ {
-		shard := testShardId(config.AppConfig.System.MessageShardModifier, i)
-		n, err := CleanUpExpiredDistributedMessages(ctx, shard)
-		if err != nil {
-			return 0, err
-		}
-		count += int(n)
-	}
-	return count, nil
 }
 
 func testShardId(modifier string, i int64) string {
