@@ -31,6 +31,7 @@ const (
 	MessageCategoryPlainSticker   = "PLAIN_STICKER"
 	MessageCategoryPlainContact   = "PLAIN_CONTACT"
 	MessageCategoryPlainAudio     = "PLAIN_AUDIO"
+	MessageCategoryPlainPost      = "PLAIN_POST"
 	MessageCategoryAppCard        = "APP_CARD"
 	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
 )
@@ -392,5 +393,6 @@ var whitelistCategories = map[string]bool{
 	MessageCategoryPlainContact:   true,
 	MessageCategoryPlainAudio:     true,
 	MessageCategoryAppCard:        true,
+	MessageCategoryPlainPost:      true,
 	MessageCategoryAppButtonGroup: true,
 }
