@@ -424,8 +424,8 @@ func (user *User) isAdmin() bool {
 
 func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
 	var users []*User
-	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
-	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt)
+	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at > $2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt, time.Now().Add(-48*time.Hour))
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
 	}
