@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS users_identityx ON users(identity_number);
-CREATE INDEX IF NOT EXISTS users_subscribed_activex ON users(subscribed_at, active);
+CREATE INDEX IF NOT EXISTS users_subscribed_activex ON users(subscribed_at, active_at);
 CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 
 
