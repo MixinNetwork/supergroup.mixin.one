@@ -16,24 +16,21 @@ type Blacklist struct {
 }
 
 func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
-	_, err := bot.UuidFromString(userId)
-	if err != nil {
+	if id, _ := bot.UuidFromString(userId); id.String() != userId {
 		return nil, session.ForbiddenError(ctx)
 	}
-	if !config.AppConfig.System.Operators[user.UserId] {
-		return nil, nil
-	}
-	if config.AppConfig.System.Operators[userId] {
+	operators := config.AppConfig.System.Operators
+	if !operators[user.UserId] || operators[userId] {
 		return nil, nil
 	}
 
 	b := &Blacklist{UserId: userId}
-	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		u, err := findUserById(ctx, tx, userId)
 		if err != nil || u == nil {
 			return err
 		}
-		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, ID: %d", u.FullName, u.IdentityNumber)))
+		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, Mixin ID: %d", u.FullName, u.IdentityNumber)))
 		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
 		if err != nil {
 			return err
@@ -52,14 +49,16 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 }
 
 func ReadBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
-	var b Blacklist
-	err := session.Database(ctx).QueryRowContext(ctx, "SELECT user_id from blacklists WHERE user_id=$1", userId).Scan(&b.UserId)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	var b *Blacklist
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		var err error
+		b, err = readBlacklistInTx(ctx, tx, userId)
+		return err
+	})
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	return &b, nil
+	return b, nil
 }
 
 func readBlacklistInTx(ctx context.Context, tx *sql.Tx, userId string) (*Blacklist, error) {
@@ -68,7 +67,7 @@ func readBlacklistInTx(ctx context.Context, tx *sql.Tx, userId string) (*Blackli
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
-		return nil, session.TransactionError(ctx, err)
+		return nil, err
 	}
 	return &b, nil
 }
