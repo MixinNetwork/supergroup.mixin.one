@@ -9,16 +9,6 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-const broadcasters_DDL = `
-CREATE TABLE IF NOT EXISTS broadcasters (
-	user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
-	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-	updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS broadcasters_updatedx ON broadcasters(updated_at);
-`
-
 var broadcasterColumns = []string{"user_id", "created_at", "updated_at"}
 
 func (b *Broadcaster) values() []interface{} {

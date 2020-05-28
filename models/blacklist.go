@@ -11,12 +11,6 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-const blacklist_DDL = `
-CREATE TABLE IF NOT EXISTS blacklists (
-	user_id	          VARCHAR(36) PRIMARY KEY CHECK (user_id ~* '^[0-9a-f-]{36,36}$')
-);
-`
-
 type Blacklist struct {
 	UserId string
 }

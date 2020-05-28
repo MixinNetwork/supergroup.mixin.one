@@ -34,24 +34,6 @@ const (
 	MessageStatusDelivered = "DELIVERED"
 )
 
-const distributed_messages_DDL = `
-CREATE TABLE IF NOT EXISTS distributed_messages (
-	message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
-	conversation_id       VARCHAR(36) NOT NULL CHECK (conversation_id ~* '^[0-9a-f-]{36,36}$'),
-	recipient_id          VARCHAR(36) NOT NULL CHECK (recipient_id ~* '^[0-9a-f-]{36,36}$'),
-	user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
-	parent_id             VARCHAR(36) NOT NULL CHECK (parent_id ~* '^[0-9a-f-]{36,36}$'),
-	quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
-	shard                 VARCHAR(36) NOT NULL,
-	category              VARCHAR(512) NOT NULL,
-	data                  TEXT NOT NULL,
-	status                VARCHAR(512) NOT NULL,
-	created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS message_shard_statusx ON distributed_messages(shard, status, created_at);
-`
-
 var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
 
 func (dm *DistributedMessage) values() []interface{} {

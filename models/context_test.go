@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"testing"
 
@@ -67,22 +68,9 @@ func setupTestContext() context.Context {
 	if err != nil {
 		log.Panicln(err)
 	}
-	tables := []string{
-		users_DDL,
-		messages_DDL,
-		distributed_messages_DDL,
-		assets_DDL,
-		blacklist_DDL,
-		packets_DDL,
-		participants_DDL,
-		properties_DDL,
-		broadcasters_DDL,
-		rewards_DDL,
-	}
-	for _, q := range tables {
-		if _, err := db.Exec(q); err != nil {
-			log.Panicln(err)
-		}
+	data, err := ioutil.ReadFile("./schema.sql")
+	if _, err := db.Exec(string(data)); err != nil {
+		log.Panicln(err)
 	}
 	database, err := durable.NewDatabase(context.Background(), db)
 	if err != nil {

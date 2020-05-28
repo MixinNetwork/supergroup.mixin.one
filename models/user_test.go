@@ -37,6 +37,8 @@ func TestUserCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(users, 0)
 
+	err = user.Payment(ctx)
+	assert.Nil(err)
 	err = user.Subscribe(ctx)
 	assert.Nil(err)
 	user, err = FindUser(ctx, user.UserId)
@@ -82,6 +84,8 @@ func TestUserCRUD(t *testing.T) {
 	user, err = FindUser(ctx, user.UserId)
 	assert.Nil(err)
 	assert.Equal(PaymentStatePaid, user.State)
+	err = user.Subscribe(ctx)
+	assert.Nil(err)
 	messages, err = PendingMessages(ctx, 100)
 	assert.Nil(err)
 	assert.Len(messages, 1)

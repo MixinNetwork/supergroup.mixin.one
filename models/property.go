@@ -17,14 +17,6 @@ const (
 	ProhibitedMessage = "prohibited-message-property"
 )
 
-const properties_DDL = `
-CREATE TABLE IF NOT EXISTS properties (
-	name               VARCHAR(512) PRIMARY KEY,
-	value              VARCHAR(1024) NOT NULL,
-	created_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-`
-
 var propertiesColumns = []string{"name", "value", "created_at"}
 
 func (p *Property) values() []interface{} {

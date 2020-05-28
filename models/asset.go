@@ -15,17 +15,6 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-const assets_DDL = `
-CREATE TABLE IF NOT EXISTS assets (
-	asset_id         VARCHAR(36) PRIMARY KEY CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
-	symbol           VARCHAR(512) NOT NULL,
-	name             VARCHAR(512) NOT NULL,
-	icon_url         VARCHAR(1024) NOT NULL,
-	price_btc        VARCHAR(128) NOT NULL,
-	price_usd        VARCHAR(128) NOT NULL
-);
-`
-
 const (
 	PacketMinAmount = "0.0001"
 )

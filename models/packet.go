@@ -31,23 +31,6 @@ const (
 	shareShardId    = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
-const packets_DDL = `
-CREATE TABLE IF NOT EXISTS packets (
-	packet_id         VARCHAR(36) PRIMARY KEY CHECK (packet_id ~* '^[0-9a-f-]{36,36}$'),
-	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
-	asset_id          VARCHAR(36) NOT NULL CHECK (asset_id ~* '^[0-9a-f-]{36,36}$'),
-	amount            VARCHAR(128) NOT NULL,
-	greeting          VARCHAR(36) NOT NULL,
-	total_count       BIGINT NOT NULL,
-	remaining_count   BIGINT NOT NULL,
-	remaining_amount  VARCHAR(128) NOT NULL,
-	state             VARCHAR(36) NOT NULL,
-	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS packets_state_createdx ON packets(state, created_at);
-`
-
 var packetsCols = []string{"packet_id", "user_id", "asset_id", "amount", "greeting", "total_count", "remaining_count", "remaining_amount", "state", "created_at"}
 
 func (p *Packet) values() []interface{} {

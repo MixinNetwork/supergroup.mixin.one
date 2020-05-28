@@ -19,19 +19,6 @@ import (
 	"github.com/lib/pq"
 )
 
-const participants_DDL = `
-CREATE TABLE IF NOT EXISTS participants (
-	packet_id         VARCHAR(36) NOT NULL REFERENCES packets(packet_id) ON DELETE CASCADE,
-	user_id	          VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
-	amount            VARCHAR(128) NOT NULL,
-	created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-	paid_at           TIMESTAMP WITH TIME ZONE,
-	PRIMARY KEY(packet_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS participants_created_paidx ON participants(created_at, paid_at);
-`
-
 type Participant struct {
 	PacketId  string
 	UserId    string
