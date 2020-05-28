@@ -56,6 +56,9 @@ func (u *User) values() []interface{} {
 func userFromRow(row durable.Row) (*User, error) {
 	var u User
 	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt, &u.PayMethod)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &u, err
 }
 
@@ -488,9 +491,6 @@ func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error)
 	query := fmt.Sprintf("SELECT %s FROM users WHERE user_id=$1", strings.Join(usersCols, ","))
 	row := tx.QueryRowContext(ctx, query, userId)
 	user, err := userFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	return user, err
 }
 

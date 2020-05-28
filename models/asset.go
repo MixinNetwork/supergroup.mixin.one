@@ -8,10 +8,10 @@ import (
 	"sort"
 	"strings"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/externals"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
@@ -39,15 +39,15 @@ func (a *Asset) values() []interface{} {
 func assetFromRow(row durable.Row) (*Asset, error) {
 	var a Asset
 	err := row.Scan(&a.AssetId, &a.Symbol, &a.Name, &a.IconURL, &a.PriceBTC, &a.PriceUSD)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &a, err
 }
 
 func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
-	list, err := bot.AssetList(ctx, current.AccessToken)
+	list, err := externals.AssetList(ctx, current.AccessToken)
 	if err != nil {
-		if serr, b := session.ParseError(err.Error()); b && serr.Code == 403 {
-			return nil, session.AssetForbiddenError(ctx)
-		}
 		return nil, err
 	}
 	var assets []*Asset
@@ -95,11 +95,8 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 }
 
 func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, error) {
-	a, err := bot.AssetShow(ctx, assetId, current.AccessToken)
+	a, err := externals.AssetShow(ctx, assetId, current.AccessToken)
 	if err != nil {
-		if serr, b := session.ParseError(err.Error()); b && serr.Code == 403 {
-			return nil, session.AssetForbiddenError(ctx)
-		}
 		return nil, err
 	}
 	asset := &Asset{
@@ -135,8 +132,5 @@ func findAssetById(ctx context.Context, tx *sql.Tx, assetId string) (*Asset, err
 	query := fmt.Sprintf("SELECT %s FROM assets WHERE asset_id=$1", strings.Join(assetsColumns, ","))
 	row := tx.QueryRowContext(ctx, query, assetId)
 	asset, err := assetFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	return asset, err
 }

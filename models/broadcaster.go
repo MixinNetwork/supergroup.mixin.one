@@ -9,16 +9,16 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-var broadcasterColumns = []string{"user_id", "created_at", "updated_at"}
-
-func (b *Broadcaster) values() []interface{} {
-	return []interface{}{b.UserId, b.CreatedAt, b.UpdatedAt}
-}
-
 type Broadcaster struct {
 	UserId    string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+var broadcasterColumns = []string{"user_id", "created_at", "updated_at"}
+
+func (b *Broadcaster) values() []interface{} {
+	return []interface{}{b.UserId, b.CreatedAt, b.UpdatedAt}
 }
 
 func (current *User) CreateBroadcaster(ctx context.Context, identity int64) (*User, error) {
@@ -34,8 +34,9 @@ func (current *User) CreateBroadcaster(ctx context.Context, identity int64) (*Us
 	}
 	user := users[0]
 
+	t := time.Now()
 	query := fmt.Sprintf("INSERT INTO broadcasters(user_id,created_at,updated_at) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET updated_at=EXCLUDED.updated_at")
-	_, err = session.Database(ctx).ExecContext(ctx, query, user.UserId, time.Now(), time.Now())
+	_, err = session.Database(ctx).ExecContext(ctx, query, user.UserId, t, t)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
