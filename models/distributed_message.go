@@ -88,24 +88,24 @@ func (message *Message) Distribute(ctx context.Context) error {
 				return err
 			}
 			if xurls.Relaxed.Match(data) {
-				return message.Leapfrog(ctx, "Message contains link")
+				return message.Notify(ctx, "Message contains link")
 			}
 		}
 		if system.DetectQRCodeEnabled && message.Category == MessageCategoryPlainImage {
 			b, reason := messageQRFilter(ctx, message)
 			if !b {
-				return message.Leapfrog(ctx, reason)
+				return message.Notify(ctx, reason)
 			}
 		}
 	}
 
-	var recallMessage RecallMessage
+	var recall RecallMessage
 	if message.Category == MessageCategoryMessageRecall {
 		data, err := base64.StdEncoding.DecodeString(message.Data)
 		if err != nil {
 			return session.BadDataError(ctx)
 		}
-		err = json.Unmarshal(data, &recallMessage)
+		err = json.Unmarshal(data, &recall)
 		if err != nil {
 			return session.BadDataError(ctx)
 		}
@@ -156,7 +156,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 				}
 				if message.Category == MessageCategoryMessageRecall {
 					r := RecallMessage{
-						MessageId: UniqueConversationId(user.UserId, recallMessage.MessageId),
+						MessageId: UniqueConversationId(user.UserId, recall.MessageId),
 					}
 					data, err := json.Marshal(r)
 					if err != nil {
@@ -209,7 +209,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 	return nil
 }
 
-func (message *Message) Leapfrog(ctx context.Context, reason string) error {
+func (message *Message) Notify(ctx context.Context, reason string) error {
 	ids := make([]string, 0)
 	for key, _ := range config.AppConfig.System.Operators {
 		ids = append(ids, key)

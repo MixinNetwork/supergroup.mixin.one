@@ -336,7 +336,11 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 
 func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
 	if identity > 20000 {
-		return findUsersByIdentityNumber(ctx, identity)
+		user, err := findUserByIdentityNumber(ctx, identity)
+		if err != nil {
+			return nil, err
+		}
+		return []*User{user}, nil
 	}
 	if len(keywords) != 0 {
 		return findUsersByKeywords(ctx, keywords)
@@ -456,16 +460,14 @@ func PingUserActiveAt(ctx context.Context, userId string) error {
 	return nil
 }
 
-func findUsersByIdentityNumber(ctx context.Context, identity int64) ([]*User, error) {
+func findUserByIdentityNumber(ctx context.Context, identity int64) (*User, error) {
 	query := fmt.Sprintf("SELECT %s FROM users WHERE identity_number=$1", strings.Join(usersCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, identity)
 	user, err := userFromRow(row)
-	if err == sql.ErrNoRows {
-		return []*User{}, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
-	return []*User{user}, nil
+	return user, nil
 }
 
 func findUsersByKeywords(ctx context.Context, keywords string) ([]*User, error) {

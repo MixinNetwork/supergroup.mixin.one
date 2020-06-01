@@ -26,16 +26,15 @@ func (current *User) CreateBroadcaster(ctx context.Context, identity int64) (*Us
 		return nil, session.ForbiddenError(ctx)
 	}
 
-	users, err := findUsersByIdentityNumber(ctx, identity)
+	user, err := findUserByIdentityNumber(ctx, identity)
 	if err != nil {
 		return nil, err
-	} else if len(users) == 0 {
-		return nil, session.BadDataError(ctx)
+	} else if user == nil {
+		return nil, nil
 	}
-	user := users[0]
 
 	t := time.Now()
-	query := fmt.Sprintf("INSERT INTO broadcasters(user_id,created_at,updated_at) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET updated_at=EXCLUDED.updated_at")
+	query := fmt.Sprintf("INSERT INTO broadcasters(%s) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET updated_at=EXCLUDED.updated_at", strings.Join(broadcasterColumns, ","))
 	_, err = session.Database(ctx).ExecContext(ctx, query, user.UserId, t, t)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)

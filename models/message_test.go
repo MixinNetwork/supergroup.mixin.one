@@ -109,7 +109,7 @@ func TestMessageCRUD(t *testing.T) {
 	message, err = CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
-	err = message.Leapfrog(ctx, "ONLY TEST")
+	err = message.Notify(ctx, "ONLY TEST")
 	assert.Nil(err)
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)

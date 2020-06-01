@@ -17,7 +17,7 @@ type Blacklist struct {
 
 func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
 	if id, _ := bot.UuidFromString(userId); id.String() != userId {
-		return nil, session.ForbiddenError(ctx)
+		return nil, session.BadDataError(ctx)
 	}
 	operators := config.AppConfig.System.Operators
 	if !operators[user.UserId] || operators[userId] {

@@ -33,6 +33,8 @@ func (impl *broadcastersImpl) create(w http.ResponseWriter, r *http.Request, _ m
 	user, err := middlewares.CurrentUser(r).CreateBroadcaster(r.Context(), body.Identity)
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
+	} else if user == nil {
+		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	} else {
 		views.RenderUserView(w, r, user)
 	}
