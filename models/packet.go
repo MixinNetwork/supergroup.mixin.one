@@ -31,12 +31,6 @@ const (
 	shareShardId    = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
-var packetsCols = []string{"packet_id", "user_id", "asset_id", "amount", "greeting", "total_count", "remaining_count", "remaining_amount", "state", "created_at"}
-
-func (p *Packet) values() []interface{} {
-	return []interface{}{p.PacketId, p.UserId, p.AssetId, p.Amount, p.Greeting, p.TotalCount, p.RemainingCount, p.RemainingAmount, p.State, p.CreatedAt}
-}
-
 type Packet struct {
 	PacketId        string
 	UserId          string
@@ -52,6 +46,18 @@ type Packet struct {
 	User         *User
 	Asset        *Asset
 	Participants []*Participant
+}
+
+var packetsCols = []string{"packet_id", "user_id", "asset_id", "amount", "greeting", "total_count", "remaining_count", "remaining_amount", "state", "created_at"}
+
+func (p *Packet) values() []interface{} {
+	return []interface{}{p.PacketId, p.UserId, p.AssetId, p.Amount, p.Greeting, p.TotalCount, p.RemainingCount, p.RemainingAmount, p.State, p.CreatedAt}
+}
+
+func packetFromRow(row durable.Row) (*Packet, error) {
+	var p Packet
+	err := row.Scan(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
+	return &p, err
 }
 
 func (current *User) Prepare(ctx context.Context) (int64, error) {
@@ -407,12 +413,6 @@ func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, erro
 		return nil, session.TransactionError(ctx, err)
 	}
 	return p, nil
-}
-
-func packetFromRow(row durable.Row) (*Packet, error) {
-	var p Packet
-	err := row.Scan(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
-	return &p, err
 }
 
 func generatePacketRefundId(packetId string) (string, error) {

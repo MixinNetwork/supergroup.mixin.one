@@ -30,6 +30,12 @@ type Participant struct {
 	AvatarURL string
 }
 
+func participantFromRow(row durable.Row) (*Participant, error) {
+	var p Participant
+	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.PaidAt, &p.FullName, &p.AvatarURL)
+	return &p, err
+}
+
 func (packet *Packet) GetParticipants(ctx context.Context) error {
 	query := fmt.Sprintf("SELECT p.packet_id,p.user_id,p.amount,p.created_at,p.paid_at,u.full_name,u.avatar_url FROM participants p INNER JOIN users u ON p.user_id=u.user_id WHERE p.packet_id=$1 ORDER BY p.created_at")
 	rows, err := session.Database(ctx).QueryContext(ctx, query, packet.PacketId)
@@ -110,12 +116,6 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		return session.ServerError(ctx, err)
 	}
 	return nil
-}
-
-func participantFromRow(row durable.Row) (*Participant, error) {
-	var p Participant
-	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.PaidAt, &p.FullName, &p.AvatarURL)
-	return &p, err
 }
 
 func generateParticipantId(packetId, userId string) (string, error) {

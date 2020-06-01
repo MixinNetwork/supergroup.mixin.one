@@ -17,6 +17,12 @@ const (
 	ProhibitedMessage = "prohibited-message-property"
 )
 
+type Property struct {
+	Name      string
+	Value     string
+	CreatedAt time.Time
+}
+
 var propertiesColumns = []string{"name", "value", "created_at"}
 
 func (p *Property) values() []interface{} {
@@ -27,12 +33,6 @@ func propertyFromRow(row durable.Row) (*Property, error) {
 	var p Property
 	err := row.Scan(&p.Name, &p.Value, &p.CreatedAt)
 	return &p, err
-}
-
-type Property struct {
-	Name      string
-	Value     string
-	CreatedAt time.Time
 }
 
 func CreateProperty(ctx context.Context, name string, value bool) (*Property, error) {

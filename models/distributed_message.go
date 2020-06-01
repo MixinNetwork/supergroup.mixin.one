@@ -26,19 +26,11 @@ import (
 )
 
 const (
-	DistributeSubscriberLimit      = 100
-	ExpiredDistributedMessageLimit = 100
-	PendingDistributedMessageLimit = 20
+	DistributeSubscriberLimit = 100
 
 	MessageStatusSent      = "SENT"
 	MessageStatusDelivered = "DELIVERED"
 )
-
-var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
-
-func (dm *DistributedMessage) values() []interface{} {
-	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
-}
 
 type DistributedMessage struct {
 	MessageId      string
@@ -52,6 +44,18 @@ type DistributedMessage struct {
 	Data           string
 	Status         string
 	CreatedAt      time.Time
+}
+
+var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
+
+func (dm *DistributedMessage) values() []interface{} {
+	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
+}
+
+func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
+	var m DistributedMessage
+	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
+	return &m, err
 }
 
 func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
@@ -354,12 +358,6 @@ func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string
 		set[id] = true
 	}
 	return set, nil
-}
-
-func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
-	var m DistributedMessage
-	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
-	return &m, err
 }
 
 func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string) string {
