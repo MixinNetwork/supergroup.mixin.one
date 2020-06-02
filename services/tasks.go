@@ -86,6 +86,27 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 	return nil
 }
 
+func loopInactiveUsers(ctx context.Context) {
+	for {
+		users, err := models.LoopingInactiveUsers(ctx)
+		if err != nil {
+			time.Sleep(time.Second)
+			session.Logger(ctx).Errorf("LoopingInactiveUsers ERROR: %+v", err)
+			continue
+		}
+
+		for _, user := range users {
+			err = user.Hibernate(ctx)
+			if err != nil {
+				time.Sleep(time.Second)
+				session.Logger(ctx).Errorf("Hibernate ERROR: %+v", err)
+				continue
+			}
+		}
+		time.Sleep(time.Hour)
+	}
+}
+
 func shardId(modifier string, i int64) string {
 	h := md5.New()
 	h.Write([]byte(modifier))

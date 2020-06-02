@@ -412,8 +412,8 @@ func (user *User) isAdmin() bool {
 
 func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
 	var users []*User
-	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at > $2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
-	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt, time.Now().Add(-48*time.Hour))
+	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt, time.Now().Add(-24*6*time.Hour))
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
 	}
@@ -454,6 +454,43 @@ func FindUser(ctx context.Context, userId string) (*User, error) {
 func PingUserActiveAt(ctx context.Context, userId string) error {
 	query := "UPDATE users SET active_at=$1 WHERE user_id=$2"
 	_, err := session.Database(ctx).ExecContext(ctx, query, time.Now(), userId)
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
+func LoopingInactiveUsers(ctx context.Context) ([]*User, error) {
+	var users []*User
+	query := fmt.Sprintf("SELECT %s FROM users WHERE active_at>$1 AND active_at<$2 ORDER BY active_at DESC LIMIT 500", strings.Join(usersCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*6*time.Hour))
+	if err != nil {
+		return users, session.TransactionError(ctx, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		u, err := userFromRow(rows)
+		if err != nil {
+			return users, session.TransactionError(ctx, err)
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
+func (user *User) Hibernate(ctx context.Context) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
+		err := createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, text)
+		if err != nil {
+			return err
+		}
+		user.ActiveAt = time.Now().Add(-24 * 7 * time.Hour)
+		query := "UPDATE users SET active_at=$1 WHERE user_id=$2"
+		_, err = tx.Exec(query, user.ActiveAt, user.UserId)
+		return err
+	})
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}

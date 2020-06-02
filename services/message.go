@@ -73,6 +73,7 @@ type MessageContext struct {
 
 func (service *MessageService) Run(ctx context.Context) error {
 	go distribute(ctx)
+	go loopInactiveUsers(ctx)
 	go loopPendingMessages(ctx)
 	go handlePendingParticipants(ctx)
 	go handleExpiredPackets(ctx)

@@ -58,6 +58,7 @@ message_template:
   message_reward_label: "%s 给 %s 转了 %s %s"
   message_reward_memo: "来自 %s"
   message_tips_too_many   : "发送太频繁"
+  message_tips_suspended   : "由于您长时间未使用，暂停发送消息"
   message_commands_info   : "/INFO"
   message_commands_info_resp: "当前订阅人数: %d"
 mixin:
