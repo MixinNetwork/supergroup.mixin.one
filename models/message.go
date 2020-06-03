@@ -179,8 +179,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			message.UserId = m.UserId
 		}
 	}
-	params, positions := compileTableQuery(messagesCols)
-	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", params, positions)
+	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", messagesCols)
 	_, err := session.Database(ctx).ExecContext(ctx, query, message.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -201,8 +200,7 @@ func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string)
 		State:            MessageStatePending,
 		LastDistributeAt: genesisStartedAt(),
 	}
-	params, positions := compileTableQuery(messagesCols)
-	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", params, positions)
+	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", messagesCols)
 	_, err := tx.ExecContext(ctx, query, message.values()...)
 	return err
 }
@@ -244,8 +242,7 @@ func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error 
 		UpdatedAt: t,
 		State:     MessageStatePending,
 	}
-	params, positions := compileTableQuery(messagesCols)
-	query := fmt.Sprintf("INSERT INTO messages (%s) VALUES (%s)", params, positions)
+	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s)", messagesCols)
 	_, err = tx.ExecContext(ctx, query, message.values()...)
 	return err
 }

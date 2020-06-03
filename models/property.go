@@ -41,8 +41,7 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 		Value:     fmt.Sprint(value),
 		CreatedAt: time.Now(),
 	}
-	params, positions := compileTableQuery(propertiesColumns)
-	query := fmt.Sprintf("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", params, positions)
+	query := durable.PrepareQuery("INSERT INTO properties (%s) VALUES (%s) ON CONFLICT (name) DO UPDATE SET value=EXCLUDED.value", propertiesColumns)
 	session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, property.values()...)
 		if err != nil {
@@ -54,7 +53,6 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 			text = data.MessageTemplate.MessageProhibit
 		}
 		return createSystemMessage(ctx, tx, MessageCategoryPlainText, base64.StdEncoding.EncodeToString([]byte(text)))
-		return nil
 	})
 	_, err := session.Database(ctx).ExecContext(ctx, query, property.values()...)
 	if err != nil {

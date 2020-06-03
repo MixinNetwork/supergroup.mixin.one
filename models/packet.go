@@ -135,8 +135,7 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 		Asset:           asset,
 	}
 
-	params, positions := compileTableQuery(packetsCols)
-	query := fmt.Sprintf("INSERT INTO packets (%s) VALUES (%s)", params, positions)
+	query := durable.PrepareQuery("INSERT INTO packets (%s) VALUES (%s)", packetsCols)
 	_, err = session.Database(ctx).ExecContext(ctx, query, packet.values()...)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
@@ -236,8 +235,7 @@ func (current *User) ClaimPacket(ctx context.Context, packetId string) (*Packet,
 				if err != nil {
 					return err
 				}
-				params, positions := compileTableQuery(distributedMessagesCols)
-				query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES (%s)", params, positions)
+				query := durable.PrepareQuery("INSERT INTO distributed_messages (%s) VALUES (%s)", distributedMessagesCols)
 				_, err = tx.ExecContext(ctx, query, dm.values()...)
 				return err
 			}

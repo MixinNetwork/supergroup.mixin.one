@@ -75,8 +75,7 @@ func CreateReward(ctx context.Context, traceId, userId, recipientId, assetId, am
 			PaidAt:      time.Time{},
 			CreatedAt:   time.Now(),
 		}
-		params, positions := compileTableQuery(rewardColumns)
-		_, err = tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO rewards (%s) VALUES (%s)", params, positions), reward.values()...)
+		_, err = tx.ExecContext(ctx, durable.PrepareQuery("INSERT INTO rewards (%s) VALUES (%s)", rewardColumns), reward.values()...)
 		if err != nil {
 			return err
 		}

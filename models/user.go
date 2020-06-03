@@ -139,8 +139,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 					return err
 				}
 			}
-			params, positions := compileTableQuery(usersCols)
-			_, err := tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO users (%s) VALUES (%s)", params, positions), user.values()...)
+			_, err := tx.ExecContext(ctx, durable.PrepareQuery("INSERT INTO users (%s) VALUES (%s)", usersCols), user.values()...)
 			return err
 		})
 		if err != nil {
@@ -149,8 +148,8 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		return user, nil
 	}
 
-	params, positions := compileTableQuery([]string{"full_name", "access_token", "avatar_url"})
-	_, err = session.Database(ctx).Exec(fmt.Sprintf("UPDATE users SET (%s)=(%s) WHERE user_id='%s'", params, positions, user.UserId), user.FullName, user.AccessToken, user.AvatarURL)
+	short := []string{"full_name", "access_token", "avatar_url"}
+	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$4", short), user.FullName, user.AccessToken, user.AvatarURL, user.UserId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -536,19 +535,6 @@ func findUserById(ctx context.Context, tx *sql.Tx, userId string) (*User, error)
 func genesisStartedAt() time.Time {
 	startedAt, _ := time.Parse(time.RFC3339, "2017-01-01T00:00:00Z")
 	return startedAt
-}
-
-func compileTableQuery(fields []string) (string, string) {
-	var params, positions bytes.Buffer
-	for i, f := range fields {
-		if i != 0 {
-			params.WriteString(",")
-			positions.WriteString(",")
-		}
-		params.WriteString(f)
-		positions.WriteString(fmt.Sprintf("$%d", i+1))
-	}
-	return params.String(), positions.String()
 }
 
 func (u *User) GetFullName() string {
