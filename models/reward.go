@@ -36,6 +36,9 @@ func (r *Reward) values() []interface{} {
 func rewardFromRow(row durable.Row) (*Reward, error) {
 	var r Reward
 	err := row.Scan(&r.RewardId, &r.UserId, &r.RecipientId, &r.AssetId, &r.Amount, &r.PaidAt, &r.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &r, err
 }
 
@@ -91,9 +94,6 @@ func readRewardById(ctx context.Context, tx *sql.Tx, id string) (*Reward, error)
 	query := fmt.Sprintf("SELECT %s FROM rewards WHERE reward_id=$1", strings.Join(rewardColumns, ","))
 	row := tx.QueryRowContext(ctx, query, id)
 	reward, err := rewardFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
 	return reward, err
 }
 

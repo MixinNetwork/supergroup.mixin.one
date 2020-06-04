@@ -55,6 +55,9 @@ func (dm *DistributedMessage) values() []interface{} {
 func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	var m DistributedMessage
 	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &m, err
 }
 
@@ -335,9 +338,7 @@ func FindDistributedMessage(ctx context.Context, id string) (*DistributedMessage
 	query := fmt.Sprintf("SELECT %s FROM distributed_messages WHERE message_id=$1", strings.Join(distributedMessagesCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, id)
 	dm, err := distributedMessageFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return dm, nil

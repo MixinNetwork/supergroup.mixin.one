@@ -57,6 +57,9 @@ func (p *Packet) values() []interface{} {
 func packetFromRow(row durable.Row) (*Packet, error) {
 	var p Packet
 	err := row.Scan(&p.PacketId, &p.UserId, &p.AssetId, &p.Amount, &p.Greeting, &p.TotalCount, &p.RemainingCount, &p.RemainingAmount, &p.State, &p.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &p, err
 }
 
@@ -405,9 +408,7 @@ func readPacket(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, erro
 	query := fmt.Sprintf("SELECT %s FROM packets WHERE packet_id=$1", strings.Join(packetsCols, ","))
 	row := tx.QueryRowContext(ctx, query, packetId)
 	p, err := packetFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return p, nil

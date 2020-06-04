@@ -32,6 +32,9 @@ func (p *Property) values() []interface{} {
 func propertyFromRow(row durable.Row) (*Property, error) {
 	var p Property
 	err := row.Scan(&p.Name, &p.Value, &p.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &p, err
 }
 
@@ -65,9 +68,7 @@ func ReadProperty(ctx context.Context, name string) (*Property, error) {
 	query := fmt.Sprintf("SELECT %s FROM properties WHERE name=$1", strings.Join(propertiesColumns, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, name)
 	property, err := propertyFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return property, nil
@@ -77,9 +78,7 @@ func readPropertyAsBool(ctx context.Context, tx *sql.Tx, name string) (bool, err
 	query := fmt.Sprintf("SELECT %s FROM properties WHERE name=$1", strings.Join(propertiesColumns, ","))
 	row := tx.QueryRowContext(ctx, query, name)
 	property, err := propertyFromRow(row)
-	if err == sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
+	if err != nil || property == nil {
 		return false, err
 	}
 	return property.Value == "true", nil

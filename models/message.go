@@ -36,18 +36,6 @@ const (
 	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
 )
 
-var messagesCols = []string{"message_id", "user_id", "category", "quote_message_id", "data", "created_at", "updated_at", "state", "last_distribute_at"}
-
-func (m *Message) values() []interface{} {
-	return []interface{}{m.MessageId, m.UserId, m.Category, m.QuoteMessageId, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
-}
-
-func messageFromRow(row durable.Row) (*Message, error) {
-	var m Message
-	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.QuoteMessageId, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
-	return &m, err
-}
-
 type Message struct {
 	MessageId        string
 	UserId           string
@@ -60,6 +48,21 @@ type Message struct {
 	LastDistributeAt time.Time
 
 	FullName sql.NullString
+}
+
+var messagesCols = []string{"message_id", "user_id", "category", "quote_message_id", "data", "created_at", "updated_at", "state", "last_distribute_at"}
+
+func (m *Message) values() []interface{} {
+	return []interface{}{m.MessageId, m.UserId, m.Category, m.QuoteMessageId, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
+}
+
+func messageFromRow(row durable.Row) (*Message, error) {
+	var m Message
+	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.QuoteMessageId, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &m, err
 }
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
@@ -277,9 +280,7 @@ func FindMessage(ctx context.Context, id string) (*Message, error) {
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE message_id=$1", strings.Join(messagesCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, id)
 	message, err := messageFromRow(row)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
+	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
 	return message, nil

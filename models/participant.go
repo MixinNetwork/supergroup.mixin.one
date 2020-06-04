@@ -33,6 +33,9 @@ type Participant struct {
 func participantFromRow(row durable.Row) (*Participant, error) {
 	var p Participant
 	err := row.Scan(&p.PacketId, &p.UserId, &p.Amount, &p.CreatedAt, &p.PaidAt, &p.FullName, &p.AvatarURL)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &p, err
 }
 
