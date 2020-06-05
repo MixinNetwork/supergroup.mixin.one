@@ -16,6 +16,7 @@ import (
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/externals"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -63,19 +64,11 @@ func userFromRow(row durable.Row) (*User, error) {
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
-	accessToken, scope, err := bot.OAuthGetAccessToken(ctx, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.ClientSecret, authorizationCode, "")
+	me, token, err := externals.UserMe(ctx, authorizationCode)
 	if err != nil {
 		return nil, err
 	}
-	if !strings.Contains(scope, "PROFILE:READ") {
-		return nil, session.ForbiddenError(ctx)
-	}
-
-	me, err := bot.UserMe(ctx, accessToken)
-	if err != nil {
-		return nil, session.ServerError(ctx, err)
-	}
-	return createUser(ctx, accessToken, me.UserId, me.IdentityNumber, me.FullName, me.AvatarURL)
+	return createUser(ctx, token, me.UserId, me.IdentityNumber, me.FullName, me.AvatarURL)
 }
 
 func createUser(ctx context.Context, accessToken, userId, identityNumber, fullName, avatarURL string) (*User, error) {
@@ -118,11 +111,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 			user.SubscribedAt = time.Now()
 			user.PayMethod = PayMethodOffer
 		}
-		if config.AppConfig.Service.Environment != "test" {
-			err = createConversation(ctx, "CONTACT", userId)
-			if err != nil {
-				return nil, session.ServerError(ctx, err)
-			}
+		err = externals.CreateConversation(ctx, "CONTACT", userId)
+		if err != nil {
+			return nil, err
 		}
 	}
 	if strings.TrimSpace(fullName) != "" {
@@ -156,25 +147,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	return user, nil
 }
 
-func createConversation(ctx context.Context, category, participantId string) error {
-	if config.AppConfig.Service.Environment == "test" {
-		return nil
-	}
-	conversationId := bot.UniqueConversationId(config.AppConfig.Mixin.ClientId, participantId)
-	participant := bot.Participant{
-		UserId: participantId,
-		Role:   "",
-	}
-	participants := []bot.Participant{
-		participant,
-	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, "", "", participants, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
-	return err
-}
-
 func AuthenticateUserByToken(ctx context.Context, authenticationToken string) (*User, error) {
-	var user *User = nil
-	var queryErr error = nil
+	var user *User
+	var queryErr error
 	token, err := jwt.Parse(authenticationToken, func(token *jwt.Token) (interface{}, error) {
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
