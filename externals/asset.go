@@ -7,7 +7,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-func AssetList(ctx context.Context, token string) ([]bot.Asset, error) {
+func AssetList(ctx context.Context, token string) ([]*bot.Asset, error) {
 	list, err := bot.AssetList(ctx, token)
 	if err != nil {
 		return nil, parseError(ctx, err.(bot.Error))

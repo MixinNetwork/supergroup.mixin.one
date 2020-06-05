@@ -168,7 +168,7 @@ func createConversation(ctx context.Context, category, participantId string) err
 	participants := []bot.Participant{
 		participant,
 	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, participants, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
+	_, err := bot.CreateConversation(ctx, category, conversationId, "", "", participants, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
 	return err
 }
 
