@@ -21,12 +21,13 @@ func main() {
 	flag.Parse()
 
 	config.LoadConfig(*dir)
+	cfg := config.AppConfig.Database
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		config.AppConfig.Database.User,
-		config.AppConfig.Database.Password,
-		config.AppConfig.Database.Host,
-		config.AppConfig.Database.Port,
-		config.AppConfig.Database.Name)
+		cfg.User,
+		cfg.Password,
+		cfg.Host,
+		cfg.Port,
+		cfg.Name)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
@@ -34,8 +35,8 @@ func main() {
 	db.SetConnMaxLifetime(time.Hour)
 	db.SetMaxOpenConns(128)
 	db.SetMaxIdleConns(4)
-
 	defer db.Close()
+
 	database, err := durable.NewDatabase(context.Background(), db)
 	if err != nil {
 		log.Panicln(err)
@@ -43,7 +44,7 @@ func main() {
 
 	switch *service {
 	case "http":
-		log.Println("Listened Port:", config.AppConfig.Service.HTTPListenPort)
+		log.Println("Http Server Listened Port:", config.AppConfig.Service.HTTPListenPort)
 		err := StartServer(database)
 		if err != nil {
 			log.Println(err)
