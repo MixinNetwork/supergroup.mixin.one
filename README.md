@@ -2,7 +2,7 @@ supergroup.mixin.one is the source code of "Mixin 中文群"，which is an unlim
 
 ## NOTICE !!!
 
-Before you upgrade your group, please checkout `CHANGELOG.md` first. 
+Before you upgrade your group, please checkout [CHANGELOG.md](https://github.com/MixinNetwork/supergroup.mixin.one/blob/master/CHANGELOG.md) first. 
 
 ## Prepare
 
@@ -10,7 +10,7 @@ Before you upgrade your group, please checkout `CHANGELOG.md` first.
 2. Replace configurations in `config.yaml`, we use PostgreSQL as our database.
 3. `cd web` and exec `npm install`
 4. `cp env.example .env.local`, you can find more document in https://cli.vuejs.org/guide/mode-and-env.html
-5. Replace all configs in `.env.local`
+5. Replace configs in `.env.local`
 
 ## Run
 
