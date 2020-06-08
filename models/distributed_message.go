@@ -244,10 +244,10 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		}
 		i += 1
 		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
+		values.WriteString(",")
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
-		values.WriteString(",")
 		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Status))
 	}
 
@@ -260,6 +260,48 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		}
 		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
 		_, err = tx.ExecContext(ctx, query)
+		return err
+	})
+	if err != nil {
+		return session.TransactionError(ctx, err)
+	}
+	return nil
+}
+
+func notifyToLarge(ctx context.Context, messageId, userId string) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+
+		why := fmt.Sprintf("MessageId: %s, Reason: data too large", messageId)
+		data := base64.StdEncoding.EncodeToString([]byte(why))
+		for key, _ := range config.AppConfig.System.Operators {
+			dm := &DistributedMessage{
+				MessageId:      bot.UuidNewV4().String(),
+				ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, key),
+				RecipientId:    key,
+				UserId:         config.AppConfig.Mixin.ClientId,
+				ParentId:       messageId,
+				QuoteMessageId: "",
+				Category:       MessageCategoryPlainText,
+				Data:           data,
+				Status:         MessageStatusSent,
+				CreatedAt:      time.Now(),
+			}
+			shard, err := shardId(dm.ConversationId, dm.RecipientId)
+			if err != nil {
+				return err
+			}
+			dm.Shard = shard
+			_, err = stmt.Exec(dm.values()...)
+			if err != nil {
+				return err
+			}
+		}
+		_, err = stmt.Exec()
 		return err
 	})
 	if err != nil {
