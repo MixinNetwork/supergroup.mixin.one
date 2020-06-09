@@ -268,7 +268,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 	return nil
 }
 
-func notifyToLarge(ctx context.Context, messageId, userId, name string) error {
+func notifyToLarge(ctx context.Context, messageId, category, userId, name string) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
 		if err != nil {
@@ -276,7 +276,7 @@ func notifyToLarge(ctx context.Context, messageId, userId, name string) error {
 		}
 		defer stmt.Close()
 
-		why := fmt.Sprintf("MessageId: %s, Reason: data too large, From: %s", messageId, name)
+		why := fmt.Sprintf("MessageId: %s, Category: %s, Reason: data too large, From: %s", messageId, category, name)
 		data := base64.StdEncoding.EncodeToString([]byte(why))
 		for key, _ := range config.AppConfig.System.Operators {
 			dm := &DistributedMessage{

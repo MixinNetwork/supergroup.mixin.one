@@ -67,7 +67,7 @@ func messageFromRow(row durable.Row) (*Message, error) {
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 {
-		return nil, notifyToLarge(ctx, messageId, user.UserId, user.FullName)
+		return nil, notifyToLarge(ctx, messageId, category, user.UserId, user.FullName)
 	}
 	if !whitelistCategories[category] {
 		return nil, nil
