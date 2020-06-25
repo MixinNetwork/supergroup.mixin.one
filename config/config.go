@@ -3,12 +3,10 @@ package config
 import (
 	"io/ioutil"
 	"log"
-	"path"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
-const ConfigFile = "config.yaml"
 const BuildVersion = "BUILD_VERSION"
 
 type PaymentAsset struct {
@@ -106,8 +104,8 @@ type ExportedConfig struct {
 
 var AppConfig *Config
 
-func LoadConfig(dir string) {
-	data, err := ioutil.ReadFile(path.Join(dir, ConfigFile))
+func LoadConfig(f string) {
+	data, err := ioutil.ReadFile(f)
 	if err != nil {
 		log.Panicln(err)
 	}

@@ -17,17 +17,17 @@ import (
 
 func main() {
 	service := flag.String("service", "http", "run a service")
-	dir := flag.String("dir", "./config/", "config.yaml dir")
+	yaml := flag.String("config", "./config/config.yaml", "path of the config file")
 	flag.Parse()
 
-	config.LoadConfig(*dir)
-	cfg := config.AppConfig.Database
+	config.LoadConfig(*yaml)
+	dbinfo := config.AppConfig.Database
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		cfg.User,
-		cfg.Password,
-		cfg.Host,
-		cfg.Port,
-		cfg.Name)
+		dbinfo.User,
+		dbinfo.Password,
+		dbinfo.Host,
+		dbinfo.Port,
+		dbinfo.Name)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Panicln(err)
