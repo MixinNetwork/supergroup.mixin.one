@@ -4,7 +4,6 @@ deploy
 nginx.conf
 tasks
 web/dist
-web/deploy
 web/node_modules
 supergroup.mixin.one
 config.yaml
