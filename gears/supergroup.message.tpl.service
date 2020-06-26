@@ -5,7 +5,7 @@ After=systemd-user-sessions.service
 After=network-online.target
 
 [Service]
-ExecStart=/your/path/to/start/group -service message -dir /home/web/bin/config.yaml
+ExecStart=/your/path/to/start/group -service message -config /home/web/bin/config.yaml
 WorkingDirectory=/your/path/to/group
 Type=forking
 User=ubuntu
