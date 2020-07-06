@@ -122,7 +122,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 		}
 	}
 	for {
-		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit)
+		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit, message.UserId)
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}

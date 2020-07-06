@@ -319,7 +319,7 @@ func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords
 	if len(keywords) != 0 {
 		return findUsersByKeywords(ctx, keywords)
 	}
-	users, err := subscribedUsers(ctx, offset, 200)
+	users, err := subscribedUsers(ctx, offset, 200, "")
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -384,9 +384,12 @@ func (user *User) isAdmin() bool {
 	return false
 }
 
-func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int) ([]*User, error) {
+func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, id string) ([]*User, error) {
 	var users []*User
 	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	if config.AppConfig.System.Operators[id] || config.AppConfig.Mixin.ClientId == id {
+		query = fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	}
 	rows, err := session.Database(ctx).QueryContext(ctx, query, subscribedAt, time.Now().Add(-24*6*time.Hour))
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
