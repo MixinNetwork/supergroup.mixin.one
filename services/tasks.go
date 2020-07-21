@@ -50,21 +50,21 @@ func loopPendingSuccessMessages(ctx context.Context) {
 	}
 }
 
-func sendTextMessage(ctx context.Context, mc *MessageContext, conversationId, label string) error {
+func sendTextMessage(ctx context.Context, mc *MessageContext, conversationId, label string, timer *time.Timer, drained *bool) error {
 	params := map[string]interface{}{
 		"conversation_id": conversationId,
 		"message_id":      bot.UuidNewV4().String(),
 		"category":        "PLAIN_TEXT",
 		"data":            base64.StdEncoding.EncodeToString([]byte(label)),
 	}
-	err := writeMessageAndWait(ctx, mc, "CREATE_MESSAGE", params)
+	err := writeMessageAndWait(ctx, mc, "CREATE_MESSAGE", params, timer, drained)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
 	return nil
 }
 
-func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationId, action string) error {
+func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationId, action string, timer *time.Timer, drained *bool) error {
 	btns, err := json.Marshal([]interface{}{map[string]string{
 		"label":  label,
 		"action": action,
@@ -79,7 +79,7 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 		"category":        "APP_BUTTON_GROUP",
 		"data":            base64.StdEncoding.EncodeToString(btns),
 	}
-	err = writeMessageAndWait(ctx, mc, "CREATE_MESSAGE", params)
+	err = writeMessageAndWait(ctx, mc, "CREATE_MESSAGE", params, timer, drained)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}

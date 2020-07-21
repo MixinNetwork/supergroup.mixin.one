@@ -111,13 +111,23 @@ func (service *MessageService) loop(ctx context.Context) error {
 	go writePump(ctx, conn, mc)
 	go readPump(ctx, conn, mc)
 
-	err = writeMessageAndWait(ctx, mc, "LIST_PENDING_MESSAGES", nil)
+	writeDrained := false
+	writeTimer := time.NewTimer(keepAlivePeriod)
+	err = writeMessageAndWait(ctx, mc, "LIST_PENDING_MESSAGES", nil, writeTimer, &writeDrained)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
 
+	drained := false
+	timer := time.NewTimer(time.Second)
 	messages := make([]map[string]interface{}, 0)
 	for {
+		if !drained && !timer.Stop() {
+			<-timer.C
+		}
+		drained = false
+		timer.Reset(time.Second)
+
 		select {
 		case <-mc.ReadDone:
 			return nil
@@ -137,26 +147,24 @@ func (service *MessageService) loop(ctx context.Context) error {
 					return session.BlazeServerError(ctx, err)
 				}
 			} else if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
-				if err := handleMessage(ctx, mc, &msg); err != nil {
+				if err := handleMessage(ctx, mc, &msg, writeTimer, &writeDrained); err != nil {
 					return err
 				}
 			}
 
 			messages = append(messages, map[string]interface{}{"message_id": msg.MessageId, "status": "READ"})
-			if len(messages) >= 80 {
-				err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{"messages": messages})
+		case <-timer.C:
+			drained = true
+			for len(messages) > 0 {
+				split := len(messages)
+				if split > 80 {
+					split = 80
+				}
+				err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{"messages": messages[:split]}, writeTimer, &writeDrained)
 				if err != nil {
 					return session.BlazeServerError(ctx, err)
 				}
-				messages = make([]map[string]interface{}, 0)
-			}
-		case <-time.After(1 * time.Second):
-			if len(messages) > 0 {
-				err = writeMessageAndWait(ctx, mc, "ACKNOWLEDGE_MESSAGE_RECEIPTS", map[string]interface{}{"messages": messages})
-				if err != nil {
-					return session.BlazeServerError(ctx, err)
-				}
-				messages = make([]map[string]interface{}, 0)
+				messages = messages[split:]
 			}
 		}
 	}
@@ -178,6 +186,9 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		}
 		return nil
 	})
+
+	drained := false
+	timer := time.NewTimer(time.Second)
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(pongWait))
 		if err != nil {
@@ -190,7 +201,7 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		if messageType != websocket.BinaryMessage {
 			return session.BlazeServerError(ctx, fmt.Errorf("invalid message type %d", messageType))
 		}
-		err = parseMessage(ctx, mc, wsReader)
+		err = parseMessage(ctx, mc, wsReader, timer, &drained)
 		if err != nil {
 			return session.BlazeServerError(ctx, err)
 		}
@@ -222,7 +233,13 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 	}
 }
 
-func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string, params map[string]interface{}) error {
+func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string, params map[string]interface{}, timer *time.Timer, drained *bool) error {
+	if !*drained && !timer.Stop() {
+		<-timer.C
+	}
+	*drained = false
+	timer.Reset(keepAlivePeriod)
+
 	var resp = make(chan BlazeMessage, 1)
 	var id = bot.UuidNewV4().String()
 	mc.Transactions.set(id, func(t BlazeMessage) error {
@@ -239,19 +256,26 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 		return err
 	}
 	select {
-	case <-time.After(keepAlivePeriod):
+	case <-timer.C:
+		*drained = true
 		return fmt.Errorf("timeout to write %s %v", action, params)
 	case mc.WriteBuffer <- blazeMessage:
 	}
 
+	if !*drained && !timer.Stop() {
+		<-timer.C
+	}
+	*drained = false
+	timer.Reset(keepAlivePeriod)
 	select {
-	case <-time.After(keepAlivePeriod):
+	case <-timer.C:
+		*drained = true
 		mc.Transactions.retrive(id)
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
 		if t.Error != nil && t.Error.Code != 403 {
 			mc.Transactions.retrive(id)
-			return writeMessageAndWait(ctx, mc, action, params)
+			return writeMessageAndWait(ctx, mc, action, params, timer, drained)
 		}
 	}
 	return nil
@@ -280,7 +304,13 @@ func writeGzipToConn(ctx context.Context, conn *websocket.Conn, msg []byte) erro
 	return nil
 }
 
-func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) error {
+func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader, timer *time.Timer, drained *bool) error {
+	if !*drained && !timer.Stop() {
+		<-timer.C
+	}
+	*drained = false
+	timer.Reset(time.Second)
+
 	var message BlazeMessage
 	gzReader, err := gzip.NewReader(wsReader)
 	if err != nil {
@@ -344,7 +374,8 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader) e
 	}
 
 	select {
-	case <-time.After(keepAlivePeriod):
+	case <-timer.C:
+		*drained = true
 		return fmt.Errorf("timeout to handle %s %s", msg.Category, msg.MessageId)
 	case mc.ReadBuffer <- msg:
 	}
@@ -487,13 +518,13 @@ func handlePendingParticipants(ctx context.Context) {
 	}
 }
 
-func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView) error {
+func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView, timer *time.Timer, drained *bool) error {
 	user, err := models.FindUser(ctx, message.UserId)
 	if err != nil {
 		return err
 	}
 	if user == nil || user.State != models.PaymentStatePaid {
-		return sendHelpMessge(ctx, user, mc, message)
+		return sendHelpMessge(ctx, user, mc, message, timer, drained)
 	}
 	if user.ActiveAt.Before(time.Now().Add(-1 * models.UserActivePeriod)) {
 		err = models.PingUserActiveAt(ctx, user.UserId)
@@ -502,7 +533,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 		}
 	}
 	if user.SubscribedAt.IsZero() {
-		return sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsUnsubscribe)
+		return sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsUnsubscribe, timer, drained)
 	}
 	dataBytes, err := base64.StdEncoding.DecodeString(message.Data)
 	if err != nil {
@@ -512,7 +543,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 			if count, err := models.SubscribersCount(ctx); err != nil {
 				return err
 			} else {
-				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.AppConfig.MessageTemplate.MessageCommandsInfoResp, count))
+				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.AppConfig.MessageTemplate.MessageCommandsInfoResp, count), timer, drained)
 			}
 		}
 	}
@@ -522,11 +553,11 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	return nil
 }
 
-func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView) error {
-	if err := sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsHelp); err != nil {
+func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView, timer *time.Timer, drained *bool) error {
+	if err := sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsHelp, timer, drained); err != nil {
 		return err
 	}
-	if err := sendAppButton(ctx, mc, config.AppConfig.MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.AppConfig.Service.HTTPResourceHost); err != nil {
+	if err := sendAppButton(ctx, mc, config.AppConfig.MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.AppConfig.Service.HTTPResourceHost, timer, drained); err != nil {
 		return err
 	}
 	return nil
