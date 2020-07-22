@@ -50,6 +50,7 @@ func main() {
 			log.Println(err)
 		}
 	default:
+		log.Printf("Mixin Group Service %s Started.\n", *service)
 		go func() {
 			hub := services.NewHub(database)
 			err := hub.StartService(*service)
