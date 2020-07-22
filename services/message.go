@@ -243,9 +243,10 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 	var resp = make(chan BlazeMessage, 1)
 	var id = bot.UuidNewV4().String()
 	mc.Transactions.set(id, func(t BlazeMessage) error {
+		timer := time.NewTimer(2 * time.Second)
 		select {
 		case resp <- t:
-		case <-time.After(2 * time.Second):
+		case <-timer.C:
 			return fmt.Errorf("timeout to hook %s %s", action, id)
 		}
 		return nil
