@@ -9,7 +9,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "core-js": "^3.6.5",
-    "dayjs": "^1.8.28",
+    "dayjs": "^1.8.32",
     "file-saver": "^2.0.2",
     "uuid": "^8.1.0",
     "vant": "^2.8.5",
