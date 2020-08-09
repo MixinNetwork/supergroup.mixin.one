@@ -8245,10 +8245,10 @@ vue-qr@^2.2.1:
   resolved "https://registry.yarnpkg.com/vue-qr/-/vue-qr-2.2.1.tgz#d7844e75d5223ef2ab192523cf8bb129d3b82489"
   integrity sha512-IrYYrBlS5qR67xmXiFw0lmnn4NfXtuOSH5vuu6LpHN69+M2LB/6R6xYwUS3WT1LDpSpy6XZ6ex/kkOLlRJUWSw==
 
-vue-router@^3.3.2:
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.3.2.tgz#0099de402edb2fe92f9711053ab5a2156f239cad"
-  integrity sha512-5sEbcfb7MW8mY8lbUVbF4kgcipGXsagkM/X+pb6n0MhjP+RorWIUTPAPSqgPaiPOxVCXgAItBl8Vwz8vq78faA==
+vue-router@^3.4.2:
+  version "3.4.2"
+  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.4.2.tgz#541221d7ac467786c1c9381bcf36019d883b9cf8"
+  integrity sha512-n3Ok70hW0EpcJF4lcWIwSHAQbFTnIOLl/fhO8+oTs4jHNtBNsovcVvPZeTOyKEd8C3xF1Crft2ASuOiVT5K1mw==
 
 vue-style-loader@^4.1.0, vue-style-loader@^4.1.2:
   version "4.1.2"
