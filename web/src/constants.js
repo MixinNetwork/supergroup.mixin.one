@@ -2,6 +2,8 @@ export const isProduction = process.env.NODE_ENV === 'production'
 
 export const CLIENT_ID = process.env.VUE_APP_CLIENT_ID
 
+export const MIXIN_AUTH_API = process.env.VUE_APP_MIXIN_AUTH_API
+
 export const WEB_ROOT = process.env.VUE_APP_WEB_ROOT
 
 export const OAUTH_CALLBACK_URL = process.env.VUE_APP_WEB_ROOT + '/auth'
