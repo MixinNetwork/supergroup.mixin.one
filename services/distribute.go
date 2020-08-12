@@ -117,7 +117,9 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 	if httpPool[key] == nil {
 		httpPool[key] = &http.Client{Timeout: 6 * time.Second}
 	}
-	req, err := http.NewRequest(method, "https://mixin-api.zeromesh.net"+path, bytes.NewReader(body))
+	cfg := config.AppConfig
+	url := cfg.Service.APIRoot[cfg.Service.Retry%len(cfg.Service.APIRoot)]
+	req, err := http.NewRequest(method, url+path, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +132,7 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 500 {
+		cfg.Service.Retry++
 		return nil, bot.ServerError(ctx, nil)
 	}
 	return ioutil.ReadAll(resp.Body)

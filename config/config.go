@@ -30,10 +30,13 @@ type ShortcutGroup struct {
 
 type Config struct {
 	Service struct {
-		Name             string `yaml:"name"`
-		Environment      string `yaml:"enviroment"`
-		HTTPListenPort   int    `yaml:"port"`
-		HTTPResourceHost string `yaml:"host"`
+		Name             string   `yaml:"name"`
+		Environment      string   `yaml:"enviroment"`
+		HTTPListenPort   int      `yaml:"port"`
+		HTTPResourceHost string   `yaml:"host"`
+		APIRoot          []string `yaml:"api_root"`
+		BlazeRoot        []string `yaml:"blaze_root"`
+		Retry            int
 	} `yaml:"service"`
 	Database struct {
 		User     string `yaml:"username"`

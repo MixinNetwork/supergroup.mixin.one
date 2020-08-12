@@ -1,14 +1,19 @@
+# 2020-08-12
+配置文件: config.tpl.yaml 
+增加：api_root, blaze_root 可以自动切换域名
+
+
 # 2020-06-02
 
 配置文件: config.tpl.yaml 
-增加了: message_tips_suspended 6 天不活跃的用户发送系统提示消息，并不再推送消息
+增加: message_tips_suspended 6 天不活跃的用户发送系统提示消息，并不再推送消息
 users 表索引修改: CREATE INDEX IF NOT EXISTS users_subscribed_activex ON users(subscribed_at, active_at);
 
 # 2019-11-05
 
 配置文件: config.tpl.yaml 
-删除了: prohibited_message
-增加了: limit_message_number, 跟原有的 limit_message_duration 可以控制发消息频率
+删除: prohibited_message
+增加: limit_message_number, 跟原有的 limit_message_duration 可以控制发消息频率
 
 # 2019-09-06
 

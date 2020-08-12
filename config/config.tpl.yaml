@@ -3,6 +3,12 @@ service:
   enviroment: "production" # or development
   port: 7001
   host: "https://you-domain-name"
+  api_root:
+    - "https://mixin-api.zeromesh.net"
+    - "https://api.mixin.one"
+  blaze_root:
+    - "mixin-blaze.zeromesh.net"
+    - "blaze.mixin.one"
 database:
   username: "postgres"
   password: ""
