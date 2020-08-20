@@ -49,14 +49,14 @@ type MessageView struct {
 }
 
 type TransferView struct {
-	Type          string    `json:"type"`
-	SnapshotId    string    `json:"snapshot_id"`
-	CounterUserId string    `json:"counter_user_id"`
-	AssetId       string    `json:"asset_id"`
-	Amount        string    `json:"amount"`
-	TraceId       string    `json:"trace_id"`
-	Memo          string    `json:"memo"`
-	CreatedAt     time.Time `json:"created_at"`
+	Type       string    `json:"type"`
+	SnapshotId string    `json:"snapshot_id"`
+	OpponentId string    `json:"opponent_id"`
+	AssetId    string    `json:"asset_id"`
+	Amount     string    `json:"amount"`
+	TraceId    string    `json:"trace_id"`
+	Memo       string    `json:"memo"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type MessageService struct{}
@@ -386,6 +386,9 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader, t
 func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferView, userId string) error {
 	id, err := bot.UuidFromString(transfer.TraceId)
 	if err != nil {
+		return nil
+	}
+	if number.FromString(transfer.Amount).Exhausted() {
 		return nil
 	}
 	if data, _ := base64.StdEncoding.DecodeString(transfer.Memo); len(data) > 0 {
