@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import {CLIENT_ID, OAUTH_CALLBACK_URL} from '@/constants'
+import {CLIENT_ID, MIXIN_AUTH_API, OAUTH_CALLBACK_URL} from '@/constants'
 export default {
   name: 'App',
   components: {
