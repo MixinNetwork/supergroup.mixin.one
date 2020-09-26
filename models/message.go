@@ -114,7 +114,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 				return nil, err
 			}
 			str := strings.ToUpper(strings.TrimSpace(string(bytes)))
-			if str == "BAN" || str == "DELETE" || str == "KICK" {
+			if str == "BAN" || str == "DELETE" || str == "REMOVE" || str == "KICK" {
 				dm, err := FindDistributedMessage(ctx, quoteMessageId)
 				if err != nil || dm == nil {
 					return nil, err
