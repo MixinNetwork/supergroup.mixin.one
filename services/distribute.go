@@ -127,6 +127,7 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	resp, err := httpPool[key].Do(req)
 	if err != nil {
+		cfg.Service.Retry++
 		return nil, err
 	}
 	defer resp.Body.Close()
