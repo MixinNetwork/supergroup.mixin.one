@@ -8170,10 +8170,10 @@ vue-qr@^2.3.0:
   resolved "https://registry.yarnpkg.com/vue-qr/-/vue-qr-2.3.0.tgz#d659ee9db2bc717a2b46bd0e7a5414e75a7a3bba"
   integrity sha512-qcmMKNVz4dSZjXsUIQmK/QoODvOYg8+EyCaCynZfwcUJk4mjsevEv+z4uYoRz0Or1ET9UMwjV7/GQdHTSFCIIA==
 
-vue-router@^3.3.2:
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.3.2.tgz#0099de402edb2fe92f9711053ab5a2156f239cad"
-  integrity sha512-5sEbcfb7MW8mY8lbUVbF4kgcipGXsagkM/X+pb6n0MhjP+RorWIUTPAPSqgPaiPOxVCXgAItBl8Vwz8vq78faA==
+vue-router@^3.4.9:
+  version "3.4.9"
+  resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.4.9.tgz#c016f42030ae2932f14e4748b39a1d9a0e250e66"
+  integrity sha512-CGAKWN44RqXW06oC+u4mPgHLQQi2t6vLD/JbGRDAXm0YpMv0bgpKuU5bBd7AvMgfTz9kXVRIWKHqRwGEb8xFkA==
 
 vue-style-loader@^4.1.0, vue-style-loader@^4.1.2:
   version "4.1.2"
