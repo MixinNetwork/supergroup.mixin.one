@@ -530,7 +530,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	if user == nil || user.State != models.PaymentStatePaid {
 		return sendHelpMessge(ctx, user, mc, message, timer, drained)
 	}
-	if user.ActiveAt.Before(time.Now().Add(-1 * models.UserActivePeriod)) {
+	if user.ActiveAt.Before(time.Now().Add(-models.UserActivePeriod)) {
 		err = models.PingUserActiveAt(ctx, user.UserId)
 		if err != nil {
 			session.Logger(ctx).Error("handleMessage PingUserActiveAt", err)
@@ -539,32 +539,16 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 	if user.SubscribedAt.IsZero() {
 		return sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsUnsubscribe, timer, drained)
 	}
-	dataBytes, err := base64.StdEncoding.DecodeString(message.Data)
-	if err != nil {
-		return session.BadDataError(ctx)
-	} else if len(dataBytes) < 10 {
-		if strings.ToUpper(string(dataBytes)) == config.AppConfig.MessageTemplate.MessageCommandsInfo {
-			if count, err := models.SubscribersCount(ctx); err != nil {
-				return err
-			} else {
-				return sendTextMessage(ctx, mc, message.ConversationId, fmt.Sprintf(config.AppConfig.MessageTemplate.MessageCommandsInfoResp, count), timer, drained)
-			}
-		}
-	}
-	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
-		return err
-	}
-	return nil
+
+	_, err = models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.CreatedAt, message.UpdatedAt)
+	return err
 }
 
 func sendHelpMessge(ctx context.Context, user *models.User, mc *MessageContext, message *MessageView, timer *time.Timer, drained *bool) error {
 	if err := sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsHelp, timer, drained); err != nil {
 		return err
 	}
-	if err := sendAppButton(ctx, mc, config.AppConfig.MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.AppConfig.Service.HTTPResourceHost, timer, drained); err != nil {
-		return err
-	}
-	return nil
+	return sendAppButton(ctx, mc, config.AppConfig.MessageTemplate.MessageTipsHelpBtn, message.ConversationId, config.AppConfig.Service.HTTPResourceHost, timer, drained)
 }
 
 type tmap struct {

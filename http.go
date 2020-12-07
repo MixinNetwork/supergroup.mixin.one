@@ -27,7 +27,7 @@ func StartServer(database *durable.Database) error {
 	routes.RegisterRoutes(router)
 	handler := middlewares.Authenticate(router)
 	handler = middlewares.Constraint(handler)
-	handler = middlewares.Context(handler, database, render.New(render.Options{UnEscapeHTML: true}))
+	handler = middlewares.Context(handler, database, render.New())
 	handler = middlewares.Stats(handler, "http", true, config.BuildVersion)
 	handler = middlewares.Log(handler, logger, "http")
 	handler = handlers.ProxyHeaders(handler)
