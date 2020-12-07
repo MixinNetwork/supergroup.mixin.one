@@ -444,7 +444,8 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 		session.Logger(ctx).Errorf("validateMessage ERROR: %+v", err)
 		return false, "message.Data Unmarshal error"
 	}
-	attachment, err := bot.AttachmentShow(ctx, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, a.AttachmentId)
+	mixin := config.AppConfig.Mixin
+	attachment, err := bot.AttachmentShow(ctx, mixin.ClientId, mixin.SessionId, mixin.SessionKey, a.AttachmentId)
 	if err != nil {
 		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
 	}
