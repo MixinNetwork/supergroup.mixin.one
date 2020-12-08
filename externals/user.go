@@ -11,7 +11,7 @@ import (
 
 func UserMe(ctx context.Context, code string) (*bot.User, string, error) {
 	mixin := config.AppConfig.Mixin
-	token, scope, err := bot.OAuthGetAccessToken(ctx, mixin.ClientId, mixin.ClientSecret, code, "")
+	token, scope, _, err := bot.OAuthGetAccessToken(ctx, mixin.ClientId, mixin.ClientSecret, code, "", "")
 	if err != nil {
 		return nil, "", parseError(ctx, err.(bot.Error))
 	}

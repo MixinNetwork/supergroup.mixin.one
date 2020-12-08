@@ -306,7 +306,7 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 		Memo:        "",
 	}
 	mixin := config.AppConfig.Mixin
-	err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}

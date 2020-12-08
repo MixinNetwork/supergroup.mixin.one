@@ -108,7 +108,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		}
 		if !number.FromString(amount).Exhausted() {
 			mixin := config.AppConfig.Mixin
-			err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+			_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
 			if err != nil {
 				return err
 			}

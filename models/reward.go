@@ -140,7 +140,7 @@ func SendRewardTransfer(ctx context.Context, reward *Reward) error {
 		Memo:        memo,
 	}
 	mixin := config.AppConfig.Mixin
-	err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
