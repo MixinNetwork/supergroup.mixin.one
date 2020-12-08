@@ -113,6 +113,7 @@ export default {
       setTimeout(() => {
         this.waitForPayment(pkt.packet_id)
       }, 2000)
+      console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
       window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`
     },
     onChangeAsset (ix) {
