@@ -19,7 +19,8 @@ func CreateConversation(ctx context.Context, category, participantId string) err
 	participants := []bot.Participant{
 		participant,
 	}
-	_, err := bot.CreateConversation(ctx, category, conversationId, "", "", participants, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
+	mixin := config.AppConfig.Mixin
+	_, err := bot.CreateConversation(ctx, category, conversationId, "", "", participants, mixin.ClientId, mixin.SessionId, mixin.SessionKey)
 	if err != nil {
 		return parseError(ctx, err.(bot.Error))
 	}

@@ -139,7 +139,8 @@ func SendRewardTransfer(ctx context.Context, reward *Reward) error {
 		TraceId:     traceId,
 		Memo:        memo,
 	}
-	err = bot.CreateTransfer(ctx, in, config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey, config.AppConfig.Mixin.SessionAssetPIN, config.AppConfig.Mixin.PinToken)
+	mixin := config.AppConfig.Mixin
+	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
