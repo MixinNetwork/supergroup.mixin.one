@@ -30,53 +30,30 @@ func sessionFromRow(row durable.Row) (*Session, error) {
 }
 
 func SyncSession(ctx context.Context, sessions []*Session) error {
-	var userIDs, toRemove []string
-	var toAdd []*Session
-	toLatest := make(map[string]*Session)
-	for i, s := range sessions {
+	var userIDs []string
+	for _, s := range sessions {
 		userIDs = append(userIDs, s.UserID)
-		toLatest[s.SessionID] = sessions[i]
-	}
-	olds, err := ReadSessionsByUsers(ctx, userIDs)
-	if err != nil {
-		return err
-	}
-	existing := make(map[string]*Session)
-	for i, s := range olds {
-		if toLatest[s.SessionID] == nil {
-			toRemove = append(toRemove, s.SessionID)
-		}
-		existing[s.SessionID] = olds[i]
-	}
-	for i, s := range sessions {
-		if existing[s.SessionID] == nil {
-			toAdd = append(toAdd, sessions[i])
-		}
 	}
 
-	if len(toAdd) == 0 && len(toRemove) == 0 {
-		return nil
-	}
-
-	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.Exec("DELETE FROM sessions WHERE user_id=ANY($1)", pq.Array(userIDs))
+		if err != nil {
+			return err
+		}
 		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("sessions", sessionsCols...))
 		if err != nil {
 			return err
 		}
 		defer stmt.Close()
 
-		for i, _ := range toAdd {
-			_, err = stmt.Exec(toAdd[i].values()...)
+		for i, _ := range sessions {
+			_, err = stmt.Exec(sessions[i].values()...)
 			if err != nil {
 				return err
 			}
 		}
 		_, err = stmt.Exec()
-		if err != nil {
-			return err
-		}
-		_, err = tx.Exec("DELETE FROM sessions WHERE session_id=ANY($1)", pq.Array(toRemove))
-		return nil
+		return err
 	})
 	if err != nil {
 		return session.TransactionError(ctx, err)

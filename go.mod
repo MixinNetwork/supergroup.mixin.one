@@ -6,7 +6,7 @@ go 1.15
 
 require (
 	cloud.google.com/go v0.41.0
-	github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208033233-ad9cd614a589
+	github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208143932-12707e72f443
 	github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef
 	github.com/bugsnag/bugsnag-go v1.5.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -24,7 +24,7 @@ require (
 	github.com/tuotoo/qrcode v0.0.0-20190222102259-ac9c44189bf2
 	github.com/unrolled/render v1.0.3
 	github.com/willf/bitset v1.1.10 // indirect
-	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c // indirect
+	golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9 // indirect
 	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	google.golang.org/api v0.7.0

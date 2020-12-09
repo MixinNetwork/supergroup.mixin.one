@@ -17,7 +17,7 @@ CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 
 
 CREATE TABLE IF NOT EXISTS sessions (
-  user_id            VARCHAR(36) NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  user_id            VARCHAR(36) NOT NULL,
   session_id         VARCHAR(36) NOT NULL,
   public_key         VARCHAR(128) NOT NULL,
   PRIMARY KEY(user_id, session_id)

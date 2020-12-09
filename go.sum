@@ -13,6 +13,8 @@ github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201207135719-be03065043e5 h
 github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201207135719-be03065043e5/go.mod h1:ihVnfcZW/Z1q4Pv8QWsMB2sD5Qy3RoK0xFfnLgIj4vI=
 github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208033233-ad9cd614a589 h1:gOhSIiExgPTXPnFZe6lHWCj7b+duuhuSMQCEjDycCzk=
 github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208033233-ad9cd614a589/go.mod h1:ihVnfcZW/Z1q4Pv8QWsMB2sD5Qy3RoK0xFfnLgIj4vI=
+github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208143932-12707e72f443 h1:yl5DY+Y/DFGMvvWmSXrr666TFYvJx/6o80SxIbLLY5Y=
+github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208143932-12707e72f443/go.mod h1:ihVnfcZW/Z1q4Pv8QWsMB2sD5Qy3RoK0xFfnLgIj4vI=
 github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef h1:voLSevPsupH+UzSIhDZWKAnnw9NdCROYnRLuVB/de1E=
 github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef/go.mod h1:yED1WX0flPw5EBTLHye6ob3FnurCNk/Yk5NUe5VVWzg=
 github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5 h1:P5U+E4x5OkVEKQDklVPmzs71WM56RTTRqV4OrDC//Y4=
@@ -125,6 +127,8 @@ golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 h1:pLI5jrR7OSLijeIDcmRxNm
 golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c h1:9HhBz5L/UjnK9XLtiZhYAdue5BVKep3PMmS2LuPDt8k=
 golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
+golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9 h1:sYNJzB4J8toYPQTM6pAkcmBRgw9SnQKP9oXCHfgy604=
+golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190510132918-efd6b22b2522/go.mod h1:ZjyILWgesfNpC6sMxTJOJm9Kp84zZh5NQWvqDGG3Qr8=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
