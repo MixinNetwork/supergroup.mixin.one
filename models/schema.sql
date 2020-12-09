@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 
-CREATE TABLE conversation_participants (
-  conversation_id     STRING(36) NOT NULL,
-  user_id             STRING(36) NOT NULL,
+CREATE TABLE IF NOT EXISTS conversation_participants (
+  conversation_id     VARCHAR(36) NOT NULL,
+  user_id             VARCHAR(36) NOT NULL,
   PRIMARY KEY(conversation_id, user_id)
 );
 
