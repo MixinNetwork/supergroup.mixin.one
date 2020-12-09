@@ -257,7 +257,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 	for i, msg := range messages {
 		if msg.Category == MessageCategoryMessageRecall {
 			var recallMessage RecallMessage
-			data, err := base64.StdEncoding.DecodeString(msg.Data)
+			data, err := base64.RawURLEncoding.DecodeString(msg.Data)
 			if err != nil {
 				return session.BadDataError(ctx)
 			}
@@ -273,7 +273,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 			if err != nil {
 				return session.BadDataError(ctx)
 			}
-			msg.Data = base64.StdEncoding.EncodeToString(data)
+			msg.Data = base64.RawURLEncoding.EncodeToString(data)
 		}
 		messageId := UniqueConversationId(user.UserId, msg.MessageId)
 		if len(msg.Data) == 0 {
@@ -356,7 +356,7 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 		if err != nil || u == nil {
 			return err
 		}
-		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
+		data := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
 		err = createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, data)
 		if err != nil {
 			return err
@@ -460,7 +460,7 @@ func LoopingInactiveUsers(ctx context.Context) ([]*User, error) {
 
 func (user *User) Hibernate(ctx context.Context) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-		text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
+		text := base64.RawURLEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
 		err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
 		if err != nil {
 			return err

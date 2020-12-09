@@ -2,8 +2,12 @@ package models
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/ed25519"
 	"database/sql"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -16,6 +20,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
+	"golang.org/x/crypto/curve25519"
 )
 
 const (
@@ -144,6 +149,23 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 				err = CreateSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text)
 				return nil, err
 			}
+		}
+	}
+
+	switch category {
+	case MessageCategoryEncryptedPost,
+		MessageCategoryEncryptedText,
+		MessageCategoryEncryptedImage,
+		MessageCategoryEncryptedVideo,
+		MessageCategoryEncryptedLive,
+		MessageCategoryEncryptedAudio,
+		MessageCategoryEncryptedData,
+		MessageCategoryEncryptedSticker,
+		MessageCategoryEncryptedContact,
+		MessageCategoryEncryptedLocation:
+		data, err := decryptMessageData(data)
+		if err != nil || data == "" {
+			return nil, err
 		}
 	}
 
@@ -391,4 +413,137 @@ func FirstNStringInRune(s string, n int) string {
 		return s
 	}
 	return string([]rune(s)[:n]) + "..."
+}
+
+func decryptMessageData(data string) (string, error) {
+	bytes, err := base64.RawURLEncoding.DecodeString(data)
+	if err != nil {
+		return "", err
+	}
+	total := len(bytes)
+	if total < 8+8+32+16+48+12 {
+		return "", nil
+	}
+	if (len(bytes)-48)%64 != 0 {
+		return "", nil
+	}
+	size := int(binary.LittleEndian.Uint64(bytes[8:16]))
+	mixin := config.AppConfig.Mixin
+	var key []byte
+	for i := 48; i < total-size; i += 64 {
+		if uid, _ := bot.UuidFromBytes(bytes[i : i+16]); uid.String() == mixin.SessionId {
+			private, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
+			if err != nil {
+				return "", err
+			}
+			var dst, priv, pub [32]byte
+			copy(pub[:], bytes[:])
+			bot.PrivateKeyToCurve25519(&priv, ed25519.PrivateKey(private))
+			curve25519.ScalarMult(&dst, &priv, &pub)
+
+			block, err := aes.NewCipher(dst[:])
+			if err != nil {
+				return "", err
+			}
+			iv := bytes[i+16 : i+16+aes.BlockSize]
+			key = bytes[i+16+aes.BlockSize : i+16+48]
+			stream := cipher.NewCFBDecrypter(block, iv)
+			stream.XORKeyStream(key, key)
+			break
+		}
+	}
+	if len(key) != 32 {
+		return "", nil
+	}
+	nonce := bytes[total-size : total-size+16]
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", nil // TODO
+	}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", nil // TODO
+	}
+	plaintext, err := aesgcm.Open(nil, nonce, bytes[total-size+16:], nil)
+	if err != nil {
+		return "", nil // TODO
+	}
+	return base64.RawURLEncoding.EncodeToString(plaintext), nil
+}
+
+func encryptMessageData(data string, sessions []*Session) (string, error) {
+	bytes, err := base64.RawURLEncoding.DecodeString(data)
+	if err != nil {
+		return "", err
+	}
+	version := 1_000_000
+
+	key := make([]byte, 32)
+	_, err = rand.Read(key)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, 12)
+	_, err = rand.Read(nonce)
+	if err != nil {
+		return "", err
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	ciphertext := aesgcm.Seal(nil, nonce, bytes, nil)
+	size := len(nonce) + len(ciphertext)
+
+	var versionBytes, sizeBytes [8]byte
+	binary.LittleEndian.PutUint64(versionBytes[:], uint64(version))
+	binary.LittleEndian.PutUint64(sizeBytes[:], uint64(size))
+
+	mixin := config.AppConfig.Mixin
+	privateBytes, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
+	if err != nil {
+		return "", err
+	}
+
+	var pub [32]byte
+	private := ed25519.PrivateKey(privateBytes)
+	bot.PublicKeyToCurve25519(&pub, ed25519.PublicKey(private[32:]))
+
+	var sessionsBytes []byte
+	for _, s := range sessions {
+		clientPublic, err := base64.RawURLEncoding.DecodeString(s.PublicKey)
+		if err != nil {
+			return "", err
+		}
+		var dst, priv, clientPub [32]byte
+		copy(clientPub[:], clientPublic[:])
+		bot.PrivateKeyToCurve25519(&priv, private)
+		curve25519.ScalarMult(&dst, &priv, &clientPub)
+
+		block, err := aes.NewCipher(dst[:])
+		if err != nil {
+			return "", err
+		}
+		ciphertext := make([]byte, aes.BlockSize+len(key))
+		iv := ciphertext[:aes.BlockSize]
+		_, err = rand.Read(iv)
+		if err != nil {
+			return "", err
+		}
+		mode := cipher.NewCBCEncrypter(block, iv)
+		mode.CryptBlocks(ciphertext[aes.BlockSize:], key)
+		sessionsBytes = append(sessionsBytes, ciphertext...)
+	}
+
+	result := versionBytes[:]
+	result = append(result, sizeBytes[:]...)
+	result = append(result, pub[:]...)
+	result = append(result, sessionsBytes...)
+	result = append(result, nonce[:]...)
+	result = append(result, ciphertext...)
+	return base64.RawURLEncoding.EncodeToString(result), nil
 }

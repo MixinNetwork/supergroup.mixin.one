@@ -24,7 +24,7 @@ func TestMessageCRUD(t *testing.T) {
 
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	user := &User{UserId: id, ActiveAt: time.Now()}
-	data := base64.StdEncoding.EncodeToString([]byte("hello"))
+	data := base64.RawURLEncoding.EncodeToString([]byte("hello"))
 	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)

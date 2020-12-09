@@ -55,7 +55,7 @@ func CreateProperty(ctx context.Context, name string, value bool) (*Property, er
 		if value {
 			text = data.MessageTemplate.MessageProhibit
 		}
-		return createSystemMessage(ctx, tx, MessageCategoryPlainText, base64.StdEncoding.EncodeToString([]byte(text)))
+		return createSystemMessage(ctx, tx, MessageCategoryPlainText, base64.RawURLEncoding.EncodeToString([]byte(text)))
 	})
 	_, err := session.Database(ctx).ExecContext(ctx, query, property.values()...)
 	if err != nil {
