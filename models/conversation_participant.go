@@ -30,6 +30,9 @@ func (p *ConversationParticipant) values() []interface{} {
 func conversationParticipantFromRow(row durable.Row) (*ConversationParticipant, error) {
 	var p ConversationParticipant
 	err := row.Scan(&p.ConversationID, &p.UserID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &p, err
 }
 

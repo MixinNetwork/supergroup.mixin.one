@@ -279,7 +279,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		if len(msg.Data) == 0 {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
+		dm, err := buildDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -357,7 +357,7 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 			return err
 		}
 		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
-		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
+		err = createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, data)
 		if err != nil {
 			return err
 		}
@@ -384,11 +384,11 @@ func (user *User) isAdmin() bool {
 	return false
 }
 
-func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, id string) ([]*User, error) {
+func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, senderID string) ([]*User, error) {
 	var users []*User
 	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
 	params := []interface{}{subscribedAt, time.Now().Add(-24 * 6 * time.Hour)}
-	if config.AppConfig.System.Operators[id] || config.AppConfig.Mixin.ClientId == id {
+	if config.AppConfig.System.Operators[senderID] || config.AppConfig.Mixin.ClientId == senderID {
 		query = fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
 		params = []interface{}{subscribedAt}
 	}
@@ -461,7 +461,7 @@ func LoopingInactiveUsers(ctx context.Context) ([]*User, error) {
 func (user *User) Hibernate(ctx context.Context) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
-		err := createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, text)
+		err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
 		if err != nil {
 			return err
 		}

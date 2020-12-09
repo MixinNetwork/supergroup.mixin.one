@@ -14,13 +14,16 @@ func TestBroadcasterCRUD(t *testing.T) {
 
 	admin := &User{UserId: "e9a5b807-fa8b-455a-8dfa-b189d28310ff"}
 
+	users, err := ReadBroadcasters(ctx)
+	assert.Nil(err)
+	assert.Len(users, 0)
 	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	broadcaster, err := admin.CreateBroadcaster(ctx, user.IdentityNumber)
 	assert.Nil(err)
 	assert.Equal(user.UserId, broadcaster.UserId)
-	users, err := ReadBroadcasters(ctx)
+	users, err = ReadBroadcasters(ctx)
 	assert.Nil(err)
 	assert.Len(users, 1)
 }

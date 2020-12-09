@@ -26,6 +26,9 @@ func (s *Session) values() []interface{} {
 func sessionFromRow(row durable.Row) (*Session, error) {
 	var s Session
 	err := row.Scan(&s.UserID, &s.SessionID, &s.PublicKey)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
 	return &s, err
 }
 

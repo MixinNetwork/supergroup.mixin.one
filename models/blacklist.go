@@ -9,6 +9,7 @@ import (
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/lib/pq"
 )
 
 type Blacklist struct {
@@ -30,16 +31,22 @@ func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklis
 		if err != nil || u == nil {
 			return err
 		}
-		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, Mixin ID: %d", u.FullName, u.IdentityNumber)))
-		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
-		if err != nil {
-			return err
-		}
-		_, err = tx.ExecContext(ctx, "INSERT INTO blacklists (user_id) VALUES ($1)", u.UserId)
+		data := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("Banned %s, Mixin ID: %d", u.FullName, u.IdentityNumber)))
+		err = createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, data)
 		if err != nil {
 			return err
 		}
 		_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE user_id=$1", u.UserId)
+		if err != nil {
+			return err
+		}
+
+		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("blacklists", "user_id"))
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+		_, err = stmt.ExecContext(ctx, u.UserId)
 		return err
 	})
 	if err != nil {

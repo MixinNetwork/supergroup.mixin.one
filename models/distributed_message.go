@@ -18,8 +18,8 @@ import (
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
-	"github.com/MixinNetwork/supergroup.mixin.one/interceptors"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/utils"
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
 	"mvdan.cc/xurls"
@@ -61,7 +61,7 @@ func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	return &m, err
 }
 
-func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
+func buildDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, recipientId),
@@ -85,7 +85,8 @@ func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMess
 func (message *Message) Distribute(ctx context.Context) error {
 	system := config.AppConfig.System
 	if !system.Operators[message.UserId] {
-		if system.DetectLinkEnabled && message.Category == MessageCategoryPlainText {
+		switch message.Category {
+		case MessageCategoryPlainText, MessageCategoryEncryptedText:
 			data, err := base64.StdEncoding.DecodeString(message.Data)
 			if err != nil {
 				return err
@@ -93,8 +94,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 			if xurls.Relaxed.Match(data) {
 				return message.Notify(ctx, "Message contains link")
 			}
-		}
-		if system.DetectQRCodeEnabled && message.Category == MessageCategoryPlainImage {
+		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
 			b, reason := messageQRFilter(ctx, message)
 			if !b {
 				return message.Notify(ctx, reason)
@@ -235,7 +235,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data)
+		dm, err := buildDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -268,7 +268,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 	return nil
 }
 
-func notifyToLarge(ctx context.Context, messageId, category, userId, name string) error {
+func notifyTooLarge(ctx context.Context, messageId, category, userId, name string) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
 		if err != nil {
@@ -277,13 +277,14 @@ func notifyToLarge(ctx context.Context, messageId, category, userId, name string
 		defer stmt.Close()
 
 		why := fmt.Sprintf("MessageId: %s, Category: %s, Reason: data too large, From: %s", messageId, category, name)
-		data := base64.StdEncoding.EncodeToString([]byte(why))
+		data := base64.RawURLEncoding.EncodeToString([]byte(why))
+		mixin := config.AppConfig.Mixin
 		for key, _ := range config.AppConfig.System.Operators {
 			dm := &DistributedMessage{
 				MessageId:      bot.UuidNewV4().String(),
-				ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, key),
+				ConversationId: UniqueConversationId(mixin.ClientId, key),
 				RecipientId:    key,
-				UserId:         config.AppConfig.Mixin.ClientId,
+				UserId:         mixin.ClientId,
 				ParentId:       messageId,
 				QuoteMessageId: "",
 				Category:       MessageCategoryPlainText,
@@ -310,18 +311,29 @@ func notifyToLarge(ctx context.Context, messageId, category, userId, name string
 	return nil
 }
 
-func createSystemDistributedMessage(ctx context.Context, tx *sql.Tx, user *User, category, data string) error {
-	if len(data) == 0 {
+func CreateSystemDistributedMessage(ctx context.Context, user *User, category, reason string) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		return createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, reason)
+	})
+	return err
+}
+
+func createSystemDistributedMessageInTx(ctx context.Context, tx *sql.Tx, user *User, category, reason string) error {
+	if len(reason) == 0 {
 		return nil
 	}
-	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, data)
+	dm, err := buildDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, reason)
 	if err != nil {
-		return session.TransactionError(ctx, err)
+		return err
 	}
-	var values bytes.Buffer
-	values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
-	query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-	_, err = tx.ExecContext(ctx, query)
+
+	stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, dm.values()...)
 	return err
 }
 
@@ -469,7 +481,7 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 	if err != nil {
 		return true, ""
 	}
-	if b, err := interceptors.CheckQRCode(ctx, data); b {
+	if b, err := utils.CheckQRCode(ctx, data); b {
 		if err != nil {
 			return true, ""
 		}

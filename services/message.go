@@ -41,7 +41,7 @@ type MessageView struct {
 	MessageId      string    `json:"message_id"`
 	QuoteMessageId string    `json:"quote_message_id"`
 	Category       string    `json:"category"`
-	Data           string    `json:"data"`
+	DataBase64     string    `json:"data_base64"`
 	Status         string    `json:"status"`
 	Source         string    `json:"source"`
 	CreatedAt      time.Time `json:"created_at"`
@@ -92,7 +92,8 @@ func (service *MessageService) Run(ctx context.Context) error {
 }
 
 func (service *MessageService) loop(ctx context.Context) error {
-	conn, err := ConnectMixinBlaze(config.AppConfig.Mixin.ClientId, config.AppConfig.Mixin.SessionId, config.AppConfig.Mixin.SessionKey)
+	mixin := config.AppConfig.Mixin
+	conn, err := ConnectMixinBlaze(mixin.ClientId, mixin.SessionId, mixin.SessionKey)
 	if err != nil {
 		return err
 	}
@@ -132,23 +133,26 @@ func (service *MessageService) loop(ctx context.Context) error {
 		case <-mc.ReadDone:
 			return nil
 		case msg := <-mc.ReadBuffer:
-			if msg.Category == "SYSTEM_ACCOUNT_SNAPSHOT" && msg.UserId != config.AppConfig.Mixin.ClientId {
-				data, err := base64.StdEncoding.DecodeString(msg.Data)
-				if err != nil {
-					return session.BlazeServerError(ctx, err)
-				}
-				var transfer TransferView
-				err = json.Unmarshal(data, &transfer)
-				if err != nil {
-					return session.BlazeServerError(ctx, err)
-				}
-				err = handleTransfer(ctx, mc, transfer, msg.UserId)
-				if err != nil {
-					return session.BlazeServerError(ctx, err)
-				}
-			} else if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
-				if err := handleMessage(ctx, mc, &msg, writeTimer, &writeDrained); err != nil {
-					return err
+			if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
+				switch msg.Category {
+				case "SYSTEM_ACCOUNT_SNAPSHOT":
+					data, err := base64.RawURLEncoding.DecodeString(msg.DataBase64)
+					if err != nil {
+						return session.BlazeServerError(ctx, err)
+					}
+					var transfer TransferView
+					err = json.Unmarshal(data, &transfer)
+					if err != nil {
+						return session.BlazeServerError(ctx, err)
+					}
+					err = handleTransfer(ctx, mc, transfer, msg.UserId)
+					if err != nil {
+						return session.BlazeServerError(ctx, err)
+					}
+				default:
+					if err := handleMessage(ctx, mc, &msg, writeTimer, &writeDrained); err != nil {
+						return err
+					}
 				}
 			}
 
@@ -274,7 +278,17 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 		mc.Transactions.retrive(id)
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
-		if t.Error != nil && t.Error.Code != 403 {
+		if t.Error != nil {
+			if t.Error.Code == 403 {
+				return nil
+			}
+			if t.Error.Code == 20140 {
+				err = models.SyncConversationParticipant(ctx, fmt.Sprint(params["conversation_id"]))
+				if err != nil {
+					return err
+				}
+				return t.Error
+			}
 			mc.Transactions.retrive(id)
 			return writeMessageAndWait(ctx, mc, action, params, timer, drained)
 		}
@@ -437,7 +451,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 	}
 	t := time.Now()
 	u := &models.User{UserId: config.AppConfig.Mixin.ClientId, ActiveAt: time.Now()}
-	_, err = models.CreateMessage(ctx, u, packet.PacketId, models.MessageCategoryAppCard, "", base64.StdEncoding.EncodeToString(card), t, t)
+	_, err = models.CreateMessage(ctx, u, packet.PacketId, models.MessageCategoryAppCard, "", base64.RawURLEncoding.EncodeToString(card), t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
@@ -540,7 +554,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 		return sendTextMessage(ctx, mc, message.ConversationId, config.AppConfig.MessageTemplate.MessageTipsUnsubscribe, timer, drained)
 	}
 
-	_, err = models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.CreatedAt, message.UpdatedAt)
+	_, err = models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.DataBase64, message.CreatedAt, message.UpdatedAt)
 	return err
 }
 

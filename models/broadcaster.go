@@ -2,11 +2,13 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/lib/pq"
 )
 
 type Broadcaster struct {
@@ -27,17 +29,28 @@ func (current *User) CreateBroadcaster(ctx context.Context, identity int64) (*Us
 	}
 
 	user, err := findUserByIdentityNumber(ctx, identity)
-	if err != nil {
+	if err != nil || user == nil {
 		return nil, err
-	} else if user == nil {
-		return nil, nil
 	}
 
 	t := time.Now()
-	query := fmt.Sprintf("INSERT INTO broadcasters(%s) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET updated_at=EXCLUDED.updated_at", strings.Join(broadcasterColumns, ","))
-	_, err = session.Database(ctx).ExecContext(ctx, query, user.UserId, t, t)
+	b := &Broadcaster{
+		UserId:    user.UserId,
+		CreatedAt: t,
+		UpdatedAt: t,
+	}
+
+	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("broadcasters", broadcasterColumns...))
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+		_, err = stmt.Exec(b.values()...)
+		return err
+	})
 	if err != nil {
-		return nil, session.TransactionError(ctx, err)
+		return user, session.TransactionError(ctx, err)
 	}
 	return user, nil
 }
