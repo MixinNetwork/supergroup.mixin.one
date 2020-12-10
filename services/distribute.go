@@ -48,22 +48,62 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-		err = sendDistributedMessges(ctx, shard, messages)
+		results, err := sendDistributedMessges(ctx, shard, messages)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages sendDistributedMessges ERROR: %+v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		err = models.UpdateMessagesStatus(ctx, messages)
+		var delivered []string
+		var sessions []*models.Session
+		for _, m := range results {
+			if m.State == "SUCCESS" {
+				delivered = append(delivered, m.MessageID)
+			}
+			if m.State == "FAILED" {
+				for _, s := range m.Sessions {
+					sessions = append(sessions, &models.Session{
+						UserID:    m.RecipientID,
+						SessionID: s.SessionID,
+						PublicKey: s.PublicKey,
+					})
+				}
+			}
+		}
+		err = models.UpdateDeliveredMessagesStatus(ctx, delivered)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages UpdateMessagesStatus ERROR: %+v", err)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		err = models.SyncSession(ctx, sessions)
+		if err != nil {
+			session.Logger(ctx).Errorf("PendingActiveDistributedMessages SyncSession ERROR: %+v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 	}
 }
 
-func sendDistributedMessges(ctx context.Context, key string, messages []*models.DistributedMessage) error {
+type Message struct {
+	MessageID   string `json:"message_id"`
+	RecipientID string `json:"recipient_id"`
+	State       string `json:"state"`
+	Sessions    []struct {
+		SessionID string `json:"session_id"`
+		PublicKey string `json:"public_key"`
+	} `json:"sessions"`
+}
+
+func sendDistributedMessges(ctx context.Context, key string, messages []*models.DistributedMessage) ([]*Message, error) {
+	var userIDs []string
+	for _, m := range messages {
+		userIDs = append(userIDs, m.RecipientId)
+	}
+	sessionSet, err := models.ReadSessionSetByUsers(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
 	var body []map[string]interface{}
 	for _, message := range messages {
 		if message.UserId == config.AppConfig.Mixin.ClientId {
@@ -72,7 +112,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 		if message.Category == models.MessageCategoryMessageRecall {
 			message.UserId = ""
 		}
-		body = append(body, map[string]interface{}{
+		m := map[string]interface{}{
 			"conversation_id":   message.ConversationId,
 			"recipient_id":      message.RecipientId,
 			"message_id":        message.MessageId,
@@ -82,33 +122,42 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"representative_id": message.UserId,
 			"created_at":        message.CreatedAt,
 			"updated_at":        message.CreatedAt,
-		})
+		}
+		m["category"] = interface{}(message.ReadCategory(sessionSet[message.RecipientId].Category))
+		m["checksum"] = models.GenerateUserChecksum(sessionSet[message.RecipientId].Sessions)
+		var sessions []map[string]string
+		for _, s := range sessionSet[message.RecipientId].Sessions {
+			sessions = append(sessions, map[string]string{"session_id": s.SessionID})
+		}
+		m["recipient_sessions"] = sessions
+		body = append(body, m)
 	}
 
 	msgs, err := json.Marshal(body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mixin := config.AppConfig.Mixin
-	accessToken, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "POST", "/messages", string(msgs))
+	accessToken, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "POST", "/encrypted_messages", string(msgs))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	data, err := request(ctx, key, "POST", "/messages", msgs, accessToken)
+	data, err := request(ctx, key, "POST", "/encrypted_messages", msgs, accessToken)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var resp struct {
-		Error bot.Error `json:"error"`
+		Data  []*Message `json:"data"`
+		Error bot.Error  `json:"error"`
 	}
 	err = json.Unmarshal(data, &resp)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if resp.Error.Code > 0 {
-		return resp.Error
+		return nil, resp.Error
 	}
-	return nil
+	return resp.Data, nil
 }
 
 var httpPool map[string]*http.Client = make(map[string]*http.Client, 0)

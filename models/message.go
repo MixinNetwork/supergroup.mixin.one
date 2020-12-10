@@ -163,7 +163,8 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedSticker,
 		MessageCategoryEncryptedContact,
 		MessageCategoryEncryptedLocation:
-		data, err := decryptMessageData(data)
+		var err error
+		data, err = decryptMessageData(data)
 		if err != nil || data == "" {
 			return nil, err
 		}
@@ -421,16 +422,17 @@ func decryptMessageData(data string) (string, error) {
 		return "", err
 	}
 	total := len(bytes)
-	if total < 8+8+32+16+48+12 {
+	if total < 1+2+32+16+48+12 {
 		return "", nil
 	}
 	if (len(bytes)-48)%64 != 0 {
 		return "", nil
 	}
-	size := int(binary.LittleEndian.Uint64(bytes[8:16]))
+	sessionLen := int(binary.LittleEndian.Uint16(bytes[1:3]))
 	mixin := config.AppConfig.Mixin
+	prefixSize := 35 + sessionLen*64
 	var key []byte
-	for i := 48; i < total-size; i += 64 {
+	for i := 35; i < prefixSize; i += 64 {
 		if uid, _ := bot.UuidFromBytes(bytes[i : i+16]); uid.String() == mixin.SessionId {
 			private, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
 			if err != nil {
@@ -455,7 +457,7 @@ func decryptMessageData(data string) (string, error) {
 	if len(key) != 32 {
 		return "", nil
 	}
-	nonce := bytes[total-size : total-size+16]
+	nonce := bytes[prefixSize : prefixSize+16]
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", nil // TODO
@@ -464,7 +466,7 @@ func decryptMessageData(data string) (string, error) {
 	if err != nil {
 		return "", nil // TODO
 	}
-	plaintext, err := aesgcm.Open(nil, nonce, bytes[total-size+16:], nil)
+	plaintext, err := aesgcm.Open(nil, nonce, bytes[prefixSize+16:], nil)
 	if err != nil {
 		return "", nil // TODO
 	}
@@ -476,7 +478,6 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	version := 1_000_000
 
 	key := make([]byte, 32)
 	_, err = rand.Read(key)
@@ -497,11 +498,9 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 		return "", err
 	}
 	ciphertext := aesgcm.Seal(nil, nonce, bytes, nil)
-	size := len(nonce) + len(ciphertext)
 
-	var versionBytes, sizeBytes [8]byte
-	binary.LittleEndian.PutUint64(versionBytes[:], uint64(version))
-	binary.LittleEndian.PutUint64(sizeBytes[:], uint64(size))
+	var sessionLen [2]byte
+	binary.LittleEndian.PutUint16(sessionLen[:], uint16(len(sessions)))
 
 	mixin := config.AppConfig.Mixin
 	privateBytes, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
@@ -539,8 +538,8 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 		sessionsBytes = append(sessionsBytes, ciphertext...)
 	}
 
-	result := versionBytes[:]
-	result = append(result, sizeBytes[:]...)
+	result := []byte{1}
+	result = append(result, sessionLen[:]...)
 	result = append(result, pub[:]...)
 	result = append(result, sessionsBytes...)
 	result = append(result, nonce[:]...)

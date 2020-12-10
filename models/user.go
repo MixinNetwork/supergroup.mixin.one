@@ -30,6 +30,9 @@ const (
 	PayMethodOffer = "offer"
 
 	UserActivePeriod = 5 * time.Minute
+
+	UserCategoryPlain     = "PLAIN"
+	UserCategoryEncrypted = "ENCRYPTED"
 )
 
 type User struct {

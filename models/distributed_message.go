@@ -333,11 +333,7 @@ func PendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 	return messages, nil
 }
 
-func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) error {
-	ids := make([]string, len(messages))
-	for i, m := range messages {
-		ids[i] = m.MessageId
-	}
+func UpdateDeliveredMessagesStatus(ctx context.Context, ids []string) error {
 	query := "UPDATE distributed_messages SET status=$1 WHERE message_id=ANY($2)"
 	_, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, pq.Array(ids))
 	if err != nil {
@@ -502,4 +498,15 @@ func UniqueConversationId(userId, recipientId string) string {
 	sum[6] = (sum[6] & 0x0f) | 0x30
 	sum[8] = (sum[8] & 0x3f) | 0x80
 	return uuid.FromBytesOrNil(sum).String()
+}
+
+func (m *DistributedMessage) ReadCategory(category string) string {
+	switch category {
+	case UserCategoryPlain:
+		return strings.Replace(m.Category, "ENCRYPTED_", "PLAIN_", -1)
+	case UserCategoryEncrypted:
+		return strings.Replace(m.Category, "PLAIN_", "ENCRYPTED_", -1)
+	default:
+		return m.Category
+	}
 }
