@@ -2,9 +2,11 @@ package models
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"math/big"
 	"strings"
 	"testing"
@@ -97,7 +99,11 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	err = UpdateMessagesStatus(ctx, dms)
+	messageIDs := make([]string, len(dms))
+	for i, m := range dms {
+		messageIDs[i] = m.MessageId
+	}
+	err = UpdateDeliveredMessagesStatus(ctx, messageIDs)
 	assert.Nil(err)
 	query := "UPDATE distributed_messages SET created_at=$1"
 	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-96*time.Hour))
@@ -121,6 +127,27 @@ func TestMessageCRUD(t *testing.T) {
 	messages, err = LatestMessageWithUser(ctx, 10)
 	assert.Nil(err)
 	assert.Len(messages, 4)
+
+	mixin := config.AppConfig.Mixin
+	privateBytes, _ := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
+	var pub [32]byte
+	private := ed25519.PrivateKey(privateBytes)
+	bot.PublicKeyToCurve25519(&pub, ed25519.PublicKey(private[32:]))
+
+	sessions := []*Session{
+		&Session{
+			UserID:    mixin.ClientId,
+			SessionID: mixin.SessionId,
+			PublicKey: base64.RawURLEncoding.EncodeToString(pub[:]),
+		},
+	}
+	data, err = encryptMessageData(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), sessions)
+	assert.Nil(err)
+	assert.NotEqual("", data)
+	log.Println(data)
+	data, err = decryptMessageData(data)
+	assert.Nil(err)
+	assert.Equal(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), data)
 }
 
 func testReadMessage(ctx context.Context, id string) (*Message, error) {

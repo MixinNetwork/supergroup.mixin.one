@@ -425,9 +425,6 @@ func decryptMessageData(data string) (string, error) {
 	if total < 1+2+32+16+48+12 {
 		return "", nil
 	}
-	if (len(bytes)-48)%64 != 0 {
-		return "", nil
-	}
 	sessionLen := int(binary.LittleEndian.Uint16(bytes[1:3]))
 	mixin := config.AppConfig.Mixin
 	prefixSize := 35 + sessionLen*64
@@ -439,7 +436,7 @@ func decryptMessageData(data string) (string, error) {
 				return "", err
 			}
 			var dst, priv, pub [32]byte
-			copy(pub[:], bytes[:])
+			copy(pub[:], bytes[3:35])
 			bot.PrivateKeyToCurve25519(&priv, ed25519.PrivateKey(private))
 			curve25519.ScalarMult(&dst, &priv, &pub)
 
@@ -449,15 +446,15 @@ func decryptMessageData(data string) (string, error) {
 			}
 			iv := bytes[i+16 : i+16+aes.BlockSize]
 			key = bytes[i+16+aes.BlockSize : i+16+48]
-			stream := cipher.NewCFBDecrypter(block, iv)
-			stream.XORKeyStream(key, key)
+			mode := cipher.NewCBCDecrypter(block, iv)
+			mode.CryptBlocks(key, key)
 			break
 		}
 	}
 	if len(key) != 32 {
 		return "", nil
 	}
-	nonce := bytes[prefixSize : prefixSize+16]
+	nonce := bytes[prefixSize : prefixSize+12]
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", nil // TODO
@@ -466,7 +463,7 @@ func decryptMessageData(data string) (string, error) {
 	if err != nil {
 		return "", nil // TODO
 	}
-	plaintext, err := aesgcm.Open(nil, nonce, bytes[prefixSize+16:], nil)
+	plaintext, err := aesgcm.Open(nil, nonce, bytes[prefixSize+12:], nil)
 	if err != nil {
 		return "", nil // TODO
 	}
@@ -535,6 +532,11 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 		}
 		mode := cipher.NewCBCEncrypter(block, iv)
 		mode.CryptBlocks(ciphertext[aes.BlockSize:], key)
+		id, err := bot.UuidFromString(s.SessionID)
+		if err != nil {
+			return "", err
+		}
+		sessionsBytes = append(sessionsBytes, id.Bytes()...)
 		sessionsBytes = append(sessionsBytes, ciphertext...)
 	}
 
