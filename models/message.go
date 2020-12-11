@@ -422,7 +422,7 @@ func decryptMessageData(data string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	size := 16 + 64 // session id bytes + encypted key bytes size
+	size := 16 + 48 // session id bytes + encypted key bytes size
 	total := len(bytes)
 	if total < 1+2+32+size+12 {
 		return "", nil
@@ -450,11 +450,11 @@ func decryptMessageData(data string) (string, error) {
 			key = bytes[i+16+aes.BlockSize : i+size]
 			mode := cipher.NewCBCDecrypter(block, iv)
 			mode.CryptBlocks(key, key)
-			key = key[:32]
+			key = key[:16]
 			break
 		}
 	}
-	if len(key) != 32 {
+	if len(key) != 16 {
 		return "", nil
 	}
 	nonce := bytes[prefixSize : prefixSize+12]
@@ -479,7 +479,7 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 		return "", err
 	}
 
-	key := make([]byte, 32)
+	key := make([]byte, 16)
 	_, err = rand.Read(key)
 	if err != nil {
 		return "", err
