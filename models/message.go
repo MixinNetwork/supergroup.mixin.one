@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -421,15 +422,16 @@ func decryptMessageData(data string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	size := 16 + 64 // session id bytes + encypted key bytes size
 	total := len(bytes)
-	if total < 1+2+32+16+48+12 {
+	if total < 1+2+32+size+12 {
 		return "", nil
 	}
 	sessionLen := int(binary.LittleEndian.Uint16(bytes[1:3]))
 	mixin := config.AppConfig.Mixin
-	prefixSize := 35 + sessionLen*64
+	prefixSize := 35 + sessionLen*size
 	var key []byte
-	for i := 35; i < prefixSize; i += 64 {
+	for i := 35; i < prefixSize; i += size {
 		if uid, _ := bot.UuidFromBytes(bytes[i : i+16]); uid.String() == mixin.SessionId {
 			private, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
 			if err != nil {
@@ -445,9 +447,10 @@ func decryptMessageData(data string) (string, error) {
 				return "", err
 			}
 			iv := bytes[i+16 : i+16+aes.BlockSize]
-			key = bytes[i+16+aes.BlockSize : i+16+48]
+			key = bytes[i+16+aes.BlockSize : i+size]
 			mode := cipher.NewCBCDecrypter(block, iv)
 			mode.CryptBlocks(key, key)
+			key = key[:32]
 			break
 		}
 	}
@@ -471,7 +474,7 @@ func decryptMessageData(data string) (string, error) {
 }
 
 func encryptMessageData(data string, sessions []*Session) (string, error) {
-	bytes, err := base64.RawURLEncoding.DecodeString(data)
+	dataBytes, err := base64.RawURLEncoding.DecodeString(data)
 	if err != nil {
 		return "", err
 	}
@@ -494,7 +497,7 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ciphertext := aesgcm.Seal(nil, nonce, bytes, nil)
+	ciphertext := aesgcm.Seal(nil, nonce, dataBytes, nil)
 
 	var sessionLen [2]byte
 	binary.LittleEndian.PutUint16(sessionLen[:], uint16(len(sessions)))
@@ -524,14 +527,19 @@ func encryptMessageData(data string, sessions []*Session) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		ciphertext := make([]byte, aes.BlockSize+len(key))
+		padding := aes.BlockSize - len(key)%aes.BlockSize
+		padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+		shared := make([]byte, len(key))
+		copy(shared[:], key[:])
+		shared = append(shared, padtext...)
+		ciphertext := make([]byte, aes.BlockSize+len(shared))
 		iv := ciphertext[:aes.BlockSize]
 		_, err = rand.Read(iv)
 		if err != nil {
 			return "", err
 		}
 		mode := cipher.NewCBCEncrypter(block, iv)
-		mode.CryptBlocks(ciphertext[aes.BlockSize:], key)
+		mode.CryptBlocks(ciphertext[aes.BlockSize:], shared)
 		id, err := bot.UuidFromString(s.SessionID)
 		if err != nil {
 			return "", err

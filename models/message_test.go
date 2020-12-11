@@ -140,6 +140,11 @@ func TestMessageCRUD(t *testing.T) {
 			SessionID: mixin.SessionId,
 			PublicKey: base64.RawURLEncoding.EncodeToString(pub[:]),
 		},
+		&Session{
+			UserID:    mixin.ClientId,
+			SessionID: bot.UuidNewV4().String(),
+			PublicKey: base64.RawURLEncoding.EncodeToString(pub[:]),
+		},
 	}
 	data, err = encryptMessageData(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), sessions)
 	assert.Nil(err)
