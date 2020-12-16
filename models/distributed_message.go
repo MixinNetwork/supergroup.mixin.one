@@ -500,8 +500,11 @@ func UniqueConversationId(userId, recipientId string) string {
 	return uuid.FromBytesOrNil(sum).String()
 }
 
-func (m *DistributedMessage) ReadCategory(category string) string {
-	switch category {
+func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
+	if user == nil {
+		return strings.Replace(m.Category, "PLAIN_", "ENCRYPTED_", -1)
+	}
+	switch user.Category {
 	case UserCategoryPlain:
 		return strings.Replace(m.Category, "ENCRYPTED_", "PLAIN_", -1)
 	case UserCategoryEncrypted:

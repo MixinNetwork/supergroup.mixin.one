@@ -124,16 +124,21 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"updated_at":        message.CreatedAt,
 		}
 		recipient := sessionSet[message.RecipientId]
+		m["category"] = message.ReadCategory(recipient.Category)
 		if recipient != nil {
-			m["category"] = interface{}(message.ReadCategory(recipient.Category))
 			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
 			var sessions []map[string]string
 			for _, s := range recipient.Sessions {
 				sessions = append(sessions, map[string]string{"session_id": s.SessionID})
 			}
 			m["recipient_sessions"] = sessions
-			m["data_base64"], err = models.EncryptMessageData(message.Data, recipient.Sessions)
+			data, err := models.EncryptMessageData(message.Data, recipient.Sessions)
+			if err != nil {
+				return nil, err
+			}
+			m["data_base64"] = data
 		}
+
 		body = append(body, m)
 	}
 
