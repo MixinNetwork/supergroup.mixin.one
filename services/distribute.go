@@ -123,13 +123,16 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"created_at":        message.CreatedAt,
 			"updated_at":        message.CreatedAt,
 		}
-		m["category"] = interface{}(message.ReadCategory(sessionSet[message.RecipientId].Category))
-		m["checksum"] = models.GenerateUserChecksum(sessionSet[message.RecipientId].Sessions)
-		var sessions []map[string]string
-		for _, s := range sessionSet[message.RecipientId].Sessions {
-			sessions = append(sessions, map[string]string{"session_id": s.SessionID})
+		recipient := sessionSet[message.RecipientId]
+		if recipient != nil {
+			m["category"] = interface{}(message.ReadCategory(recipient.Category))
+			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
+			var sessions []map[string]string
+			for _, s := range recipient.Sessions {
+				sessions = append(sessions, map[string]string{"session_id": s.SessionID})
+			}
+			m["recipient_sessions"] = sessions
 		}
-		m["recipient_sessions"] = sessions
 		body = append(body, m)
 	}
 
