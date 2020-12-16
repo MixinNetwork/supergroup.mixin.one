@@ -132,6 +132,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 				sessions = append(sessions, map[string]string{"session_id": s.SessionID})
 			}
 			m["recipient_sessions"] = sessions
+			m["data"], err = models.EncryptMessageData(message.Data, recipient.Sessions)
 		}
 		body = append(body, m)
 	}

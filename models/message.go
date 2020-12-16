@@ -473,7 +473,7 @@ func decryptMessageData(data string) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(plaintext), nil
 }
 
-func encryptMessageData(data string, sessions []*Session) (string, error) {
+func EncryptMessageData(data string, sessions []*Session) (string, error) {
 	dataBytes, err := base64.RawURLEncoding.DecodeString(data)
 	if err != nil {
 		return "", err
