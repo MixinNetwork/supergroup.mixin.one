@@ -124,7 +124,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"updated_at":        message.CreatedAt,
 		}
 		recipient := sessionSet[message.RecipientId]
-		m["category"] = message.ReadCategory(recipient.Category)
+		m["category"] = message.ReadCategory(recipient)
 		if recipient != nil {
 			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
 			var sessions []map[string]string

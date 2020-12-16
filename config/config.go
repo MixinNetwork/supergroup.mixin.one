@@ -7,7 +7,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const BuildVersion = "BUILD_VERSION"
+const BuildVersion = "2274fd040484284a918bba27d6434939ac3f2638"
 
 type PaymentAsset struct {
 	Symbol  string `yaml:"symbol" json:"symbol"`
