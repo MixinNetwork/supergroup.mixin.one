@@ -502,7 +502,7 @@ func UniqueConversationId(userId, recipientId string) string {
 
 func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
 	if user == nil {
-		return strings.Replace(m.Category, "PLAIN_", "ENCRYPTED_", -1)
+		return strings.Replace(m.Category, "ENCRYPTED_", "PLAIN_", -1)
 	}
 	switch user.Category {
 	case UserCategoryPlain:
