@@ -56,11 +56,16 @@ func SyncSession(ctx context.Context, sessions []*Session) error {
 		}
 		defer stmt.Close()
 
-		for i, _ := range sessions {
+		repeatIds := make(map[string]bool)
+		for i, s := range sessions {
+			if repeatIds[s.UserID+s.SessionID] {
+				continue
+			}
 			_, err = stmt.Exec(sessions[i].values()...)
 			if err != nil {
 				return err
 			}
+			repeatIds[s.UserID+s.SessionID] = true
 		}
 		_, err = stmt.Exec()
 		return err
