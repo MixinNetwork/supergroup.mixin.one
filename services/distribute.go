@@ -118,7 +118,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"message_id":        message.MessageId,
 			"quote_message_id":  message.QuoteMessageId,
 			"category":          message.Category,
-			"data":              message.Data,
+			"data_base64":       message.Data,
 			"representative_id": message.UserId,
 			"created_at":        message.CreatedAt,
 			"updated_at":        message.CreatedAt,
@@ -132,7 +132,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 				sessions = append(sessions, map[string]string{"session_id": s.SessionID})
 			}
 			m["recipient_sessions"] = sessions
-			m["data"], err = models.EncryptMessageData(message.Data, recipient.Sessions)
+			m["data_base64"], err = models.EncryptMessageData(message.Data, recipient.Sessions)
 		}
 		body = append(body, m)
 	}
