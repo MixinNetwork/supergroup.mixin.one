@@ -110,7 +110,7 @@ func ReadSessionSetByUsers(ctx context.Context, userIDs []string) (map[string]*S
 	}
 	defer rows.Close()
 
-	var set map[string]*SimpleUser
+	set := make(map[string]*SimpleUser)
 	for rows.Next() {
 		s, err := sessionFromRow(rows)
 		if err != nil {
