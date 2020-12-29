@@ -77,7 +77,7 @@
     "pay": "支付红包"
   },
   "packet": {
-    "opened": "打开 %{opened_count}/%{total_count} 了个红包",
+    "opened": "打开 %{opened_count}/%{total_count} 个红包",
     "open": "打开红包",
     "paid": "红包已进入你的钱包",
     "completed": "都被抢光了，如果还有剩余，会原路退回。"
