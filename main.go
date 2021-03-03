@@ -10,6 +10,7 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	"github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/services"
@@ -19,6 +20,8 @@ func main() {
 	service := flag.String("service", "http", "run a service")
 	yaml := flag.String("config", "./config/config.yaml", "path of the config file")
 	flag.Parse()
+	// TODO
+	bot.SetBaseUri("https://api.mixin.zone")
 
 	config.LoadConfig(*yaml)
 	dbinfo := config.AppConfig.Database
