@@ -17,10 +17,14 @@ import (
 
 func main() {
 	service := flag.String("service", "http", "run a service")
-	env := flag.String("e", "development", "")
+	env := flag.String("e", "production", "")
 	flag.Parse()
 
 	config.Init(*env)
+	if *env != config.AppConfig.Service.Environment {
+		log.Panicln("Invalid Environment", *env, config.AppConfig.Service.Environment)
+	}
+
 	dbinfo := config.AppConfig.Database
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		dbinfo.User,
