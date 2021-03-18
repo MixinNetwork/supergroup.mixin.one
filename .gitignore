@@ -10,5 +10,3 @@ config.yaml
 
 !config/config.go
 !config/config.tpl.yaml
-new-web/public/legacy
-new-web/public/shortcuts

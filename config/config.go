@@ -1,11 +1,14 @@
 package config
 
 import (
-	"io/ioutil"
+	_ "embed"
 	"log"
 
 	yaml "gopkg.in/yaml.v2"
 )
+
+//go:embed config.yaml
+var data []byte
 
 const BuildVersion = "BUILD_VERSION"
 
@@ -36,7 +39,7 @@ type Config struct {
 		HTTPResourceHost string   `yaml:"host"`
 		APIRoot          []string `yaml:"api_root"`
 		BlazeRoot        []string `yaml:"blaze_root"`
-		Retry            int
+		Retry            int      `yaml:"-"`
 	} `yaml:"service"`
 	Database struct {
 		User     string `yaml:"username"`
@@ -107,16 +110,13 @@ type ExportedConfig struct {
 
 var AppConfig *Config
 
-func LoadConfig(f string) {
-	data, err := ioutil.ReadFile(f)
-	if err != nil {
-		log.Panicln(err)
-	}
-	AppConfig = &Config{}
-	err = yaml.Unmarshal(data, AppConfig)
+func Init(env string) {
+	var options map[string]*Config
+	err := yaml.Unmarshal(data, &options)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+	AppConfig = options[env]
 	AppConfig.System.Operators = make(map[string]bool)
 	for _, op := range AppConfig.System.OperatorList {
 		AppConfig.System.Operators[op] = true

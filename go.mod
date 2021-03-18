@@ -1,6 +1,6 @@
 module github.com/MixinNetwork/supergroup.mixin.one
 
-go 1.14
+go 1.16
 
 //replace github.com/MixinNetwork/bot-api-go-client => /Users/li/Golang/bot-api-go-client
 
