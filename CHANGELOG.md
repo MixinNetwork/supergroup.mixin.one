@@ -1,3 +1,6 @@
+# 2021-03-18
+利用 go1.6 的 embed 把 production 配置一起打包, 最新 config.tpl.yaml 
+
 # 2020-08-12
 配置文件: config.tpl.yaml 
 增加：api_root, blaze_root 可以自动切换域名

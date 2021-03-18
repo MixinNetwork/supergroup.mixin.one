@@ -90,3 +90,5 @@ test:
     session_id: "618e0f71-2f57-4125-913c-d58459a76b81"
     pin_token: "wITpMetv_lJdY-zkGCu76VS4isWG814WJcx9lalEtFA"
     session_key: "9v61brhzYXGlaNbrHem-BszqnWkmiu5c3P5xM7crbjI2nzFaV7xzqHIsvTFBNB5qxIvxmVXj40F_-xxX0lqBvw"
+test:
+  <<: *default
