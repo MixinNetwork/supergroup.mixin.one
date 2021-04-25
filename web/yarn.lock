@@ -8267,10 +8267,10 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
-vant@^2.12.9:
-  version "2.12.9"
-  resolved "https://registry.yarnpkg.com/vant/-/vant-2.12.9.tgz#92c85fad6277ec21277916715b0a0919ef1a64e3"
-  integrity sha512-frvm0FwrE8lz7Qv2Xnp4QRXxbOAb13ouyKK36K43yN+YrnMTJ3fowQV4eg0eKe1A/5p5ziYisi8paOJpXcwfgw==
+vant@^2.12.15:
+  version "2.12.15"
+  resolved "https://registry.yarnpkg.com/vant/-/vant-2.12.15.tgz#f0dab821ec7f61a3a248259f54b1da1783438828"
+  integrity sha512-WZ3csjbsqs8LhUFy0A2K9HdXDjZGKoHNYpSCEwO0aI1SzXbzXDi4WPItJXHU6OD/uBN/Scj0dcmI7KoIxgpk7g==
   dependencies:
     "@babel/runtime" "7.x"
     "@vant/icons" "1.5.2"
