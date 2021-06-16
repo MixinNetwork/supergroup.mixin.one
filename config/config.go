@@ -57,10 +57,10 @@ type Config struct {
 		VideoMessageEnable     bool            `yaml:"video_message_enable"`
 		LiveMessageEnable      bool            `yaml:"live_message_enable"`
 		ContactMessageEnable   bool            `yaml:"contact_message_enable"`
-		LimitMessageDuration   int64           `yaml:"limit_message_duration"`
-		LimitMessageNumber     int             `yaml:"limit_message_number"`
 		DetectQRCodeEnabled    bool            `yaml:"detect_image"`
 		DetectLinkEnabled      bool            `yaml:"detect_link"`
+		LimitMessageDuration   int64           `yaml:"limit_message_duration"`
+		LimitMessageNumber     int             `yaml:"limit_message_number"`
 		OperatorList           []string        `yaml:"operator_list"`
 		Operators              map[string]bool `yaml:"-"`
 		PayToJoin              bool            `yaml:"pay_to_join"`
