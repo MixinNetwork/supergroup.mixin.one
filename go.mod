@@ -5,30 +5,28 @@ go 1.16
 //replace github.com/MixinNetwork/bot-api-go-client => /Users/li/Golang/bot-api-go-client
 
 require (
-	cloud.google.com/go v0.41.0
-	github.com/MixinNetwork/bot-api-go-client v1.1.6-0.20201208033233-ad9cd614a589
-	github.com/MixinNetwork/go-number v0.0.0-20180814121220-f48e2574d9ef
-	github.com/bugsnag/bugsnag-go v1.5.3
+	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
+	github.com/MixinNetwork/bot-api-go-client v1.3.1
+	github.com/MixinNetwork/go-number v0.0.0-20210414133019-df3477b564b8
+	github.com/bugsnag/bugsnag-go v2.1.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dimfeld/httptreemux v5.0.1+incompatible
-	github.com/gofrs/uuid v3.3.0+incompatible
-	github.com/google/uuid v1.1.1 // indirect
-	github.com/gorilla/handlers v1.4.2
-	github.com/gorilla/websocket v1.4.2
-	github.com/jcmturner/gokrb5/v8 v8.3.0 // indirect
-	github.com/lib/pq v1.6.0
+	github.com/felixge/httpsnoop v1.0.2 // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/google/uuid v1.2.0 // indirect
+	github.com/gorilla/handlers v1.5.1
+	github.com/gorilla/websocket v1.4.3-0.20200912193213-c3dd95aea977
+	github.com/kataras/jwt v0.1.2 // indirect
+	github.com/lib/pq v1.10.2
+	github.com/maruel/rs v1.0.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
-	github.com/objcoding/wxpay v1.0.6
-	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/stretchr/testify v1.7.0
 	github.com/tuotoo/qrcode v0.0.0-20190222102259-ac9c44189bf2
-	github.com/unrolled/render v1.0.3
-	github.com/willf/bitset v1.1.10 // indirect
-	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c // indirect
-	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
-	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
-	google.golang.org/api v0.7.0
-	google.golang.org/genproto v0.0.0-20190701230453-710ae3a149df // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	github.com/unrolled/render v1.4.0
+	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
+	gopkg.in/yaml.v2 v2.4.0
 	mvdan.cc/xurls v1.1.0
 )
