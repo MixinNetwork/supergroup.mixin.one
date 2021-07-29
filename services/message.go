@@ -42,6 +42,7 @@ type MessageView struct {
 	QuoteMessageId string    `json:"quote_message_id"`
 	Category       string    `json:"category"`
 	Data           string    `json:"data"`
+	Silent         bool      `json:"silent"`
 	Status         string    `json:"status"`
 	Source         string    `json:"source"`
 	CreatedAt      time.Time `json:"created_at"`
@@ -437,7 +438,7 @@ func sendAppCard(ctx context.Context, mc *MessageContext, packet *models.Packet)
 	}
 	t := time.Now()
 	u := &models.User{UserId: config.AppConfig.Mixin.ClientId, ActiveAt: time.Now()}
-	_, err = models.CreateMessage(ctx, u, packet.PacketId, models.MessageCategoryAppCard, "", base64.StdEncoding.EncodeToString(card), t, t)
+	_, err = models.CreateMessage(ctx, u, packet.PacketId, models.MessageCategoryAppCard, "", base64.StdEncoding.EncodeToString(card), false, t, t)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
@@ -551,7 +552,7 @@ func handleMessage(ctx context.Context, mc *MessageContext, message *MessageView
 			}
 		}
 	}
-	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.CreatedAt, message.UpdatedAt); err != nil {
+	if _, err := models.CreateMessage(ctx, user, message.MessageId, message.Category, message.QuoteMessageId, message.Data, message.Silent, message.CreatedAt, message.UpdatedAt); err != nil {
 		return err
 	}
 	return nil

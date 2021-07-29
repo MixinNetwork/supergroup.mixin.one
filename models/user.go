@@ -279,7 +279,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		if len(msg.Data) == 0 {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
+		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data, false)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}

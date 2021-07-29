@@ -42,6 +42,7 @@ type Message struct {
 	Category         string
 	QuoteMessageId   string
 	Data             string
+	Silent           bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	State            string
@@ -50,22 +51,22 @@ type Message struct {
 	FullName sql.NullString
 }
 
-var messagesCols = []string{"message_id", "user_id", "category", "quote_message_id", "data", "created_at", "updated_at", "state", "last_distribute_at"}
+var messagesCols = []string{"message_id", "user_id", "category", "quote_message_id", "data", "silent", "created_at", "updated_at", "state", "last_distribute_at"}
 
 func (m *Message) values() []interface{} {
-	return []interface{}{m.MessageId, m.UserId, m.Category, m.QuoteMessageId, m.Data, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
+	return []interface{}{m.MessageId, m.UserId, m.Category, m.QuoteMessageId, m.Data, m.Silent, m.CreatedAt, m.UpdatedAt, m.State, m.LastDistributeAt}
 }
 
 func messageFromRow(row durable.Row) (*Message, error) {
 	var m Message
-	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.QuoteMessageId, &m.Data, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
+	err := row.Scan(&m.MessageId, &m.UserId, &m.Category, &m.QuoteMessageId, &m.Data, &m.Silent, &m.CreatedAt, &m.UpdatedAt, &m.State, &m.LastDistributeAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	return &m, err
 }
 
-func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, createdAt, updatedAt time.Time) (*Message, error) {
+func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, silent bool, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 {
 		return nil, notifyToLarge(ctx, messageId, category, user.UserId, user.FullName)
 	}
@@ -143,6 +144,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		UserId:           user.UserId,
 		Category:         category,
 		Data:             data,
+		Silent:           silent,
 		CreatedAt:        createdAt,
 		UpdatedAt:        updatedAt,
 		State:            MessageStatePending,
