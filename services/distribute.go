@@ -79,6 +79,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 			"quote_message_id":  message.QuoteMessageId,
 			"category":          message.Category,
 			"data":              message.Data,
+			"silent":            message.Silent,
 			"representative_id": message.UserId,
 			"created_at":        message.CreatedAt,
 			"updated_at":        message.CreatedAt,
