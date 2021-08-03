@@ -1,13 +1,16 @@
 package config
 
 import (
-	"io/ioutil"
+	_ "embed"
 	"log"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
-const BuildVersion = "2274fd040484284a918bba27d6434939ac3f2638"
+//go:embed config.yaml
+var data []byte
+
+const BuildVersion = "BUILD_VERSION"
 
 type PaymentAsset struct {
 	Symbol  string `yaml:"symbol" json:"symbol"`
@@ -36,7 +39,7 @@ type Config struct {
 		HTTPResourceHost string   `yaml:"host"`
 		APIRoot          []string `yaml:"api_root"`
 		BlazeRoot        []string `yaml:"blaze_root"`
-		Retry            int
+		Retry            int      `yaml:"-"`
 	} `yaml:"service"`
 	Database struct {
 		User     string `yaml:"username"`
@@ -54,10 +57,10 @@ type Config struct {
 		VideoMessageEnable     bool            `yaml:"video_message_enable"`
 		LiveMessageEnable      bool            `yaml:"live_message_enable"`
 		ContactMessageEnable   bool            `yaml:"contact_message_enable"`
-		LimitMessageDuration   int64           `yaml:"limit_message_duration"`
-		LimitMessageNumber     int             `yaml:"limit_message_number"`
 		DetectQRCodeEnabled    bool            `yaml:"detect_image"`
 		DetectLinkEnabled      bool            `yaml:"detect_link"`
+		LimitMessageDuration   int64           `yaml:"limit_message_duration"`
+		LimitMessageNumber     int             `yaml:"limit_message_number"`
 		OperatorList           []string        `yaml:"operator_list"`
 		Operators              map[string]bool `yaml:"-"`
 		PayToJoin              bool            `yaml:"pay_to_join"`
@@ -107,16 +110,13 @@ type ExportedConfig struct {
 
 var AppConfig *Config
 
-func LoadConfig(f string) {
-	data, err := ioutil.ReadFile(f)
-	if err != nil {
-		log.Panicln(err)
-	}
-	AppConfig = &Config{}
-	err = yaml.Unmarshal(data, AppConfig)
+func Init(env string) {
+	var options map[string]*Config
+	err := yaml.Unmarshal(data, &options)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
+	AppConfig = options[env]
 	AppConfig.System.Operators = make(map[string]bool)
 	for _, op := range AppConfig.System.OperatorList {
 		AppConfig.System.Operators[op] = true

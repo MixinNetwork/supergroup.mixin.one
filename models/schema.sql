@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS messages (
   category              VARCHAR(512) NOT NULL,
   quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
   data                  TEXT NOT NULL,
+  silent                BOOLEAN NOT NULL DEFAULT false,
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   state                 VARCHAR(128) NOT NULL,
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   shard                 VARCHAR(36) NOT NULL,
   category              VARCHAR(512) NOT NULL,
   data                  TEXT NOT NULL,
+  silent                BOOLEAN NOT NULL DEFAULT false,
   status                VARCHAR(512) NOT NULL,
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

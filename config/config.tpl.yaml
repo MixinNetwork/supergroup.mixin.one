@@ -1,91 +1,94 @@
-service:
-  name: "Mixin 中文群"
-  enviroment: "production" # or development
-  port: 7001
-  host: "https://you-domain-name"
-  api_root:
-    - "https://mixin-api.zeromesh.net"
-    - "https://api.mixin.one"
-  blaze_root:
-    - "mixin-blaze.zeromesh.net"
-    - "blaze.mixin.one"
-database:
-  username: "postgres"
-  password: ""
-  host: "localhost"
-  port: 5432
-  database_name: "postgres"
-system:
-  message_shard_modifier: SHARD
-  message_shard_size: 6
-  price_asset_enable: true
-  audio_message_enable: false
-  image_message_enable: true
-  video_message_enable: false
-  live_message_enable: false
-  contact_message_enable: true
-  limit_message_duration: 0 # seconds: 60, 0 表示不限制
-  limit_message_number: 0 # number: 5 60s 5 条
-  detect_image: false
-  detect_link: false
-  operator_list:
-    - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
-    - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
-  pay_to_join: true
-  accept_asset_list:
-    - symbol: "XIN"
-      asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8"
-      amount: "0.001"
-    - symbol: "CNB"
-      asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c"
-      amount: "1000"
-appearance:
-  home_shortcut_groups:
-    - label_en: "3-Party Services"
-      label_zh: "第三方提供的服务"
-      shortcuts:
-        - icon: "..."
-          label_en: "Service Name"
-          label_zh: "服务名称"
-          url: "https://.."
-message_template:
-  welcome_message        : "欢迎加入 Mixin 中文群"
-  message_tips_guest     : "您需要先点击机器图标授权。"
-  message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
-  group_redpacket        : "中文群红包"
-  group_redpacket_short_desc: "来自无名氏的红包"
-  group_redpacket_desc    : "来自 %s 的红包"
-  group_opened_redpacket  : "%s 打开了你的红包"
-  message_prohibit        : "群主开启了禁言，暂时不能发言了。"
-  message_allow           : "群主关闭了禁言，你可以发言了。"
-  message_tips_join      : "%s 加入了群组"
-  message_tips_help_btn   : "点击加入群组"
-  message_tips_unsubscribe: "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
-  message_reward_label: "%s 给 %s 转了 %s %s"
-  message_reward_memo: "来自 %s"
-  message_tips_too_many   : "发送太频繁"
-  message_tips_suspended   : "由于您长时间未使用，暂停发送消息"
-  message_commands_info   : "/INFO"
-  message_commands_info_resp: "当前订阅人数: %d"
-mixin:
-  client_id        : "5fcd897e-e7b2-40d5-93cd-487e2d955556"
-  client_secret    : "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
-  session_asset_pin : "133123"
-  pin_token        : "fKfozH23iFLAhAeSsFeRkkhwGJo4RiJhg4mSX3rEPxpqCf01lNsESGGQ75oQZG+diTSyqd3dyI7vMrIdhhyyecbz61cxDoYAiLXpYW4AH+r94CfT73159l1z/15KCiXEfFTXD4akO0QK0J+QWlZVrz0YmVUSewZj9imv/+NdurQ="
-  session_id       : "8f42db23-d8df-4063-aeda-c322279da2c2"
-  session_key: |
-    -----BEGIN RSA PRIVATE KEY-----
-    MIICXQIBAAKBgQCS2vbuIWPSEygHzkCDORmq9n4kN1lv5Qur9UD8ske3Yx0ZK+Bu
-    0ojJXPysOWcQwReBhsYQzsBSUfVTb+nhHueAlHvYcxgpTT048/0UrLHycuX9xTI1
-    uJSc6uZ8ha6okgknALBUT15Ns9R5raVu+TBFBlJpY+k4mWAazCboWrlqBwIDAQAB
-    AoGAMI28vpbDjh1PSuViZwBmACRnKEo0g85SwZPg3KuFEpjucfgTyBBLsWfREpAY
-    B24P+3831S7GX3FBj0idJxU0rMm6mlS88EbcUHlArlVsOKocFPTDlfpH0nvCvBQQ
-    L66mTPpnLy5bQn4vsHTXyYYsrTqyUhVr0sz5ANFU134QVAECQQDTZrWQi6p4U1Ve
-    TKeytcyYV36JsMMzRx/O3ygi7aTMCmO18VBCeeIdUN/JDxe3FP/e1io7ciK9A3cy
-    3GttR8WHAkEAsdZIGNuMEQUF+HIw4sxMJydv3Qd82Spd1EaQRtIsMXwxEMIFi1/x
-    vPTxgQ7Gb0KAeKI7wizKzf9gaqyiaqJXgQJAVmMJXQkF32fGYeOXP9s0wSg36FJY
-    YjL1V5cvkp5kEpFIT8hN0Ox3rx0mZcYKHeGx8cC4v1QTyAOLiTgzmhOTLwJBAJEh
-    ev0uTwSkwNac+mBcsdlSSexr6+ues6xFWgEyDHbmD3TJopS33CSFEYJteGvcLdRF
-    MdepjmjG/PyRnoq/qgECQQCmoIh+xR6vJZ8VRWgjSzmJUPrZFz8uWk6BoePFGrGV
-    FIHlQELVfFxLB2Xo9zDXvDVRK5N5O1bCNMfXUuQsmstm
-    -----END RSA PRIVATE KEY-----
+default: &default
+  service:
+    name: "Mixin 中文群"
+    enviroment: "production" # or development
+    port: 7001
+    host: "https://you-domain-name"
+    api_root:
+      - "https://mixin-api.zeromesh.net"
+      - "https://api.mixin.one"
+    blaze_root:
+      - "mixin-blaze.zeromesh.net"
+      - "blaze.mixin.one"
+  database:
+    username: "postgres"
+    password: ""
+    host: "localhost"
+    port: 5432
+    database_name: "postgres"
+  system:
+    message_shard_modifier: SHARD
+    message_shard_size: 6
+    price_asset_enable: true
+    audio_message_enable: false
+    image_message_enable: true
+    video_message_enable: false
+    live_message_enable: false
+    contact_message_enable: true
+    limit_message_duration: 0 # seconds: 60, 0 表示不限制
+    limit_message_number: 0 # number: 5 60s 5 条
+    detect_image: false
+    detect_link: false
+    operator_list:
+      - "e9a5b807-fa8b-455a-8dfa-b189d28310ff"
+      - "fcc87491-4fa0-4c2f-b387-262b63cbc112"
+    pay_to_join: true
+    accept_asset_list:
+      - symbol: "XIN"
+        asset_id: "c94ac88f-4671-3976-b60a-09064f1811e8"
+        amount: "0.001"
+      - symbol: "CNB"
+        asset_id: "965e5c6e-434c-3fa9-b780-c50f43cd955c"
+        amount: "1000"
+  appearance:
+    home_shortcut_groups:
+      - label_en: "3-Party Services"
+        label_zh: "第三方提供的服务"
+        shortcuts:
+          - icon: "..."
+            label_en: "Service Name"
+            label_zh: "服务名称"
+            url: "https://.."
+  message_template:
+    welcome_message        : "欢迎加入 Mixin 中文群"
+    message_tips_guest     : "您需要先点击机器图标授权。"
+    message_tips_help      : "您需要先支付 0.001 XIN, 加入群组才能发消息。"
+    group_redpacket        : "中文群红包"
+    group_redpacket_short_desc: "来自无名氏的红包"
+    group_redpacket_desc    : "来自 %s 的红包"
+    group_opened_redpacket  : "%s 打开了你的红包"
+    message_prohibit        : "群主开启了禁言，暂时不能发言了。"
+    message_allow           : "群主关闭了禁言，你可以发言了。"
+    message_tips_join      : "%s 加入了群组"
+    message_tips_help_btn   : "点击加入群组"
+    message_tips_unsubscribe: "您已经取消了本群的消息订阅, 无法发送或者接收消息。"
+    message_reward_label: "%s 给 %s 转了 %s %s"
+    message_reward_memo: "来自 %s"
+    message_tips_too_many   : "发送太频繁"
+    message_tips_suspended   : "由于您长时间未使用，暂停发送消息"
+    message_commands_info   : "/INFO"
+    message_commands_info_resp: "当前订阅人数: %d"
+  mixin:
+    client_id: "5fcd897e-e7b2-40d5-93cd-487e2d955556"
+    client_secret: "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
+    session_asset_pin: "133123"
+    pin_token: "fKfozH23iFLAhAeSsFeRkkhwGJo4RiJhg4mSX3rEPxpqCf01lNsESGGQ75oQZG+diTSyqd3dyI7vMrIdhhyyecbz61cxDoYAiLXpYW4AH+r94CfT73159l1z/15KCiXEfFTXD4akO0QK0J+QWlZVrz0YmVUSewZj9imv/+NdurQ="
+    session_id: "8f42db23-d8df-4063-aeda-c322279da2c2"
+    session_key: "9v61brhzYXGlaNbrHem-BszqnWkmiu5c3P5xM7crbjI2nzFaV7xzqHIsvTFBNB5qxIvxmVXj40F_-xxX0lqBvw"
+development:
+  <<: *default
+  database:
+    database_name: "group_development"
+test:
+  <<: *default
+  system:
+    pay_to_join: true
+  mixin:
+    client_id: "5fcd897e-e6b2-40d5-93cd-487e2d95d556" ### 7000100122 Mixin Bot Manager Test	
+    client_secret: "d4ee53085596a876ef835816f402cdccc734e112836aff39b4f261fe457aacbf"
+    session_asset_pin: "363352"
+    session_id: "618e0f71-2f57-4125-913c-d58459a76b81"
+    pin_token: "wITpMetv_lJdY-zkGCu76VS4isWG814WJcx9lalEtFA"
+    session_key: "9v61brhzYXGlaNbrHem-BszqnWkmiu5c3P5xM7crbjI2nzFaV7xzqHIsvTFBNB5qxIvxmVXj40F_-xxX0lqBvw"
+test:
+  <<: *default

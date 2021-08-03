@@ -42,19 +42,20 @@ type DistributedMessage struct {
 	Shard          string
 	Category       string
 	Data           string
+	Silent         bool
 	Status         string
 	CreatedAt      time.Time
 }
 
-var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "status", "created_at"}
+var distributedMessagesCols = []string{"message_id", "conversation_id", "recipient_id", "user_id", "parent_id", "quote_message_id", "shard", "category", "data", "silent", "status", "created_at"}
 
 func (dm *DistributedMessage) values() []interface{} {
-	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, dm.CreatedAt}
+	return []interface{}{dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Silent, dm.Status, dm.CreatedAt}
 }
 
 func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	var m DistributedMessage
-	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Status, &m.CreatedAt)
+	err := row.Scan(&m.MessageId, &m.ConversationId, &m.RecipientId, &m.UserId, &m.ParentId, &m.QuoteMessageId, &m.Shard, &m.Category, &m.Data, &m.Silent, &m.Status, &m.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -161,6 +162,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 					Shard:          shard,
 					Category:       message.Category,
 					Data:           message.Data,
+					Silent:         message.Silent,
 					Status:         MessageStatusSent,
 					CreatedAt:      time.Now(),
 				}
@@ -214,7 +216,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		dm, err := buildDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data)
+		dm, err := buildDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data, false)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -268,6 +270,7 @@ func notifyTooLarge(ctx context.Context, messageId, category, userId, name strin
 				QuoteMessageId: "",
 				Category:       MessageCategoryPlainText,
 				Data:           data,
+				Silent:         false,
 				Status:         MessageStatusSent,
 				CreatedAt:      time.Now(),
 			}
@@ -301,7 +304,7 @@ func createSystemDistributedMessageInTx(ctx context.Context, tx *sql.Tx, user *U
 	if len(reason) == 0 {
 		return nil
 	}
-	dm, err := buildDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, reason)
+	dm, err := buildDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, reason, false)
 	if err != nil {
 		return err
 	}
@@ -465,7 +468,7 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 	return true, ""
 }
 
-func buildDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string) (*DistributedMessage, error) {
+func buildDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string, silent bool) (*DistributedMessage, error) {
 	dm := &DistributedMessage{
 		MessageId:      messageId,
 		ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, recipientId),
@@ -475,6 +478,7 @@ func buildDistributeMessage(ctx context.Context, messageId, parentId, quoteMessa
 		QuoteMessageId: quoteMessageId,
 		Category:       category,
 		Data:           data,
+		Silent:         silent,
 		Status:         MessageStatusSent,
 		CreatedAt:      time.Now(),
 	}

@@ -60,7 +60,7 @@ func (impl *messageImpl) recall(w http.ResponseWriter, r *http.Request, params m
 	str := base64.StdEncoding.EncodeToString(data)
 	t := time.Now()
 	id := models.UniqueConversationId(params["id"], middlewares.CurrentUser(r).UserId)
-	_, err = models.CreateMessage(r.Context(), middlewares.CurrentUser(r), id, models.MessageCategoryMessageRecall, "", str, t, t)
+	_, err = models.CreateMessage(r.Context(), middlewares.CurrentUser(r), id, models.MessageCategoryMessageRecall, "", str, false, t, t)
 	if err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {

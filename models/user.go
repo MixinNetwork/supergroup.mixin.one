@@ -282,7 +282,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		if len(msg.Data) == 0 {
 			continue
 		}
-		dm, err := buildDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data)
+		dm, err := buildDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data, false)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -463,14 +463,16 @@ func LoopingInactiveUsers(ctx context.Context) ([]*User, error) {
 
 func (user *User) Hibernate(ctx context.Context) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-		text := base64.RawURLEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
-		err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
-		if err != nil {
-			return err
+		if user.State == PaymentStatePaid {
+			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
+			err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
+			if err != nil {
+				return err
+			}
 		}
 		user.ActiveAt = time.Now().Add(-24 * 7 * time.Hour)
 		query := "UPDATE users SET active_at=$1 WHERE user_id=$2"
-		_, err = tx.Exec(query, user.ActiveAt, user.UserId)
+		_, err := tx.Exec(query, user.ActiveAt, user.UserId)
 		return err
 	})
 	if err != nil {

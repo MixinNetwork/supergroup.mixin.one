@@ -18,12 +18,16 @@ import (
 
 func main() {
 	service := flag.String("service", "http", "run a service")
-	yaml := flag.String("config", "./config/config.yaml", "path of the config file")
+	env := flag.String("e", "production", "")
 	flag.Parse()
 	// TODO
 	bot.SetBaseUri("https://api.mixin.zone")
 
-	config.LoadConfig(*yaml)
+	config.Init(*env)
+	if *env != config.AppConfig.Service.Environment {
+		log.Panicln("Invalid Environment", *env, config.AppConfig.Service.Environment)
+	}
+
 	dbinfo := config.AppConfig.Database
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		dbinfo.User,
