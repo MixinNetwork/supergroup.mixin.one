@@ -224,12 +224,12 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 			values.WriteString(",")
 		}
 		i += 1
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Silent, dm.Status))
 		values.WriteString(",")
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
 		data := base64.RawURLEncoding.EncodeToString([]byte(why))
-		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Status))
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Silent, dm.Status))
 	}
 
 	message.LastDistributeAt = time.Now()
@@ -393,8 +393,8 @@ func readDistributedMessageSetByIds(ctx context.Context, ids []string) (map[stri
 	return set, nil
 }
 
-func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string) string {
-	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s','%s', '%s')", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status, string(pq.FormatTimestamp(time.Now())))
+func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data string, silent bool, status string) string {
+	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s',%t,'%s','%s')", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, silent, status, string(pq.FormatTimestamp(time.Now())))
 }
 
 func shardId(cid, uid string) (string, error) {
