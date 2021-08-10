@@ -28,30 +28,30 @@ const (
 	MessageStatePending = "pending"
 	MessageStateSuccess = "success"
 
-	MessageCategoryPlainText         = "PLAIN_TEXT"
-	MessageCategoryPlainImage        = "PLAIN_IMAGE"
-	MessageCategoryPlainVideo        = "PLAIN_VIDEO"
-	MessageCategoryPlainLive         = "PLAIN_LIVE"
-	MessageCategoryPlainData         = "PLAIN_DATA"
-	MessageCategoryPlainSticker      = "PLAIN_STICKER"
-	MessageCategoryPlainContact      = "PLAIN_CONTACT"
-	MessageCategoryPlainAudio        = "PLAIN_AUDIO"
-	MessageCategoryPlainPost         = "PLAIN_POST"
-	MessageCategoryPlainTranscript   = "PLAIN_TRANSCRIPT"
-	MessageCategoryEncryptedPost     = "ENCRYPTED_POST"
-	MessageCategoryEncryptedText     = "ENCRYPTED_TEXT"
-	MessageCategoryEncryptedImage    = "ENCRYPTED_IMAGE"
-	MessageCategoryEncryptedVideo    = "ENCRYPTED_VIDEO"
-	MessageCategoryEncryptedLive     = "ENCRYPTED_LIVE"
-	MessageCategoryEncryptedAudio    = "ENCRYPTED_AUDIO"
-	MessageCategoryEncryptedData     = "ENCRYPTED_DATA"
-	MessageCategoryEncryptedSticker  = "ENCRYPTED_STICKER"
-	MessageCategoryEncryptedContact  = "ENCRYPTED_CONTACT"
-	MessageCategoryEncryptedLocation = "ENCRYPTED_LOCATION"
-	MessageCategoryPlainTranscript   = "ENCRYPTED_TRANSCRIPT"
-	MessageCategoryAppCard           = "APP_CARD"
-	MessageCategoryAppButtonGroup    = "APP_BUTTON_GROUP"
-	MessageCategoryMessageRecall     = "MESSAGE_RECALL"
+	MessageCategoryPlainText           = "PLAIN_TEXT"
+	MessageCategoryPlainImage          = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo          = "PLAIN_VIDEO"
+	MessageCategoryPlainLive           = "PLAIN_LIVE"
+	MessageCategoryPlainData           = "PLAIN_DATA"
+	MessageCategoryPlainSticker        = "PLAIN_STICKER"
+	MessageCategoryPlainContact        = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio          = "PLAIN_AUDIO"
+	MessageCategoryPlainPost           = "PLAIN_POST"
+	MessageCategoryPlainTranscript     = "PLAIN_TRANSCRIPT"
+	MessageCategoryEncryptedPost       = "ENCRYPTED_POST"
+	MessageCategoryEncryptedText       = "ENCRYPTED_TEXT"
+	MessageCategoryEncryptedImage      = "ENCRYPTED_IMAGE"
+	MessageCategoryEncryptedVideo      = "ENCRYPTED_VIDEO"
+	MessageCategoryEncryptedLive       = "ENCRYPTED_LIVE"
+	MessageCategoryEncryptedAudio      = "ENCRYPTED_AUDIO"
+	MessageCategoryEncryptedData       = "ENCRYPTED_DATA"
+	MessageCategoryEncryptedSticker    = "ENCRYPTED_STICKER"
+	MessageCategoryEncryptedContact    = "ENCRYPTED_CONTACT"
+	MessageCategoryEncryptedLocation   = "ENCRYPTED_LOCATION"
+	MessageCategoryEncryptedTranscript = "ENCRYPTED_TRANSCRIPT"
+	MessageCategoryAppCard             = "APP_CARD"
+	MessageCategoryAppButtonGroup      = "APP_BUTTON_GROUP"
+	MessageCategoryMessageRecall       = "MESSAGE_RECALL"
 )
 
 type Message struct {
@@ -109,7 +109,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedSticker,
 		MessageCategoryEncryptedContact,
 		MessageCategoryEncryptedLocation,
-		MessageCategoryPlainTranscript,
+		MessageCategoryEncryptedTranscript,
 		MessageCategoryAppCard,
 		MessageCategoryAppButtonGroup,
 		MessageCategoryMessageRecall:
