@@ -37,6 +37,7 @@ const (
 	MessageCategoryPlainContact      = "PLAIN_CONTACT"
 	MessageCategoryPlainAudio        = "PLAIN_AUDIO"
 	MessageCategoryPlainPost         = "PLAIN_POST"
+	MessageCategoryPlainTranscript   = "PLAIN_TRANSCRIPT"
 	MessageCategoryEncryptedPost     = "ENCRYPTED_POST"
 	MessageCategoryEncryptedText     = "ENCRYPTED_TEXT"
 	MessageCategoryEncryptedImage    = "ENCRYPTED_IMAGE"
@@ -47,6 +48,7 @@ const (
 	MessageCategoryEncryptedSticker  = "ENCRYPTED_STICKER"
 	MessageCategoryEncryptedContact  = "ENCRYPTED_CONTACT"
 	MessageCategoryEncryptedLocation = "ENCRYPTED_LOCATION"
+	MessageCategoryPlainTranscript   = "ENCRYPTED_TRANSCRIPT"
 	MessageCategoryAppCard           = "APP_CARD"
 	MessageCategoryAppButtonGroup    = "APP_BUTTON_GROUP"
 	MessageCategoryMessageRecall     = "MESSAGE_RECALL"
@@ -96,6 +98,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryPlainContact,
 		MessageCategoryPlainAudio,
 		MessageCategoryPlainPost,
+		MessageCategoryPlainTranscript,
 		MessageCategoryEncryptedPost,
 		MessageCategoryEncryptedText,
 		MessageCategoryEncryptedImage,
@@ -106,6 +109,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedSticker,
 		MessageCategoryEncryptedContact,
 		MessageCategoryEncryptedLocation,
+		MessageCategoryPlainTranscript,
 		MessageCategoryAppCard,
 		MessageCategoryAppButtonGroup,
 		MessageCategoryMessageRecall:
@@ -164,6 +168,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedData,
 		MessageCategoryEncryptedSticker,
 		MessageCategoryEncryptedContact,
+		MessageCategoryPlainTranscript,
 		MessageCategoryEncryptedLocation:
 		var err error
 		data, err = decryptMessageData(data)

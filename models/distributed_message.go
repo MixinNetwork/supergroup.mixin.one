@@ -75,9 +75,11 @@ func (message *Message) Distribute(ctx context.Context) error {
 				return message.Notify(ctx, "Message contains link")
 			}
 		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
-			b, reason := messageQRFilter(ctx, message)
-			if !b {
-				return message.Notify(ctx, reason)
+			if system.DetectQRCodeEnabled {
+				b, reason := messageQRFilter(ctx, message)
+				if !b {
+					return message.Notify(ctx, reason)
+				}
 			}
 		}
 	}
