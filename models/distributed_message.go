@@ -239,8 +239,11 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		if err != nil {
 			return err
 		}
-		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-		_, err = tx.ExecContext(ctx, query)
+		valString := values.String()
+		if valString != "" {
+			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+			_, err = tx.ExecContext(ctx, query)
+		}
 		return err
 	})
 	if err != nil {
