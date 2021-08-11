@@ -168,7 +168,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedData,
 		MessageCategoryEncryptedSticker,
 		MessageCategoryEncryptedContact,
-		MessageCategoryPlainTranscript,
+		MessageCategoryEncryptedTranscript,
 		MessageCategoryEncryptedLocation:
 		var err error
 		data, err = decryptMessageData(data)
