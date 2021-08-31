@@ -481,10 +481,12 @@ func decryptMessageData(data string) (string, error) {
 }
 
 func EncryptMessageData(data string, sessions []*Session) (string, error) {
-	dataBytes, err := base64.RawURLEncoding.DecodeString(data)
-	if err != nil {
-		return "", err
-	}
+	/*
+		dataBytes, err := base64.RawURLEncoding.DecodeString(data)
+		if err != nil {
+			return "", err
+		}
+	*/
 
 	key := make([]byte, 16)
 	_, err = rand.Read(key)
@@ -504,7 +506,7 @@ func EncryptMessageData(data string, sessions []*Session) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ciphertext := aesgcm.Seal(nil, nonce, dataBytes, nil)
+	ciphertext := aesgcm.Seal(nil, nonce, []byte(data), nil)
 
 	var sessionLen [2]byte
 	binary.LittleEndian.PutUint16(sessionLen[:], uint16(len(sessions)))
