@@ -480,18 +480,14 @@ func decryptMessageData(data string) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(plaintext), nil
 }
 
-func EncryptMessageData(category, data string, sessions []*Session) (string, error) {
-	dataBytes := []byte(data)
-	if category == MessageCategoryEncryptedText {
-		var err error
-		dataBytes, err = base64.RawURLEncoding.DecodeString(data)
-		if err != nil {
-			return "", err
-		}
+func EncryptMessageData(data string, sessions []*Session) (string, error) {
+	dataBytes, err := base64.RawURLEncoding.DecodeString(data)
+	if err != nil {
+		return "", err
 	}
 
 	key := make([]byte, 16)
-	_, err := rand.Read(key)
+	_, err = rand.Read(key)
 	if err != nil {
 		return "", err
 	}
