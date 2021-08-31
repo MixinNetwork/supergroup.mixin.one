@@ -489,7 +489,7 @@ func EncryptMessageData(data string, sessions []*Session) (string, error) {
 	*/
 
 	key := make([]byte, 16)
-	_, err = rand.Read(key)
+	_, err := rand.Read(key)
 	if err != nil {
 		return "", err
 	}
