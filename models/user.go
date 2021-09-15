@@ -286,7 +286,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 		if i > 0 {
 			values.WriteString(",")
 		}
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, false))
 	}
 	v := values.String()
 	if v != "" {
