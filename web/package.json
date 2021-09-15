@@ -7,7 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "core-js": "^3.9.1",
     "dayjs": "^1.10.4",
     "file-saver": "^2.0.5",
