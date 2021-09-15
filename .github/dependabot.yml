@@ -1,0 +1,35 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/web"
+  schedule:
+    interval: weekly
+    timezone: Asia/Tokyo
+  open-pull-requests-limit: 100
+  ignore:
+  - dependency-name: vant
+    versions:
+    - 2.12.10
+    - 2.12.11
+    - 2.12.13
+    - 2.12.6
+    - 2.12.7
+    - 2.12.8
+  - dependency-name: core-js
+    versions:
+    - 3.10.0
+    - 3.10.1
+    - 3.8.3
+    - 3.9.0
+  - dependency-name: y18n
+    versions:
+    - 4.0.1
+  - dependency-name: vue-i18n
+    versions:
+    - 8.22.4
+    - 8.23.0
+    - 8.24.2
+  - dependency-name: sass-loader
+    versions:
+    - 10.1.1
+    - 11.0.0
