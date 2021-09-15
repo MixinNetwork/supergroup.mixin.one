@@ -9,18 +9,23 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-func UserMe(ctx context.Context, code string) (*bot.User, string, error) {
+func UserMe(ctx context.Context, code, private, public string) (*bot.User, string, string, error) {
 	mixin := config.AppConfig.Mixin
-	token, scope, _, err := bot.OAuthGetAccessToken(ctx, mixin.ClientId, mixin.ClientSecret, code, "", "")
+	_, scope, authorizationID, err := bot.OAuthGetAccessToken(ctx, mixin.ClientId, mixin.ClientSecret, code, "", public)
 	if err != nil {
-		return nil, "", parseError(ctx, err.(bot.Error))
+		return nil, "", "", parseError(ctx, err.(bot.Error))
 	}
 	if !strings.Contains(scope, "PROFILE:READ") {
-		return nil, "", session.ForbiddenError(ctx)
+		return nil, "", "", session.ForbiddenError(ctx)
 	}
-	me, err := bot.UserMe(ctx, token)
+	requestID := bot.UuidNewV4().String()
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/me", "", scope, requestID)
 	if err != nil {
-		return nil, "", parseError(ctx, err.(bot.Error))
+		return nil, "", "", err
 	}
-	return me, token, nil
+	me, err := bot.UserMeWithRequestID(ctx, token, requestID)
+	if err != nil {
+		return nil, "", "", parseError(ctx, err.(bot.Error))
+	}
+	return me, authorizationID, scope, nil
 }

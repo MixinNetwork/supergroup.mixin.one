@@ -6,7 +6,7 @@ go 1.16
 
 require (
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
-	github.com/MixinNetwork/bot-api-go-client v1.4.2
+	github.com/MixinNetwork/bot-api-go-client v1.4.3
 	github.com/MixinNetwork/go-number v0.0.0-20210414133019-df3477b564b8
 	github.com/MixinNetwork/mixin v0.13.4 // indirect
 	github.com/bugsnag/bugsnag-go v2.1.2+incompatible

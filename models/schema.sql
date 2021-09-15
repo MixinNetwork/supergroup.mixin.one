@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
   identity_number   BIGINT NOT NULL,
   full_name         VARCHAR(512) NOT NULL DEFAULT '',
   access_token      VARCHAR(512) NOT NULL DEFAULT '',
+  authorization_id  VARCHAR(512) NOT NULL DEFAULT '',
+  scope             VARCHAR(512) NOT NULL DEFAULT '',
   avatar_url        VARCHAR(1024) NOT NULL DEFAULT '',
   trace_id          VARCHAR(36) NOT NULL CHECK (trace_id ~* '^[0-9a-f-]{36,36}$'),
   state             VARCHAR(128) NOT NULL,
