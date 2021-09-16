@@ -9,7 +9,7 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-func UserMe(ctx context.Context, code, private, public string) (*bot.User, string, string, error) {
+func UserMeFromCode(ctx context.Context, code, private, public string) (*bot.User, string, string, error) {
 	mixin := config.AppConfig.Mixin
 	_, scope, authorizationID, err := bot.OAuthGetAccessToken(ctx, mixin.ClientId, mixin.ClientSecret, code, "", public)
 	if err != nil {
@@ -28,4 +28,18 @@ func UserMe(ctx context.Context, code, private, public string) (*bot.User, strin
 		return nil, "", "", parseError(ctx, err.(bot.Error))
 	}
 	return me, authorizationID, scope, nil
+}
+
+func UserMe(ctx context.Context, authorizationID, private, scope string) (*bot.User, error) {
+	mixin := config.AppConfig.Mixin
+	requestID := bot.UuidNewV4().String()
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/me", "", scope, requestID)
+	if err != nil {
+		return nil, err
+	}
+	me, err := bot.UserMeWithRequestID(ctx, token, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return me, nil
 }

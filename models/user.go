@@ -74,7 +74,7 @@ func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*Us
 	}
 	public := base64.RawURLEncoding.EncodeToString(pub)
 	private := base64.RawURLEncoding.EncodeToString(priv)
-	me, authorizationID, scope, err := externals.UserMe(ctx, authorizationCode, private, public)
+	me, authorizationID, scope, err := externals.UserMeFromCode(ctx, authorizationCode, private, public)
 	if err != nil {
 		return nil, err
 	}

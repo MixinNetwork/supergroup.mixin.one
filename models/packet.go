@@ -17,6 +17,7 @@ import (
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
+	"github.com/MixinNetwork/supergroup.mixin.one/externals"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
 )
@@ -89,7 +90,7 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 			return nil, session.BadDataError(ctx)
 		}
 	}
-	u, _ := bot.UserMe(ctx, current.AccessToken)
+	u, _ := externals.UserMe(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
 	if u != nil {
 		name := strings.TrimSpace(u.FullName)
 		if name != current.FullName || u.AvatarURL != current.AvatarURL {
