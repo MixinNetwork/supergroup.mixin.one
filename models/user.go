@@ -423,7 +423,7 @@ func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, id 
 func generateAuthenticationToken(ctx context.Context, userId, accessToken string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Id:        userId,
-		ExpiresAt: time.Now().Add(time.Hour * 24 * 365).Unix(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 365 * 5).Unix(),
 	})
 	sum := sha256.Sum256([]byte(accessToken))
 	return token.SignedString(sum[:])
