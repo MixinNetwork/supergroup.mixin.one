@@ -59,6 +59,8 @@ github.com/MixinNetwork/bot-api-go-client v1.3.1 h1:GjGDXTEpp2Ne9lkpvy85DdWmBZbL
 github.com/MixinNetwork/bot-api-go-client v1.3.1/go.mod h1:3L+TToSuzvegr2wwIVEsryNopCaLUmoNowl4p0iEbAk=
 github.com/MixinNetwork/bot-api-go-client v1.4.2 h1:6ZuUqQCUsPepYUAVyke9Ae54bcuqXyPSV5Gkk7UQAMU=
 github.com/MixinNetwork/bot-api-go-client v1.4.2/go.mod h1:+MLqfsu6QCI0BoOMZ7LBNiGKyIb+IiNfPL6/NjiDLZM=
+github.com/MixinNetwork/bot-api-go-client v1.4.3 h1:YygJXMJSmTRLfSTy27DcB1SXRI9DKv9dEeutKukih8Y=
+github.com/MixinNetwork/bot-api-go-client v1.4.3/go.mod h1:+MLqfsu6QCI0BoOMZ7LBNiGKyIb+IiNfPL6/NjiDLZM=
 github.com/MixinNetwork/go-number v0.0.0-20210302140654-71a9f2b7e10d/go.mod h1:N5G0zvYjtb/H9jaUovUbL6/ehYPlrAI9qeos/ezaBLk=
 github.com/MixinNetwork/go-number v0.0.0-20210414133019-df3477b564b8 h1:wCrPFQcU/qfdwLnnBSL+Iq/6dju+iI8lN7lJW0LFi/4=
 github.com/MixinNetwork/go-number v0.0.0-20210414133019-df3477b564b8/go.mod h1:TASJGXNi4CK9bh2AOQFpVe7r3//CBuZJTNlJYzTXRUk=
