@@ -31,6 +31,10 @@ func UserMeFromCode(ctx context.Context, code, private, public string) (*bot.Use
 }
 
 func UserMe(ctx context.Context, authorizationID, private, scope string) (*bot.User, error) {
+	// FixMe
+	if authorizationID == "" {
+		return bot.UserMe(ctx, private)
+	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
 	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/me", "", scope, requestID)

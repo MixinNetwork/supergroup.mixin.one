@@ -9,6 +9,10 @@ import (
 )
 
 func AssetList(ctx context.Context, authorizationID, private, scope string) ([]*bot.Asset, error) {
+	// FixMe
+	if authorizationID == "" {
+		return bot.AssetList(ctx, private)
+	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
 	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/assets", "", scope, requestID)
@@ -23,6 +27,10 @@ func AssetList(ctx context.Context, authorizationID, private, scope string) ([]*
 }
 
 func AssetShow(ctx context.Context, assetId, authorizationID, private, scope string) (*bot.Asset, error) {
+	// FixMe
+	if authorizationID == "" {
+		return bot.AssetShow(ctx, assetId, private)
+	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
 	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/assets/"+assetId, "", scope, requestID)
