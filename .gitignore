@@ -1,5 +1,4 @@
 .DS_Store
-config/*
 deploy
 nginx.conf
 tasks
@@ -7,6 +6,3 @@ web/dist
 web/node_modules
 supergroup.mixin.one
 config.yaml
-
-!config/config.go
-!config/config.tpl.yaml
