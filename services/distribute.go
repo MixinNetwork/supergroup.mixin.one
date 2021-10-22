@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -126,7 +127,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 		}
 		recipient := sessionSet[message.RecipientId]
 		m["category"] = message.ReadCategory(recipient)
-		if recipient != nil {
+		if strings.Contains(m["category"], "ENCRYPTED") && recipient != nil {
 			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
 			var sessions []map[string]string
 			for _, s := range recipient.Sessions {
