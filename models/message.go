@@ -515,9 +515,8 @@ func EncryptMessageData(data string, sessions []*Session) (string, error) {
 		return "", err
 	}
 
-	var pub [32]byte
 	private := ed25519.PrivateKey(privateBytes)
-	bot.PublicKeyToCurve25519(&pub, ed25519.PublicKey(private[32:]))
+	pub, _ := bot.PublicKeyToCurve25519(ed25519.PublicKey(private[32:]))
 
 	var sessionsBytes []byte
 	for _, s := range sessions {
