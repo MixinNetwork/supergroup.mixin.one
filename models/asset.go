@@ -46,7 +46,7 @@ func assetFromRow(row durable.Row) (*Asset, error) {
 }
 
 func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
-	list, err := externals.AssetList(ctx, current.AccessToken)
+	list, err := externals.AssetList(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 }
 
 func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, error) {
-	a, err := externals.AssetShow(ctx, assetId, current.AccessToken)
+	a, err := externals.AssetShow(ctx, assetId, current.AuthorizationID, current.AccessToken, current.Scope)
 	if err != nil {
 		return nil, err
 	}

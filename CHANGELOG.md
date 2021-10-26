@@ -1,3 +1,6 @@
+# 2021-09-15
+users 表添加 authorization_id, scope 两个字段, 用来支持 ed25519 签名
+
 # 2021-03-18
 利用 go1.6 的 embed 把 production 配置一起打包, 最新 config.tpl.yaml 
 

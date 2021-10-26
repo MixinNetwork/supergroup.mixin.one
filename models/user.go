@@ -3,6 +3,8 @@ package models
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
@@ -36,30 +38,32 @@ const (
 )
 
 type User struct {
-	UserId         string
-	IdentityNumber int64
-	FullName       string
-	AccessToken    string
-	AvatarURL      string
-	TraceId        string
-	State          string
-	ActiveAt       time.Time
-	SubscribedAt   time.Time
-	PayMethod      string
+	UserId          string
+	IdentityNumber  int64
+	FullName        string
+	AccessToken     string
+	AuthorizationID string
+	Scope           string
+	AvatarURL       string
+	TraceId         string
+	State           string
+	ActiveAt        time.Time
+	SubscribedAt    time.Time
+	PayMethod       string
 
 	isNew               bool
 	AuthenticationToken string
 }
 
-var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "avatar_url", "trace_id", "state", "active_at", "subscribed_at", "pay_method"}
+var usersCols = []string{"user_id", "identity_number", "full_name", "access_token", "authorization_id", "scope", "avatar_url", "trace_id", "state", "active_at", "subscribed_at", "pay_method"}
 
 func (u *User) values() []interface{} {
-	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AvatarURL, u.TraceId, u.State, u.ActiveAt, u.SubscribedAt, u.PayMethod}
+	return []interface{}{u.UserId, u.IdentityNumber, u.FullName, u.AccessToken, u.AuthorizationID, u.Scope, u.AvatarURL, u.TraceId, u.State, u.ActiveAt, u.SubscribedAt, u.PayMethod}
 }
 
 func userFromRow(row durable.Row) (*User, error) {
 	var u User
-	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt, &u.PayMethod)
+	err := row.Scan(&u.UserId, &u.IdentityNumber, &u.FullName, &u.AccessToken, &u.AuthorizationID, &u.Scope, &u.AvatarURL, &u.TraceId, &u.State, &u.ActiveAt, &u.SubscribedAt, &u.PayMethod)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -67,14 +71,20 @@ func userFromRow(row durable.Row) (*User, error) {
 }
 
 func AuthenticateUserByOAuth(ctx context.Context, authorizationCode string) (*User, error) {
-	me, token, err := externals.UserMe(ctx, authorizationCode)
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	return createUser(ctx, token, me.UserId, me.IdentityNumber, me.FullName, me.AvatarURL)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	me, authorizationID, scope, err := externals.UserMeFromCode(ctx, authorizationCode, private, public)
+	if err != nil {
+		return nil, err
+	}
+	return createUser(ctx, public, private, authorizationID, scope, me.UserId, me.IdentityNumber, me.FullName, me.AvatarURL)
 }
 
-func createUser(ctx context.Context, accessToken, userId, identityNumber, fullName, avatarURL string) (*User, error) {
+func createUser(ctx context.Context, public, private, authorizationID, scope, userId, identityNumber, fullName, avatarURL string) (*User, error) {
 	id, err := bot.UuidFromString(userId)
 	if err != nil {
 		return nil, session.ForbiddenError(ctx)
@@ -86,7 +96,7 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	if identity <= 0 || (identity > 7000000000 && identity < 8000000000) || identity == 7000 {
 		return nil, session.ForbiddenError(ctx)
 	}
-	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), accessToken)
+	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), private)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}
@@ -122,7 +132,9 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 	if strings.TrimSpace(fullName) != "" {
 		user.FullName = fullName
 	}
-	user.AccessToken = accessToken
+	user.AccessToken = private
+	user.AuthorizationID = authorizationID
+	user.Scope = scope
 	user.AvatarURL = avatarURL
 	user.AuthenticationToken = authenticationToken
 
@@ -142,8 +154,8 @@ func createUser(ctx context.Context, accessToken, userId, identityNumber, fullNa
 		return user, nil
 	}
 
-	short := []string{"full_name", "access_token", "avatar_url"}
-	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$4", short), user.FullName, user.AccessToken, user.AvatarURL, user.UserId)
+	short := []string{"full_name", "access_token", "authorization_id", "scope", "avatar_url"}
+	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$6", short), user.FullName, user.AccessToken, user.AuthorizationID, user.Scope, user.AvatarURL, user.UserId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -414,7 +426,7 @@ func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, sen
 func generateAuthenticationToken(ctx context.Context, userId, accessToken string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Id:        userId,
-		ExpiresAt: time.Now().Add(time.Hour * 24 * 365).Unix(),
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 365 * 5).Unix(),
 	})
 	sum := sha256.Sum256([]byte(accessToken))
 	return token.SignedString(sum[:])

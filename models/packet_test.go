@@ -2,7 +2,10 @@ package models
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -17,7 +20,13 @@ func TestPacketCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
+	user, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	err = user.Payment(ctx)
@@ -30,7 +39,7 @@ func TestPacketCRUD(t *testing.T) {
 	err = user.Payment(ctx)
 	assert.Nil(err)
 
-	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "Li", "http://localhost")
+	li, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1001", "Li", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	err = li.Payment(ctx)

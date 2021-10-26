@@ -12,7 +12,7 @@ func TestBroadcasterCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	admin := &User{UserId: "e9a5b807-fa8b-455a-8dfa-b189d28310ff"}
+	admin := &User{UserId: "e9e5b807-fa8b-455a-8dfa-b189d28310ff"}
 
 	users, err := ReadBroadcasters(ctx)
 	assert.Nil(err)

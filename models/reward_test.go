@@ -1,6 +1,9 @@
 package models
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/base64"
 	"testing"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
@@ -12,10 +15,16 @@ func TestRewardCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
+	user, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
-	recipient, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1100", "name", "http://localhost")
+	recipient, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1100", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(recipient)
 

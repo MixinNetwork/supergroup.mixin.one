@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/base64"
 	"testing"
 	"time"
@@ -14,7 +16,13 @@ func TestUserCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	user, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
+	user, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	assert.Equal("name", user.FullName)
@@ -93,11 +101,11 @@ func TestUserCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int64(1), count)
 
-	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
+	li, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	assert.Equal("name", li.FullName)
-	li, err = createUser(ctx, "accessToken", li.UserId, "1001", "fullname", "http://localhost")
+	li, err = createUser(ctx, public, private, authorizationID, "", li.UserId, "1001", "fullname", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	assert.Equal("fullname", li.FullName)
@@ -114,7 +122,7 @@ func TestUserCRUD(t *testing.T) {
 	user, err = FindUser(ctx, li.UserId)
 	assert.Nil(err)
 	assert.NotNil(user)
-	admin := &User{UserId: "e9a5b807-fa8b-455a-8dfa-b189d28310ff"}
+	admin := &User{UserId: "e9e5b807-fa8b-455a-8dfa-b189d28310ff"}
 	admin.DeleteUser(ctx, li.UserId)
 	user, err = FindUser(ctx, li.UserId)
 	assert.Nil(err)
@@ -126,7 +134,13 @@ func TestBlacklistCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
-	admin := &User{UserId: "e9a5b807-fa8b-455a-8dfa-b189d28310ff"}
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
+	admin := &User{UserId: "e9e5b807-fa8b-455a-8dfa-b189d28310ff"}
 	id := bot.UuidNewV4().String()
 	list, err := admin.CreateBlacklist(ctx, id)
 	assert.Nil(err)
@@ -135,7 +149,7 @@ func TestBlacklistCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Nil(list)
 
-	li, err := createUser(ctx, "accessToken", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
+	li, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1001", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(li)
 	list, err = admin.CreateBlacklist(ctx, li.UserId)

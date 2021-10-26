@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -24,9 +25,16 @@ func TestMessageCRUD(t *testing.T) {
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
 
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	user := &User{UserId: id, ActiveAt: time.Now()}
 	data := base64.RawURLEncoding.EncodeToString([]byte("hello"))
+	silent := false
 	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
@@ -58,7 +66,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	user, err = createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
+	user, err = createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "10000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	users, err := subscribedUsers(ctx, message.LastDistributeAt, 100, bot.UuidNewV4().String())
@@ -78,7 +86,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 1)
 	assert.Equal(users[0].UserId, dms[0].RecipientId)
-	user, err = createUser(ctx, "accessToken", bot.UuidNewV4().String(), "10001", "name", "http://localhost")
+	user, err = createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "10001", "name", "http://localhost")
 	assert.Nil(err)
 	err = user.Payment(ctx)
 	assert.Nil(err)
