@@ -34,7 +34,6 @@ func TestMessageCRUD(t *testing.T) {
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	user := &User{UserId: id, ActiveAt: time.Now()}
 	data := base64.RawURLEncoding.EncodeToString([]byte("hello"))
-	silent := false
 	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
@@ -138,9 +137,8 @@ func TestMessageCRUD(t *testing.T) {
 
 	mixin := config.AppConfig.Mixin
 	privateBytes, _ := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
-	var pub [32]byte
-	private := ed25519.PrivateKey(privateBytes)
-	bot.PublicKeyToCurve25519(&pub, ed25519.PublicKey(private[32:]))
+	privateKey := ed25519.PrivateKey(privateBytes)
+	pub, _ = bot.PublicKeyToCurve25519(ed25519.PublicKey(privateKey[32:]))
 
 	sessions := []*Session{
 		&Session{
