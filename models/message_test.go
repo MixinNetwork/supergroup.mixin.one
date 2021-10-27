@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"testing"
@@ -126,7 +125,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)
-	assert.Len(dms, 12)
+	assert.Len(dms, 4)
 
 	messages, err = readLatestMessages(ctx, 10)
 	assert.Nil(err)
@@ -155,7 +154,6 @@ func TestMessageCRUD(t *testing.T) {
 	data, err = EncryptMessageData(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), sessions)
 	assert.Nil(err)
 	assert.NotEqual("", data)
-	log.Println(data)
 	data, err = decryptMessageData(data)
 	assert.Nil(err)
 	assert.Equal(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), data)

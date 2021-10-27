@@ -10,7 +10,6 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/services"
@@ -20,8 +19,6 @@ func main() {
 	service := flag.String("service", "http", "run a service")
 	env := flag.String("e", "production", "")
 	flag.Parse()
-	// TODO
-	bot.SetBaseUri("https://api.mixin.zone")
 
 	config.Init(*env)
 	if *env != config.AppConfig.Service.Environment {
