@@ -32,7 +32,7 @@ func TestUserCRUD(t *testing.T) {
 	user, err = FindUser(ctx, user.UserId)
 	assert.Nil(err)
 	assert.NotNil(user)
-	assert.False(user.SubscribedAt.Before(genesisStartedAt()))
+	assert.True(user.SubscribedAt.Before(genesisStartedAt()))
 	assert.Equal(int64(1000), user.IdentityNumber)
 
 	err = user.UpdateProfile(ctx, "hello")
@@ -43,7 +43,7 @@ func TestUserCRUD(t *testing.T) {
 
 	users, err := Subscribers(ctx, time.Time{}, 0, "")
 	assert.Nil(err)
-	assert.Len(users, 1)
+	assert.Len(users, 0)
 
 	err = user.Payment(ctx)
 	assert.Nil(err)

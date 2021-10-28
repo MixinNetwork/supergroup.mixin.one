@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConversationCRUD(t *testing.T) {
+func testConversationCRUD(t *testing.T) {
 	assert := assert.New(t)
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
