@@ -2,14 +2,11 @@ package models
 
 import (
 	"context"
-	"crypto/md5"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
-	"io"
-	"sort"
 	"strings"
 
+	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/lib/pq"
@@ -139,13 +136,13 @@ func GenerateUserChecksum(sessions []*Session) string {
 	if len(sessions) < 1 {
 		return ""
 	}
-	sort.Slice(sessions, func(i, j int) bool {
-		return sessions[i].SessionID < sessions[j].SessionID
-	})
-	h := md5.New()
-	for _, s := range sessions {
-		io.WriteString(h, s.SessionID)
+	ss := make([]*bot.Session, len(sessions))
+	for i, s := range sessions {
+		ss[i] = &bot.Session{
+			UserID:    s.UserID,
+			SessionID: s.SessionID,
+			PublicKey: s.PublicKey,
+		}
 	}
-	sum := h.Sum(nil)
-	return hex.EncodeToString(sum[:])
+	return bot.GenerateUserChecksum(ss)
 }

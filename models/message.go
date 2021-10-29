@@ -1,7 +1,6 @@
 package models
 
 import (
-	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -170,8 +169,9 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedContact,
 		MessageCategoryEncryptedTranscript,
 		MessageCategoryEncryptedLocation:
+		mixin := config.AppConfig.Mixin
 		var err error
-		data, err = decryptMessageData(data)
+		data, err = bot.DecryptMessageData(data, mixin.SessionId, mixin.SessionKey)
 		if err != nil || data == "" {
 			return nil, err
 		}
@@ -481,84 +481,14 @@ func decryptMessageData(data string) (string, error) {
 }
 
 func EncryptMessageData(data string, sessions []*Session) (string, error) {
-	dataBytes, err := base64.RawURLEncoding.DecodeString(data)
-	if err != nil {
-		return "", err
+	ss := make([]*bot.Session, len(sessions))
+	for i, s := range sessions {
+		ss[i] = &bot.Session{
+			UserID:    s.UserID,
+			SessionID: s.SessionID,
+			PublicKey: s.PublicKey,
+		}
 	}
-
-	key := make([]byte, 16)
-	_, err = rand.Read(key)
-	if err != nil {
-		return "", err
-	}
-	nonce := make([]byte, 12)
-	_, err = rand.Read(nonce)
-	if err != nil {
-		return "", err
-	}
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-	aesgcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-	ciphertext := aesgcm.Seal(nil, nonce, dataBytes, nil)
-
-	var sessionLen [2]byte
-	binary.LittleEndian.PutUint16(sessionLen[:], uint16(len(sessions)))
-
 	mixin := config.AppConfig.Mixin
-	privateBytes, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
-	if err != nil {
-		return "", err
-	}
-
-	private := ed25519.PrivateKey(privateBytes)
-	pub, _ := bot.PublicKeyToCurve25519(ed25519.PublicKey(private[32:]))
-
-	var sessionsBytes []byte
-	for _, s := range sessions {
-		clientPublic, err := base64.RawURLEncoding.DecodeString(s.PublicKey)
-		if err != nil {
-			return "", err
-		}
-		var dst, priv, clientPub [32]byte
-		copy(clientPub[:], clientPublic[:])
-		bot.PrivateKeyToCurve25519(&priv, private)
-		curve25519.ScalarMult(&dst, &priv, &clientPub)
-
-		block, err := aes.NewCipher(dst[:])
-		if err != nil {
-			return "", err
-		}
-		padding := aes.BlockSize - len(key)%aes.BlockSize
-		padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-		shared := make([]byte, len(key))
-		copy(shared[:], key[:])
-		shared = append(shared, padtext...)
-		ciphertext := make([]byte, aes.BlockSize+len(shared))
-		iv := ciphertext[:aes.BlockSize]
-		_, err = rand.Read(iv)
-		if err != nil {
-			return "", err
-		}
-		mode := cipher.NewCBCEncrypter(block, iv)
-		mode.CryptBlocks(ciphertext[aes.BlockSize:], shared)
-		id, err := bot.UuidFromString(s.SessionID)
-		if err != nil {
-			return "", err
-		}
-		sessionsBytes = append(sessionsBytes, id.Bytes()...)
-		sessionsBytes = append(sessionsBytes, ciphertext...)
-	}
-
-	result := []byte{1}
-	result = append(result, sessionLen[:]...)
-	result = append(result, pub[:]...)
-	result = append(result, sessionsBytes...)
-	result = append(result, nonce[:]...)
-	result = append(result, ciphertext...)
-	return base64.RawURLEncoding.EncodeToString(result), nil
+	return bot.EncryptMessageData(data, ss, mixin.SessionKey)
 }
