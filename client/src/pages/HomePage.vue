@@ -1,27 +1,22 @@
 <template>
   <loading :loading="loading" :fullscreen="true">
-  <div class="home home-page page">
-    <div>
-      <h2>
-        {{ welcomeMessage || $t('home.welcome') }}
-      </h2>
-      {{ $t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'}) }}
-    </div>
-    <van-panel :title="welcomeMessage || $t('home.welcome')" :desc="$t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'})">
-    </van-panel>
-    <br/>
-    <div v-for="group in shortcutsGroups" :key="group.label">
-      <h2>
-        {{group.label}}
-      </h2>
-      <cell-table :items="group.shortcuts"></cell-table>
-    </div>
-    <div>
-      <h2>
-        {{ $t('home.pane_operations') }}
-      </h2>
-      <cell-table :items="builtinItems"></cell-table>
-    </div>
+  <div class="panel">
+    <h2>
+      {{ welcomeMessage || $t('home.welcome') }}
+    </h2>
+    {{ $t('home.welcome_desc', {count: websiteInfo ? websiteInfo.data.users_count : '...'}) }}
+  </div>
+  <div v-for="group in shortcutsGroups" :key="group.label"  class="panel">
+    <h2>
+      {{group.label}}
+    </h2>
+    <cell-table :items="group.shortcuts"></cell-table>
+  </div>
+  <div class="panel">
+    <h2>
+      {{ $t('home.pane_operations') }}
+    </h2>
+    <cell-table :items="builtinItems"></cell-table>
   </div>
   </loading>
 </template>
@@ -170,3 +165,20 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+div {
+  font-size: 14px;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: normal;
+}
+
+.panel {
+  background: white;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+</style>
