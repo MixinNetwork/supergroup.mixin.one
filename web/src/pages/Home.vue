@@ -21,7 +21,7 @@
 import NavBar from '../components/Nav'
 import CellTable from '../components/CellTable'
 import Loading from '../components/Loading'
-import { mapState } from 'vuex'
+//import { mapState } from 'vuex'
 import AssetItem from '@/components/partial/AssetItem'
 import utils from '@/utils'
 
