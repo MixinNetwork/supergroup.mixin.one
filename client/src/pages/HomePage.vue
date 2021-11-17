@@ -173,7 +173,7 @@ div {
 
 h2 {
   font-size: 16px;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .panel {

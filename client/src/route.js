@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from './pages/HomePage'
+import PageNotFound from './pages/PageNotFound'
 
 const routes = [
   { path: '/', component: Home },
+  { path: "*", component: PageNotFound },
 ]
 
 const router = createRouter({
