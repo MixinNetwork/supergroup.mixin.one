@@ -13,7 +13,7 @@
 <script>
 import { NavBar } from 'vant';
 export default {
-  name: 'Nav',
+  name: 'NavBar',
   props: {
     title: String,
     rightText: String,

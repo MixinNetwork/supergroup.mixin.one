@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^0.24.0",
     "core-js": "^3.6.5",
+    "dayjs": "^1.10.7",
     "sass-loader": "^12.3.0",
     "uuid": "^8.3.2",
     "vant": "^3.2.8",

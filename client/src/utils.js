@@ -62,8 +62,8 @@ export default {
       newUrl = url.replace(reg, key + timestamp)
     } else {
       // no timestamp
-      if (url.indexOf('\?')>-1){
-        var urlArr=url.split('\?');
+      if (url.indexOf('?')>-1){
+        var urlArr=url.split('?');
         if(urlArr[1]){
           newUrl = urlArr[0]+'?'+key+timestamp+'&'+urlArr[1]
         } else {

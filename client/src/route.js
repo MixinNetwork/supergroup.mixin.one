@@ -1,10 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from './pages/HomePage'
-import PageNotFound from './pages/PageNotFound'
+//import Auth from './pages/Auth'
+//import Blocking from './pages/Blocking'
+//import Pay from './pages/Pay'
+//import Broadcaster from './pages/Broadcaster'
+//import PreparePacket from './pages/PreparePacket'
+//import Packet from './pages/Packet'
+import Members from './pages/MembersPage'
+import Messages from './pages/MessagesPage'
+//import PageNotFound from './pages/PageNotFound'
 
 const routes = [
   { path: '/', component: Home },
-  { path: "*", component: PageNotFound },
+  { path: '/members/', component: Members },
+  { path: '/messages/', component: Messages },
 ]
 
 const router = createRouter({
