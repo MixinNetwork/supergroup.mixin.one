@@ -79,7 +79,7 @@ export default {
       isClose: true,
       asset: {symbol: 'BTC'},
       lottery: null,
-      user: null,
+      user: {},
       greeting: '',
       openedCount: 0,
       totalCount: 0,
@@ -92,11 +92,14 @@ export default {
       return this.user && this.user.avatar_url
     },
     firstLetter () {
-      return this.user ? this.user.full_name.trim()[0] : 'A'
+      return this.user.full_name ? this.user.full_name.trim()[0] : 'A'
     }
   },
   async mounted () {
-    document.querySelector("meta[name=theme-color]").setAttribute('content', '#46B8DA');
+    const theme = document.querySelector("meta[name=theme-color]");
+    if (theme) {
+      document.querySelector("meta[name=theme-color]").setAttribute('content', '#46B8DA');
+    }
     this.GLOBAL.api.net.on(404, ()=>{
       window.location.href = '/404';
     })
@@ -136,6 +139,8 @@ export default {
   methods: {
     async openPacket() {
       this.loading = true
+      let packetId = this.$route.params.id
+      await this.GLOBAL.api.packet.claim(packetId)
       this.loading = false
       utils.reloadPage()
     }

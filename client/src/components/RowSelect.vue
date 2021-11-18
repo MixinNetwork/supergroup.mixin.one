@@ -5,17 +5,8 @@
       </slot>
     </van-cell>
     <div></div>
-    <van-popup
-        v-model="show"
-        position="bottom"
-      >
-        <van-picker
-          show-toolbar
-          :columns="columns"
-          @confirm="handleConfirm"
-          @cancel="show = false"
-        />
-      </van-popup>
+    <van-action-sheet v-model:show="show" :actions="columns" @select="onSelect">
+    </van-action-sheet>
   </div>
 </template>
 
@@ -32,10 +23,10 @@ export default {
     }
   },
   methods: {
-    handleConfirm(value, index) {
+    onSelect(value, index) {
       this.$emit('change', index)
       this.show = false
     }
-  }
+  },
 }
 </script>

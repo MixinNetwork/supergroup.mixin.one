@@ -35,7 +35,7 @@
     </van-cell-group>
     <van-row style="padding: 20px">
       <van-col span="24">
-        <van-button style="width: 100%" type="info" :disabled="!validated" @click="pay">{{$t('broadcaster.pay')}}</van-button>
+        <van-button style="width: 100%" type="primary" :disabled="!validated" @click="pay">{{$t('broadcaster.pay')}}</van-button>
       </van-col>
     </van-row>
   </div>
