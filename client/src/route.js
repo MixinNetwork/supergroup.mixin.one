@@ -8,7 +8,7 @@ import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/PacketPage'
 import Members from './pages/MembersPage'
 import Messages from './pages/MessagesPage'
-//import PageNotFound from './pages/PageNotFound'
+import PageNotFound from './pages/PageNotFound'
 
 const routes = [
   { path: '/', component: Home },
@@ -20,6 +20,7 @@ const routes = [
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },
   { path: '/messages/', component: Messages },
+  { path: '/:pathMatch(.*)*', component: PageNotFound },
 ]
 
 const router = createRouter({
