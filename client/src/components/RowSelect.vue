@@ -1,7 +1,7 @@
 <template>
   <div class="row-select">
     <van-cell :title="title" @click="show = true" is-link>
-      <slot name="text">
+      <slot>
       </slot>
     </van-cell>
     <div></div>

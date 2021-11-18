@@ -9,7 +9,7 @@
           :columns="assets"
           placeholder="Tap to Select"
           @change="onChangeAsset">
-          <span>{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
+          <span >{{selectedAsset ? selectedAsset.text : 'Tap to Select'}}</span>
         </row-select>
         <van-cell>
           <van-field type="number" v-model="form.amount" :label="$t('prepare_packet.amount')" :placeholder="$t('prepare_packet.placeholder_amount')">
