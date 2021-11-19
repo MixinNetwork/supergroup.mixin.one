@@ -20,7 +20,7 @@
       </van-cell>
       <div>
         <van-cell>
-          <van-button style="width: 100%" type="info" :disabled="selectedAsset.amount==0 || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
+          <van-button style="width: 100%" type="primary" :disabled="selectedAsset.amount==0 || loading" @click="payCrypto">{{$t('pay.pay_crypto')}}</van-button>
         </van-cell>
       </div>
     </van-panel>
@@ -62,8 +62,9 @@ export default {
   async mounted () {
     this.loading = true;
     let config = await this.GLOBAL.api.website.config();
+    console.log(config);
     this.assets = config.data.accept_asset_list.map((a) => {
-      a.text = a.symbol;
+      a.name = a.symbol;
       a.amount = Math.floor(parseFloat(a.amount) * 100000000) / 100000000;
       return a
     });
