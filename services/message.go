@@ -87,7 +87,7 @@ func (service *MessageService) Run(ctx context.Context) error {
 			session.Logger(ctx).Error(err)
 		}
 		session.Logger(ctx).Info("connection loop end")
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(10 * time.Second)
 	}
 	return nil
 }
