@@ -103,6 +103,21 @@ func (message *Message) Distribute(ctx context.Context) error {
 			return err
 		}
 	}
+
+	var transcripts []*Transcript
+	switch message.Category {
+	case MessageCategoryPlainTranscript,
+		MessageCategoryEncryptedTranscript:
+		data, err := base64.RawURLEncoding.DecodeString(message.Data)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+		err = json.Unmarshal(data, &transcripts)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+	}
+
 	for {
 		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit, message.UserId)
 		if err != nil {
@@ -139,7 +154,8 @@ func (message *Message) Distribute(ctx context.Context) error {
 						quoteMessageId = quote.MessageId
 					}
 				}
-				if message.Category == MessageCategoryMessageRecall {
+				switch message.Category {
+				case MessageCategoryMessageRecall:
 					r := RecallMessage{
 						MessageId: UniqueConversationId(user.UserId, recall.MessageId),
 					}
@@ -148,7 +164,18 @@ func (message *Message) Distribute(ctx context.Context) error {
 						return session.BadDataError(ctx)
 					}
 					message.Data = base64.RawURLEncoding.EncodeToString(data)
+				case MessageCategoryPlainTranscript,
+					MessageCategoryEncryptedTranscript:
+					for _, t := range transcripts {
+						t.TranscriptId = messageId
+					}
+					data, err := json.Marshal(r)
+					if err != nil {
+						return session.BadDataError(ctx)
+					}
+					message.Data = base64.RawURLEncoding.EncodeToString(data)
 				}
+
 				conversationId := UniqueConversationId(config.AppConfig.Mixin.ClientId, user.UserId)
 				shard, err := shardId(conversationId, user.UserId)
 				if err != nil {
@@ -521,4 +548,14 @@ func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
 	default:
 		return m.Category
 	}
+}
+
+type Transcript struct {
+	Category     string `json:"category"`
+	UserFullName string `json:"user_full_name"`
+	Content      string `json:"content"`
+	CreatedAt    string `json:"created_at"`
+	MessageId    string `json:"message_id"`
+	UserID       string `json:"user_id"`
+	TranscriptId string `json:"transcript_id"`
 }
