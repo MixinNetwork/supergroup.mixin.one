@@ -10,7 +10,7 @@ import (
 //go:embed config.yaml
 var data []byte
 
-const BuildVersion = "BuildVersion"
+const BuildVersion = "BUILD_VERSION"
 
 type PaymentAsset struct {
 	Symbol  string `yaml:"symbol" json:"symbol"`
