@@ -19,16 +19,18 @@ const (
 )
 
 const (
-	dropRewardsDDL             = `DROP TABLE IF EXISTS rewards;`
-	dropBroadcastersDDL        = `DROP TABLE IF EXISTS broadcasters;`
-	dropPropertiesDDL          = `DROP TABLE IF EXISTS properties;`
-	dropParticipantsDDL        = `DROP TABLE IF EXISTS participants;`
-	dropPacketsDDL             = `DROP TABLE IF EXISTS packets;`
-	dropAssetsDDL              = `DROP TABLE IF EXISTS assets;`
-	dropBlacklistsDDL          = `DROP TABLE IF EXISTS blacklists;`
-	dropDistributedMessagesDDL = `DROP TABLE IF EXISTS distributed_messages;`
-	dropMessagesDDL            = `DROP TABLE IF EXISTS messages;`
-	dropUsersDDL               = `DROP TABLE IF EXISTS users;`
+	dropRewardsDDL                  = `DROP TABLE IF EXISTS rewards;`
+	dropBroadcastersDDL             = `DROP TABLE IF EXISTS broadcasters;`
+	dropPropertiesDDL               = `DROP TABLE IF EXISTS properties;`
+	dropParticipantsDDL             = `DROP TABLE IF EXISTS participants;`
+	dropPacketsDDL                  = `DROP TABLE IF EXISTS packets;`
+	dropAssetsDDL                   = `DROP TABLE IF EXISTS assets;`
+	dropBlacklistsDDL               = `DROP TABLE IF EXISTS blacklists;`
+	dropDistributedMessagesDDL      = `DROP TABLE IF EXISTS distributed_messages;`
+	dropMessagesDDL                 = `DROP TABLE IF EXISTS messages;`
+	dropConversationParticipantsDDL = `DROP TABLE IF EXISTS conversation_participants;`
+	dropSessionsDDL                 = `DROP TABLE IF EXISTS sessions;`
+	dropUsersDDL                    = `DROP TABLE IF EXISTS users;`
 )
 
 func TestClear(t *testing.T) {
@@ -39,6 +41,8 @@ func TestClear(t *testing.T) {
 func teardownTestContext(ctx context.Context) {
 	db := session.Database(ctx)
 	tables := []string{
+		dropConversationParticipantsDDL,
+		dropSessionsDDL,
 		dropUsersDDL,
 		dropMessagesDDL,
 		dropDistributedMessagesDDL,

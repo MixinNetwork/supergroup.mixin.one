@@ -26,3 +26,12 @@ func CreateConversation(ctx context.Context, category, participantId string) err
 	}
 	return nil
 }
+
+func ReadConversation(ctx context.Context, conversationID string) (*bot.Conversation, error) {
+	mixin := config.AppConfig.Mixin
+	token, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "GET", "/conversations/"+conversationID, "")
+	if err != nil {
+		return nil, err
+	}
+	return bot.ConversationShow(ctx, conversationID, token)
+}

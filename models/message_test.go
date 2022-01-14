@@ -32,9 +32,8 @@ func TestMessageCRUD(t *testing.T) {
 
 	id, uid := bot.UuidNewV4().String(), bot.UuidNewV4().String()
 	user := &User{UserId: id, ActiveAt: time.Now()}
-	data := base64.StdEncoding.EncodeToString([]byte("hello"))
-	silent := false
-	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, silent, time.Now(), time.Now())
+	data := base64.RawURLEncoding.EncodeToString([]byte("hello"))
+	message, err := CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	message, err = FindMessage(ctx, message.MessageId)
@@ -43,14 +42,14 @@ func TestMessageCRUD(t *testing.T) {
 	message, err = FindMessage(ctx, bot.UuidNewV4().String())
 	assert.Nil(err)
 	assert.Nil(message)
-	message, err = CreateMessage(ctx, user, uid, "PLAIN_IMAGE", "", data, silent, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, user, uid, "PLAIN_IMAGE", "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.Nil(message)
 	messages, err := PendingMessages(ctx, 100)
 	assert.Nil(err)
 	assert.Len(messages, 1)
 
-	message, err = CreateMessage(ctx, &User{UserId: bot.UuidNewV4().String(), ActiveAt: time.Now()}, bot.UuidNewV4().String(), MessageCategoryPlainText, "", data, silent, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, &User{UserId: bot.UuidNewV4().String(), ActiveAt: time.Now()}, bot.UuidNewV4().String(), MessageCategoryPlainText, "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	assert.Equal(MessageCategoryPlainText, message.Category)
@@ -106,7 +105,11 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	err = UpdateMessagesStatus(ctx, dms)
+	messageIDs := make([]string, len(dms))
+	for i, m := range dms {
+		messageIDs[i] = m.MessageId
+	}
+	err = UpdateDeliveredMessagesStatus(ctx, messageIDs)
 	assert.Nil(err)
 	query := "UPDATE distributed_messages SET created_at=$1"
 	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-96*time.Hour))
@@ -115,7 +118,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(dms, 0)
 
-	message, err = CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, silent, time.Now(), time.Now())
+	message, err = CreateMessage(ctx, user, uid, MessageCategoryPlainText, "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
 	assert.NotNil(message)
 	err = message.Notify(ctx, "ONLY TEST")
@@ -130,6 +133,30 @@ func TestMessageCRUD(t *testing.T) {
 	messages, err = LatestMessageWithUser(ctx, 10)
 	assert.Nil(err)
 	assert.Len(messages, 4)
+
+	mixin := config.AppConfig.Mixin
+	privateBytes, _ := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
+	privateKey := ed25519.PrivateKey(privateBytes)
+	pub, _ = bot.PublicKeyToCurve25519(ed25519.PublicKey(privateKey[32:]))
+
+	sessions := []*Session{
+		&Session{
+			UserID:    mixin.ClientId,
+			SessionID: mixin.SessionId,
+			PublicKey: base64.RawURLEncoding.EncodeToString(pub[:]),
+		},
+		&Session{
+			UserID:    mixin.ClientId,
+			SessionID: bot.UuidNewV4().String(),
+			PublicKey: base64.RawURLEncoding.EncodeToString(pub[:]),
+		},
+	}
+	data, err = EncryptMessageData(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), sessions)
+	assert.Nil(err)
+	assert.NotEqual("", data)
+	data, err = decryptMessageData(data)
+	assert.Nil(err)
+	assert.Equal(base64.RawURLEncoding.EncodeToString([]byte("Hello World")), data)
 }
 
 func testReadMessage(ctx context.Context, id string) (*Message, error) {

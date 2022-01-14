@@ -32,6 +32,9 @@ const (
 	PayMethodOffer = "offer"
 
 	UserActivePeriod = 5 * time.Minute
+
+	UserCategoryPlain     = "PLAIN"
+	UserCategoryEncrypted = "ENCRYPTED"
 )
 
 type User struct {
@@ -269,7 +272,7 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 	for i, msg := range messages {
 		if msg.Category == MessageCategoryMessageRecall {
 			var recallMessage RecallMessage
-			data, err := base64.StdEncoding.DecodeString(msg.Data)
+			data, err := base64.RawURLEncoding.DecodeString(msg.Data)
 			if err != nil {
 				return session.BadDataError(ctx)
 			}
@@ -285,20 +288,20 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 			if err != nil {
 				return session.BadDataError(ctx)
 			}
-			msg.Data = base64.StdEncoding.EncodeToString(data)
+			msg.Data = base64.RawURLEncoding.EncodeToString(data)
 		}
 		messageId := UniqueConversationId(user.UserId, msg.MessageId)
 		if len(msg.Data) == 0 {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data, false)
+		dm, err := buildDistributeMessage(ctx, messageId, msg.MessageId, "", msg.UserId, user.UserId, msg.Category, msg.Data, false)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
 		if i > 0 {
 			values.WriteString(",")
 		}
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, false))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Silent, dm.Status))
 	}
 	v := values.String()
 	if v != "" {
@@ -368,8 +371,8 @@ func (user *User) DeleteUser(ctx context.Context, id string) error {
 		if err != nil || u == nil {
 			return err
 		}
-		data := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
-		err = createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, data)
+		data := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("Kicked %s, ID: %d", u.FullName, u.IdentityNumber)))
+		err = createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, data)
 		if err != nil {
 			return err
 		}
@@ -396,11 +399,11 @@ func (user *User) isAdmin() bool {
 	return false
 }
 
-func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, id string) ([]*User, error) {
+func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, senderID string) ([]*User, error) {
 	var users []*User
 	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
 	params := []interface{}{subscribedAt, time.Now().Add(-24 * 6 * time.Hour)}
-	if config.AppConfig.System.Operators[id] || config.AppConfig.Mixin.ClientId == id {
+	if config.AppConfig.System.Operators[senderID] || config.AppConfig.Mixin.ClientId == senderID {
 		query = fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
 		params = []interface{}{subscribedAt}
 	}
@@ -474,7 +477,7 @@ func (user *User) Hibernate(ctx context.Context) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		if user.State == PaymentStatePaid {
 			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
-			err := createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, text)
+			err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
 			if err != nil {
 				return err
 			}

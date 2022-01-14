@@ -18,8 +18,8 @@ import (
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
-	"github.com/MixinNetwork/supergroup.mixin.one/interceptors"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/MixinNetwork/supergroup.mixin.one/utils"
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
 	"mvdan.cc/xurls"
@@ -62,51 +62,31 @@ func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 	return &m, err
 }
 
-func createDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string, silent bool) (*DistributedMessage, error) {
-	dm := &DistributedMessage{
-		MessageId:      messageId,
-		ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, recipientId),
-		RecipientId:    recipientId,
-		UserId:         userId,
-		ParentId:       parentId,
-		QuoteMessageId: quoteMessageId,
-		Category:       category,
-		Data:           data,
-		Silent:         silent,
-		Status:         MessageStatusSent,
-		CreatedAt:      time.Now(),
-	}
-	shard, err := shardId(dm.ConversationId, dm.RecipientId)
-	if err != nil {
-		return nil, err
-	}
-	dm.Shard = shard
-	return dm, nil
-}
-
 func (message *Message) Distribute(ctx context.Context) error {
 	system := config.AppConfig.System
 	if !system.Operators[message.UserId] {
-		if system.DetectLinkEnabled && message.Category == MessageCategoryPlainText {
-			data, err := base64.StdEncoding.DecodeString(message.Data)
+		switch message.Category {
+		case MessageCategoryPlainText, MessageCategoryEncryptedText:
+			data, err := base64.RawURLEncoding.DecodeString(message.Data)
 			if err != nil {
 				return err
 			}
 			if xurls.Relaxed.Match(data) {
 				return message.Notify(ctx, "Message contains link")
 			}
-		}
-		if system.DetectQRCodeEnabled && message.Category == MessageCategoryPlainImage {
-			b, reason := messageQRFilter(ctx, message)
-			if !b {
-				return message.Notify(ctx, reason)
+		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
+			if system.DetectQRCodeEnabled {
+				b, reason := messageQRFilter(ctx, message)
+				if !b {
+					return message.Notify(ctx, reason)
+				}
 			}
 		}
 	}
 
 	var recall RecallMessage
 	if message.Category == MessageCategoryMessageRecall {
-		data, err := base64.StdEncoding.DecodeString(message.Data)
+		data, err := base64.RawURLEncoding.DecodeString(message.Data)
 		if err != nil {
 			return session.BadDataError(ctx)
 		}
@@ -123,6 +103,21 @@ func (message *Message) Distribute(ctx context.Context) error {
 			return err
 		}
 	}
+
+	var transcripts []*Transcript
+	switch message.Category {
+	case MessageCategoryPlainTranscript,
+		MessageCategoryEncryptedTranscript:
+		data, err := base64.RawURLEncoding.DecodeString(message.Data)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+		err = json.Unmarshal(data, &transcripts)
+		if err != nil {
+			return session.BadDataError(ctx)
+		}
+	}
+
 	for {
 		users, err := subscribedUsers(ctx, message.LastDistributeAt, DistributeSubscriberLimit, message.UserId)
 		if err != nil {
@@ -132,7 +127,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 		for i, user := range users {
 			messageIds[i] = UniqueConversationId(user.UserId, message.MessageId)
 		}
-		set, err := readDistributedMessagesByIds(ctx, messageIds)
+		set, err := readDistributedMessageSetByIds(ctx, messageIds)
 		if err != nil {
 			return session.TransactionError(ctx, err)
 		}
@@ -159,7 +154,8 @@ func (message *Message) Distribute(ctx context.Context) error {
 						quoteMessageId = quote.MessageId
 					}
 				}
-				if message.Category == MessageCategoryMessageRecall {
+				switch message.Category {
+				case MessageCategoryMessageRecall:
 					r := RecallMessage{
 						MessageId: UniqueConversationId(user.UserId, recall.MessageId),
 					}
@@ -167,8 +163,19 @@ func (message *Message) Distribute(ctx context.Context) error {
 					if err != nil {
 						return session.BadDataError(ctx)
 					}
-					message.Data = base64.StdEncoding.EncodeToString(data)
+					message.Data = base64.RawURLEncoding.EncodeToString(data)
+				case MessageCategoryPlainTranscript,
+					MessageCategoryEncryptedTranscript:
+					for _, t := range transcripts {
+						t.TranscriptId = messageId
+					}
+					data, err := json.Marshal(transcripts)
+					if err != nil {
+						return session.BadDataError(ctx)
+					}
+					message.Data = base64.RawURLEncoding.EncodeToString(data)
 				}
+
 				conversationId := UniqueConversationId(config.AppConfig.Mixin.ClientId, user.UserId)
 				shard, err := shardId(conversationId, user.UserId)
 				if err != nil {
@@ -224,7 +231,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 	for i, id := range ids {
 		messageIds[i] = UniqueConversationId(id, message.MessageId)
 	}
-	set, err := readDistributedMessagesByIds(ctx, messageIds)
+	set, err := readDistributedMessageSetByIds(ctx, messageIds)
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
@@ -238,7 +245,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		if set[messageId] {
 			continue
 		}
-		dm, err := createDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data, false)
+		dm, err := buildDistributeMessage(ctx, messageId, message.MessageId, "", message.UserId, id, message.Category, message.Data, false)
 		if err != nil {
 			session.TransactionError(ctx, err)
 		}
@@ -246,12 +253,12 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 			values.WriteString(",")
 		}
 		i += 1
-		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, false))
+		values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Silent, dm.Status))
 		values.WriteString(",")
 
 		why := fmt.Sprintf("MessageId: %s, Reason: %s", message.MessageId, reason)
-		data := base64.StdEncoding.EncodeToString([]byte(why))
-		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Status, false))
+		data := base64.RawURLEncoding.EncodeToString([]byte(why))
+		values.WriteString(distributedMessageValuesString(bot.UuidNewV4().String(), dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, MessageCategoryPlainText, data, dm.Silent, dm.Status))
 	}
 
 	message.LastDistributeAt = time.Now()
@@ -261,8 +268,11 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 		if err != nil {
 			return err
 		}
-		query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-		_, err = tx.ExecContext(ctx, query)
+		valString := values.String()
+		if valString != "" {
+			query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
+			_, err = tx.ExecContext(ctx, query)
+		}
 		return err
 	})
 	if err != nil {
@@ -271,7 +281,7 @@ func (message *Message) Notify(ctx context.Context, reason string) error {
 	return nil
 }
 
-func notifyToLarge(ctx context.Context, messageId, category, userId, name string) error {
+func notifyTooLarge(ctx context.Context, messageId, category, userId, name string) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
 		if err != nil {
@@ -280,17 +290,19 @@ func notifyToLarge(ctx context.Context, messageId, category, userId, name string
 		defer stmt.Close()
 
 		why := fmt.Sprintf("MessageId: %s, Category: %s, Reason: data too large, From: %s", messageId, category, name)
-		data := base64.StdEncoding.EncodeToString([]byte(why))
+		data := base64.RawURLEncoding.EncodeToString([]byte(why))
+		mixin := config.AppConfig.Mixin
 		for key, _ := range config.AppConfig.System.Operators {
 			dm := &DistributedMessage{
 				MessageId:      bot.UuidNewV4().String(),
-				ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, key),
+				ConversationId: UniqueConversationId(mixin.ClientId, key),
 				RecipientId:    key,
-				UserId:         config.AppConfig.Mixin.ClientId,
+				UserId:         mixin.ClientId,
 				ParentId:       messageId,
 				QuoteMessageId: "",
 				Category:       MessageCategoryPlainText,
 				Data:           data,
+				Silent:         false,
 				Status:         MessageStatusSent,
 				CreatedAt:      time.Now(),
 			}
@@ -313,18 +325,29 @@ func notifyToLarge(ctx context.Context, messageId, category, userId, name string
 	return nil
 }
 
-func createSystemDistributedMessage(ctx context.Context, tx *sql.Tx, user *User, category, data string) error {
-	if len(data) == 0 {
+func CreateSystemDistributedMessage(ctx context.Context, user *User, category, reason string) error {
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		return createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, reason)
+	})
+	return err
+}
+
+func createSystemDistributedMessageInTx(ctx context.Context, tx *sql.Tx, user *User, category, reason string) error {
+	if len(reason) == 0 {
 		return nil
 	}
-	dm, err := createDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, data, false)
+	dm, err := buildDistributeMessage(ctx, bot.UuidNewV4().String(), bot.UuidNewV4().String(), "", config.AppConfig.Mixin.ClientId, user.UserId, category, reason, false)
 	if err != nil {
-		return session.TransactionError(ctx, err)
+		return err
 	}
-	var values bytes.Buffer
-	values.WriteString(distributedMessageValuesString(dm.MessageId, dm.ConversationId, dm.RecipientId, dm.UserId, dm.ParentId, dm.QuoteMessageId, dm.Shard, dm.Category, dm.Data, dm.Status, false))
-	query := fmt.Sprintf("INSERT INTO distributed_messages (%s) VALUES %s", strings.Join(distributedMessagesCols, ","), values.String())
-	_, err = tx.ExecContext(ctx, query)
+
+	stmt, err := tx.PrepareContext(ctx, pq.CopyIn("distributed_messages", distributedMessagesCols...))
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, dm.values()...)
 	return err
 }
 
@@ -345,13 +368,9 @@ func PendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 	return messages, nil
 }
 
-func UpdateMessagesStatus(ctx context.Context, messages []*DistributedMessage) error {
-	ids := make([]string, len(messages))
-	for i, m := range messages {
-		ids[i] = m.MessageId
-	}
-	query := fmt.Sprintf("UPDATE distributed_messages SET status=$1 WHERE message_id IN ('%s')", strings.Join(ids, "','"))
-	_, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered)
+func UpdateDeliveredMessagesStatus(ctx context.Context, ids []string) error {
+	query := "UPDATE distributed_messages SET status=$1 WHERE message_id=ANY($2)"
+	_, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, pq.Array(ids))
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}
@@ -389,7 +408,7 @@ func FindDistributedMessage(ctx context.Context, id string) (*DistributedMessage
 	return dm, nil
 }
 
-func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string]bool, error) {
+func readDistributedMessageSetByIds(ctx context.Context, ids []string) (map[string]bool, error) {
 	set := make(map[string]bool)
 	query := fmt.Sprintf("SELECT message_id FROM distributed_messages WHERE message_id IN ('%s')", strings.Join(ids, "','"))
 	rows, err := session.Database(ctx).QueryContext(ctx, query)
@@ -406,7 +425,7 @@ func readDistributedMessagesByIds(ctx context.Context, ids []string) (map[string
 	return set, nil
 }
 
-func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, status string, silent bool) string {
+func distributedMessageValuesString(id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data string, silent bool, status string) string {
 	return fmt.Sprintf("('%s','%s','%s','%s','%s', '%s','%s','%s','%s',%t,'%s','%s')", id, conversationId, recipientId, userId, parentId, quoteMessageId, shard, category, data, silent, status, string(pq.FormatTimestamp(time.Now())))
 }
 
@@ -438,7 +457,7 @@ type Attachment struct {
 
 func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 	var a Attachment
-	src, err := base64.StdEncoding.DecodeString(message.Data)
+	src, err := base64.RawURLEncoding.DecodeString(message.Data)
 	if err != nil {
 		return false, "message.Data format error is not Base64"
 	}
@@ -472,11 +491,71 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 	if err != nil {
 		return true, ""
 	}
-	if b, err := interceptors.CheckQRCode(ctx, data); b {
+	if b, err := utils.CheckQRCode(ctx, data); b {
 		if err != nil {
 			return true, ""
 		}
 		return false, "Image contains QR Code"
 	}
 	return true, ""
+}
+
+func buildDistributeMessage(ctx context.Context, messageId, parentId, quoteMessageId, userId, recipientId, category, data string, silent bool) (*DistributedMessage, error) {
+	dm := &DistributedMessage{
+		MessageId:      messageId,
+		ConversationId: UniqueConversationId(config.AppConfig.Mixin.ClientId, recipientId),
+		RecipientId:    recipientId,
+		UserId:         userId,
+		ParentId:       parentId,
+		QuoteMessageId: quoteMessageId,
+		Category:       category,
+		Data:           data,
+		Silent:         silent,
+		Status:         MessageStatusSent,
+		CreatedAt:      time.Now(),
+	}
+	shard, err := shardId(dm.ConversationId, dm.RecipientId)
+	if err != nil {
+		return nil, err
+	}
+	dm.Shard = shard
+	return dm, nil
+}
+
+func UniqueConversationId(userId, recipientId string) string {
+	minId, maxId := userId, recipientId
+	if strings.Compare(userId, recipientId) > 0 {
+		maxId, minId = userId, recipientId
+	}
+	h := md5.New()
+	io.WriteString(h, minId)
+	io.WriteString(h, maxId)
+	sum := h.Sum(nil)
+	sum[6] = (sum[6] & 0x0f) | 0x30
+	sum[8] = (sum[8] & 0x3f) | 0x80
+	return uuid.FromBytesOrNil(sum).String()
+}
+
+func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
+	if user == nil {
+		return strings.Replace(m.Category, "ENCRYPTED_", "PLAIN_", -1)
+	}
+	switch user.Category {
+	case UserCategoryPlain:
+		return strings.Replace(m.Category, "ENCRYPTED_", "PLAIN_", -1)
+	case UserCategoryEncrypted:
+		return strings.Replace(m.Category, "PLAIN_", "ENCRYPTED_", -1)
+	default:
+		return m.Category
+	}
+}
+
+type Transcript struct {
+	Category     string `json:"category"`
+	UserFullName string `json:"user_full_name"`
+	Content      string `json:"content"`
+	CreatedAt    string `json:"created_at"`
+	MessageId    string `json:"message_id"`
+	UserID       string `json:"user_id"`
+	TranscriptId string `json:"transcript_id"`
 }

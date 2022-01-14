@@ -2,8 +2,12 @@ package models
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/ed25519"
 	"database/sql"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -16,24 +20,37 @@ import (
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
+	"golang.org/x/crypto/curve25519"
 )
 
 const (
 	MessageStatePending = "pending"
 	MessageStateSuccess = "success"
 
-	MessageCategoryMessageRecall  = "MESSAGE_RECALL"
-	MessageCategoryPlainText      = "PLAIN_TEXT"
-	MessageCategoryPlainImage     = "PLAIN_IMAGE"
-	MessageCategoryPlainVideo     = "PLAIN_VIDEO"
-	MessageCategoryPlainLive      = "PLAIN_LIVE"
-	MessageCategoryPlainData      = "PLAIN_DATA"
-	MessageCategoryPlainSticker   = "PLAIN_STICKER"
-	MessageCategoryPlainContact   = "PLAIN_CONTACT"
-	MessageCategoryPlainAudio     = "PLAIN_AUDIO"
-	MessageCategoryPlainPost      = "PLAIN_POST"
-	MessageCategoryAppCard        = "APP_CARD"
-	MessageCategoryAppButtonGroup = "APP_BUTTON_GROUP"
+	MessageCategoryPlainText           = "PLAIN_TEXT"
+	MessageCategoryPlainImage          = "PLAIN_IMAGE"
+	MessageCategoryPlainVideo          = "PLAIN_VIDEO"
+	MessageCategoryPlainLive           = "PLAIN_LIVE"
+	MessageCategoryPlainData           = "PLAIN_DATA"
+	MessageCategoryPlainSticker        = "PLAIN_STICKER"
+	MessageCategoryPlainContact        = "PLAIN_CONTACT"
+	MessageCategoryPlainAudio          = "PLAIN_AUDIO"
+	MessageCategoryPlainPost           = "PLAIN_POST"
+	MessageCategoryPlainTranscript     = "PLAIN_TRANSCRIPT"
+	MessageCategoryEncryptedPost       = "ENCRYPTED_POST"
+	MessageCategoryEncryptedText       = "ENCRYPTED_TEXT"
+	MessageCategoryEncryptedImage      = "ENCRYPTED_IMAGE"
+	MessageCategoryEncryptedVideo      = "ENCRYPTED_VIDEO"
+	MessageCategoryEncryptedLive       = "ENCRYPTED_LIVE"
+	MessageCategoryEncryptedAudio      = "ENCRYPTED_AUDIO"
+	MessageCategoryEncryptedData       = "ENCRYPTED_DATA"
+	MessageCategoryEncryptedSticker    = "ENCRYPTED_STICKER"
+	MessageCategoryEncryptedContact    = "ENCRYPTED_CONTACT"
+	MessageCategoryEncryptedLocation   = "ENCRYPTED_LOCATION"
+	MessageCategoryEncryptedTranscript = "ENCRYPTED_TRANSCRIPT"
+	MessageCategoryAppCard             = "APP_CARD"
+	MessageCategoryAppButtonGroup      = "APP_BUTTON_GROUP"
+	MessageCategoryMessageRecall       = "MESSAGE_RECALL"
 )
 
 type Message struct {
@@ -68,9 +85,34 @@ func messageFromRow(row durable.Row) (*Message, error) {
 
 func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMessageId, data string, silent bool, createdAt, updatedAt time.Time) (*Message, error) {
 	if len(data) > 5*1024 {
-		return nil, notifyToLarge(ctx, messageId, category, user.UserId, user.FullName)
+		return nil, notifyTooLarge(ctx, messageId, category, user.UserId, user.FullName)
 	}
-	if !whitelistCategories[category] {
+	switch category {
+	case MessageCategoryPlainText,
+		MessageCategoryPlainImage,
+		MessageCategoryPlainVideo,
+		MessageCategoryPlainLive,
+		MessageCategoryPlainData,
+		MessageCategoryPlainSticker,
+		MessageCategoryPlainContact,
+		MessageCategoryPlainAudio,
+		MessageCategoryPlainPost,
+		MessageCategoryPlainTranscript,
+		MessageCategoryEncryptedPost,
+		MessageCategoryEncryptedText,
+		MessageCategoryEncryptedImage,
+		MessageCategoryEncryptedVideo,
+		MessageCategoryEncryptedLive,
+		MessageCategoryEncryptedAudio,
+		MessageCategoryEncryptedData,
+		MessageCategoryEncryptedSticker,
+		MessageCategoryEncryptedContact,
+		MessageCategoryEncryptedLocation,
+		MessageCategoryEncryptedTranscript,
+		MessageCategoryAppCard,
+		MessageCategoryAppButtonGroup,
+		MessageCategoryMessageRecall:
+	default:
 		return nil, nil
 	}
 	if !user.isAdmin() && user.UserId != config.AppConfig.Mixin.ClientId {
@@ -80,61 +122,92 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		} else if b {
 			return nil, nil
 		}
-		if category == MessageCategoryPlainImage && !config.AppConfig.System.ImageMessageEnable {
-			return nil, nil
+		system := config.AppConfig.System
+		switch category {
+		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
+			if !system.ImageMessageEnable {
+				return nil, nil
+			}
+		case MessageCategoryPlainVideo, MessageCategoryEncryptedVideo:
+			if !system.VideoMessageEnable {
+				return nil, nil
+			}
+		case MessageCategoryPlainLive, MessageCategoryEncryptedLive:
+			if !system.LiveMessageEnable {
+				return nil, nil
+			}
+		case MessageCategoryPlainContact, MessageCategoryEncryptedContact:
+			if !system.ContactMessageEnable {
+				return nil, nil
+			}
+		case MessageCategoryPlainAudio, MessageCategoryEncryptedAudio:
+			if !system.AudioMessageEnable {
+				return nil, nil
+			}
 		}
-		if category == MessageCategoryPlainVideo && !config.AppConfig.System.VideoMessageEnable {
-			return nil, nil
-		}
-		if category == MessageCategoryPlainLive && !config.AppConfig.System.LiveMessageEnable {
-			return nil, nil
-		}
-		if category == MessageCategoryPlainContact && !config.AppConfig.System.ContactMessageEnable {
-			return nil, nil
-		}
-		if category == MessageCategoryPlainAudio && !config.AppConfig.System.AudioMessageEnable {
-			return nil, nil
-		}
-		if category != MessageCategoryMessageRecall && !durable.Allow(user.UserId) {
-			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
-			err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-				err := createSystemDistributedMessage(ctx, tx, user, MessageCategoryPlainText, text)
-				return err
-			})
-			if err != nil {
+
+		switch category {
+		case MessageCategoryMessageRecall:
+		default:
+			if !durable.Allow(user.UserId) {
+				text := base64.RawURLEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
+				err = CreateSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text)
 				return nil, err
 			}
-			return nil, nil
 		}
 	}
 
-	if user.isAdmin() && category == MessageCategoryPlainText && quoteMessageId != "" {
-		if id, _ := bot.UuidFromString(quoteMessageId); id.String() == quoteMessageId {
-			bytes, err := base64.StdEncoding.DecodeString(data)
-			if err != nil {
-				return nil, err
-			}
-			str := strings.ToUpper(strings.TrimSpace(string(bytes)))
-			if str == "BAN" || str == "DELETE" || str == "REMOVE" || str == "KICK" {
-				dm, err := FindDistributedMessage(ctx, quoteMessageId)
-				if err != nil || dm == nil {
+	switch category {
+	case MessageCategoryEncryptedPost,
+		MessageCategoryEncryptedText,
+		MessageCategoryEncryptedImage,
+		MessageCategoryEncryptedVideo,
+		MessageCategoryEncryptedLive,
+		MessageCategoryEncryptedAudio,
+		MessageCategoryEncryptedData,
+		MessageCategoryEncryptedSticker,
+		MessageCategoryEncryptedContact,
+		MessageCategoryEncryptedTranscript,
+		MessageCategoryEncryptedLocation:
+		mixin := config.AppConfig.Mixin
+		var err error
+		data, err = bot.DecryptMessageData(data, mixin.SessionId, mixin.SessionKey)
+		if err != nil || data == "" {
+			return nil, err
+		}
+	}
+
+	if user.isAdmin() && quoteMessageId != "" {
+		switch category {
+		case MessageCategoryPlainText, MessageCategoryEncryptedText:
+			if id, _ := bot.UuidFromString(quoteMessageId); id.String() == quoteMessageId {
+				bytes, err := base64.RawURLEncoding.DecodeString(data)
+				if err != nil {
 					return nil, err
 				}
-				if str == "BAN" {
-					_, err = user.CreateBlacklist(ctx, dm.UserId)
-					if err != nil {
+				upper := strings.ToUpper(strings.TrimSpace(string(bytes)))
+				switch upper {
+				case "BAN", "KICK", "DELETE", "REMOVE":
+					dm, err := FindDistributedMessage(ctx, quoteMessageId)
+					if err != nil || dm == nil {
 						return nil, err
 					}
-				}
-				if str == "KICK" {
-					err = user.DeleteUser(ctx, dm.UserId)
-					if err != nil {
-						return nil, err
+					if upper == "BAN" {
+						_, err = user.CreateBlacklist(ctx, dm.UserId)
+						if err != nil {
+							return nil, err
+						}
 					}
+					if upper == "KICK" {
+						err = user.DeleteUser(ctx, dm.UserId)
+						if err != nil {
+							return nil, err
+						}
+					}
+					quoteMessageId = ""
+					category = MessageCategoryMessageRecall
+					data = base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
 				}
-				quoteMessageId = ""
-				category = MessageCategoryMessageRecall
-				data = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(`{"message_id":"%s"}`, dm.ParentId)))
 			}
 		}
 	}
@@ -164,7 +237,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		}
 	}
 	if category == MessageCategoryMessageRecall {
-		bytes, err := base64.StdEncoding.DecodeString(data)
+		bytes, err := base64.RawURLEncoding.DecodeString(data)
 		if err != nil {
 			return nil, session.BadDataError(ctx)
 		}
@@ -178,7 +251,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 			return nil, err
 		}
 		if m.UserId != user.UserId && !user.isAdmin() {
-			return nil, session.ForbiddenError(ctx)
+			return nil, nil
 		}
 		if user.isAdmin() {
 			message.UserId = m.UserId
@@ -190,24 +263,6 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		return nil, session.TransactionError(ctx, err)
 	}
 	return message, nil
-}
-
-func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string) error {
-	mixin := config.AppConfig.Mixin
-	t := time.Now()
-	message := &Message{
-		MessageId:        bot.UuidNewV4().String(),
-		UserId:           mixin.ClientId,
-		Category:         category,
-		Data:             data,
-		CreatedAt:        t,
-		UpdatedAt:        t,
-		State:            MessageStatePending,
-		LastDistributeAt: genesisStartedAt(),
-	}
-	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", messagesCols)
-	_, err := tx.ExecContext(ctx, query, message.values()...)
-	return err
 }
 
 func createSystemRewardMessage(ctx context.Context, tx *sql.Tx, r *Reward, user, receipt *User, asset *Asset) error {
@@ -228,27 +283,30 @@ func createSystemRewardMessage(ctx context.Context, tx *sql.Tx, r *Reward, user,
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
-	data := base64.StdEncoding.EncodeToString(btns)
+	data := base64.RawURLEncoding.EncodeToString(btns)
 	return createSystemMessage(ctx, tx, MessageCategoryAppButtonGroup, data)
 }
 
 func createSystemJoinMessage(ctx context.Context, tx *sql.Tx, user *User) error {
-	b, err := readProhibitedStatus(ctx, tx)
-	if err != nil || b {
-		return nil
-	}
+	data := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName)))
+	return createSystemMessage(ctx, tx, MessageCategoryPlainText, data)
+}
+
+func createSystemMessage(ctx context.Context, tx *sql.Tx, category, data string) error {
+	mixin := config.AppConfig.Mixin
 	t := time.Now()
 	message := &Message{
-		MessageId: bot.UuidNewV4().String(),
-		UserId:    config.AppConfig.Mixin.ClientId,
-		Category:  MessageCategoryPlainText,
-		Data:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(config.AppConfig.MessageTemplate.MessageTipsJoin, user.FullName))),
-		CreatedAt: t,
-		UpdatedAt: t,
-		State:     MessageStatePending,
+		MessageId:        bot.UuidNewV4().String(),
+		UserId:           mixin.ClientId,
+		Category:         category,
+		Data:             data,
+		CreatedAt:        t,
+		UpdatedAt:        t,
+		State:            MessageStatePending,
+		LastDistributeAt: genesisStartedAt(),
 	}
-	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s)", messagesCols)
-	_, err = tx.ExecContext(ctx, query, message.values()...)
+	query := durable.PrepareQuery("INSERT INTO messages (%s) VALUES (%s) ON CONFLICT (message_id) DO NOTHING", messagesCols)
+	_, err := tx.ExecContext(ctx, query, message.values()...)
 	return err
 }
 
@@ -304,7 +362,7 @@ func LatestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error)
 			return nil, session.TransactionError(ctx, err)
 		}
 		if m.Category == MessageCategoryPlainText {
-			data, _ := base64.StdEncoding.DecodeString(m.Data)
+			data, _ := base64.RawURLEncoding.DecodeString(m.Data)
 			m.Data = string(data)
 		} else {
 			m.Data = ""
@@ -366,17 +424,71 @@ func FirstNStringInRune(s string, n int) string {
 	return string([]rune(s)[:n]) + "..."
 }
 
-var whitelistCategories = map[string]bool{
-	MessageCategoryMessageRecall:  true,
-	MessageCategoryPlainText:      true,
-	MessageCategoryPlainImage:     true,
-	MessageCategoryPlainVideo:     true,
-	MessageCategoryPlainLive:      true,
-	MessageCategoryPlainData:      true,
-	MessageCategoryPlainSticker:   true,
-	MessageCategoryPlainContact:   true,
-	MessageCategoryPlainAudio:     true,
-	MessageCategoryAppCard:        true,
-	MessageCategoryPlainPost:      true,
-	MessageCategoryAppButtonGroup: true,
+func decryptMessageData(data string) (string, error) {
+	bytes, err := base64.RawURLEncoding.DecodeString(data)
+	if err != nil {
+		return "", err
+	}
+	size := 16 + 48 // session id bytes + encypted key bytes size
+	total := len(bytes)
+	if total < 1+2+32+size+12 {
+		return "", nil
+	}
+	sessionLen := int(binary.LittleEndian.Uint16(bytes[1:3]))
+	mixin := config.AppConfig.Mixin
+	prefixSize := 35 + sessionLen*size
+	var key []byte
+	for i := 35; i < prefixSize; i += size {
+		if uid, _ := bot.UuidFromBytes(bytes[i : i+16]); uid.String() == mixin.SessionId {
+			private, err := base64.RawURLEncoding.DecodeString(mixin.SessionKey)
+			if err != nil {
+				return "", err
+			}
+			var dst, priv, pub [32]byte
+			copy(pub[:], bytes[3:35])
+			bot.PrivateKeyToCurve25519(&priv, ed25519.PrivateKey(private))
+			curve25519.ScalarMult(&dst, &priv, &pub)
+
+			block, err := aes.NewCipher(dst[:])
+			if err != nil {
+				return "", err
+			}
+			iv := bytes[i+16 : i+16+aes.BlockSize]
+			key = bytes[i+16+aes.BlockSize : i+size]
+			mode := cipher.NewCBCDecrypter(block, iv)
+			mode.CryptBlocks(key, key)
+			key = key[:16]
+			break
+		}
+	}
+	if len(key) != 16 {
+		return "", nil
+	}
+	nonce := bytes[prefixSize : prefixSize+12]
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", nil // TODO
+	}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", nil // TODO
+	}
+	plaintext, err := aesgcm.Open(nil, nonce, bytes[prefixSize+12:], nil)
+	if err != nil {
+		return "", nil // TODO
+	}
+	return base64.RawURLEncoding.EncodeToString(plaintext), nil
+}
+
+func EncryptMessageData(data string, sessions []*Session) (string, error) {
+	ss := make([]*bot.Session, len(sessions))
+	for i, s := range sessions {
+		ss[i] = &bot.Session{
+			UserID:    s.UserID,
+			SessionID: s.SessionID,
+			PublicKey: s.PublicKey,
+		}
+	}
+	mixin := config.AppConfig.Mixin
+	return bot.EncryptMessageData(data, ss, mixin.SessionKey)
 }

@@ -18,6 +18,21 @@ CREATE INDEX IF NOT EXISTS users_subscribed_activex ON users(subscribed_at, acti
 CREATE INDEX IF NOT EXISTS users_activex ON users(active_at);
 
 
+CREATE TABLE IF NOT EXISTS sessions (
+  user_id            VARCHAR(36) NOT NULL,
+  session_id         VARCHAR(36) NOT NULL,
+  public_key         VARCHAR(128) NOT NULL,
+  PRIMARY KEY(user_id, session_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS conversation_participants (
+  conversation_id     VARCHAR(36) NOT NULL,
+  user_id             VARCHAR(36) NOT NULL,
+  PRIMARY KEY(conversation_id, user_id)
+);
+
+
 CREATE TABLE IF NOT EXISTS messages (
   message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
   user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),

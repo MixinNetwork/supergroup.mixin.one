@@ -23,13 +23,16 @@ func TestBroadcasterCRUD(t *testing.T) {
 	private := base64.RawURLEncoding.EncodeToString(priv)
 	authorizationID := bot.UuidNewV4().String()
 
+	users, err := ReadBroadcasters(ctx)
+	assert.Nil(err)
+	assert.Len(users, 0)
 	user, err := createUser(ctx, public, private, authorizationID, "", bot.UuidNewV4().String(), "1000", "name", "http://localhost")
 	assert.Nil(err)
 	assert.NotNil(user)
 	broadcaster, err := admin.CreateBroadcaster(ctx, user.IdentityNumber)
 	assert.Nil(err)
 	assert.Equal(user.UserId, broadcaster.UserId)
-	users, err := ReadBroadcasters(ctx)
+	users, err = ReadBroadcasters(ctx)
 	assert.Nil(err)
 	assert.Len(users, 1)
 }
