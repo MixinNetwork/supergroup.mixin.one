@@ -1,3 +1,7 @@
+# 2022-01-14
+
+添加了两个新表 sessions, conversation_participants 支持大群加密
+
 # 2021-09-15
 users 表添加 authorization_id, scope 两个字段, 用来支持 ed25519 签名
 
