@@ -169,7 +169,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 					for _, t := range transcripts {
 						t.TranscriptId = messageId
 					}
-					data, err := json.Marshal(r)
+					data, err := json.Marshal(transcripts)
 					if err != nil {
 						return session.BadDataError(ctx)
 					}
