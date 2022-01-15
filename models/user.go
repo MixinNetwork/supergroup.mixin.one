@@ -476,7 +476,7 @@ func LoopingInactiveUsers(ctx context.Context) ([]*User, error) {
 func (user *User) Hibernate(ctx context.Context) error {
 	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		if user.State == PaymentStatePaid {
-			text := base64.StdEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
+			text := base64.RawURLEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsSuspended))
 			err := createSystemDistributedMessageInTx(ctx, tx, user, MessageCategoryPlainText, text)
 			if err != nil {
 				return err
