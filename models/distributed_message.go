@@ -67,12 +67,14 @@ func (message *Message) Distribute(ctx context.Context) error {
 	if !system.Operators[message.UserId] {
 		switch message.Category {
 		case MessageCategoryPlainText, MessageCategoryEncryptedText:
-			data, err := base64.RawURLEncoding.DecodeString(message.Data)
-			if err != nil {
-				return err
-			}
-			if xurls.Relaxed.Match(data) {
-				return message.Notify(ctx, "Message contains link")
+			if system.DetectLinkEnabled {
+				data, err := base64.RawURLEncoding.DecodeString(message.Data)
+				if err != nil {
+					return err
+				}
+				if xurls.Relaxed.Match(data) {
+					return message.Notify(ctx, "Message contains link")
+				}
 			}
 		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
 			if system.DetectQRCodeEnabled {
