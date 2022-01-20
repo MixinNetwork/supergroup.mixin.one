@@ -40,7 +40,7 @@
             </div>
             <div class="user info">
               <h5>{{user.full_name}}</h5>
-              <time>{{user.created_at}}</time>
+              <time v-bind:key="user.user_id">{{user.created_at}}</time>
             </div>
             <div class="packet amount">{{user.amount}} {{user.symbol}}</div>
           </li>
@@ -124,8 +124,8 @@ export default {
       for (var j in pktData.participants) {
         var participant = pktData.participants[j];
         pktData.participants[j]['symbol'] = pktData.asset.symbol;
-        pktData.participants[j]['created_at'] = dayjs(pktData.participants[i].created_at).format('MM-DD HH:mm:ss')
-        pktData.participants[i]['firstLetter'] = pktData.participants[i].avatar_url === '' ? (participant.full_name.trim()[0] || '^_^') : undefined;
+        pktData.participants[j]['created_at'] = dayjs(pktData.participants[j].created_at).format('MM-DD HH:mm:ss')
+        pktData.participants[j]['firstLetter'] = pktData.participants[j].avatar_url === '' ? (participant.full_name.trim()[0] || '^_^') : undefined;
       }
     } else {
       this.isClose = true
