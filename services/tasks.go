@@ -88,6 +88,16 @@ func sendAppButton(ctx context.Context, mc *MessageContext, label, conversationI
 
 func loopInactiveUsers(ctx context.Context) {
 	for {
+		message, err := models.LastSucessMessage(ctx)
+		if err != nil {
+			time.Sleep(time.Second)
+			session.Logger(ctx).Errorf("LastSucessMessage ERROR: %+v", err)
+			continue
+		}
+		if message == nil {
+			time.Sleep(time.Minute)
+			continue
+		}
 		users, err := models.LoopingInactiveUsers(ctx)
 		if err != nil {
 			time.Sleep(time.Second)
