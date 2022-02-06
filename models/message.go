@@ -329,8 +329,8 @@ func PendingMessages(ctx context.Context, limit int64) ([]*Message, error) {
 
 func LastSucessMessage(ctx context.Context) (*Message, error) {
 	var message *Message
-	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 AND updated_at>$2 ORDER BY state,updated_at LIMIT 1", strings.Join(messagesCols, ","))
-	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStateSuccess, time.Now().Add(-24*6*time.Hour))
+	query := fmt.Sprintf("SELECT %s FROM messages WHERE state=$1 AND updated_at>$2 AND updated_at<$3 ORDER BY state,updated_at LIMIT 1", strings.Join(messagesCols, ","))
+	rows, err := session.Database(ctx).QueryContext(ctx, query, MessageStateSuccess, time.Now().Add(-24*6*time.Hour), time.Now().Add(-12*time.Hour))
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
