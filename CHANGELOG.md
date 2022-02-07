@@ -1,5 +1,4 @@
 # 2022-01-14
-
 添加了两个新表 sessions, conversation_participants 支持大群加密
 
 # 2021-09-15

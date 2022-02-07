@@ -553,11 +553,31 @@ func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
 }
 
 type Transcript struct {
-	Category     string `json:"category"`
-	UserFullName string `json:"user_full_name"`
-	Content      string `json:"content"`
-	CreatedAt    string `json:"created_at"`
-	MessageId    string `json:"message_id"`
-	UserID       string `json:"user_id"`
-	TranscriptId string `json:"transcript_id"`
+	Category       string `json:"category"`
+	Caption        string `json:"caption"`
+	Content        string `json:"content"`
+	CreatedAt      string `json:"created_at"`
+	MediaName      string `json:"media_name"`
+	MediaKey       string `json:"media_key"`
+	MediaWaveform  string `json:"media_waveform"`
+	MediaSize      int    `json:"media_size"`
+	MediaWidth     int    `json:"media_width"`
+	MediaHeight    int    `json:"media_height"`
+	MediaDuration  int    `json:"media_duration"`
+	MediaURL       string `json:"media_url"`
+	MediaStatus    string `json:"media_status"`
+	MediaDigest    string `json:"media_digest"`
+	MediaMimeType  string `json:"media_mime_type"`
+	MediaCreatedAt string `json:"media_created_at"`
+	Mentions       string `json:"mentions"`
+	MessageId      string `json:"message_id"`
+	SharedUserID   string `json:"shared_user_id"`
+	StickerId      string `json:"sticker_id"`
+	TranscriptId   string `json:"transcript_id"`
+	ThumbURL       string `json:"thumb_url"`
+	ThumbImage     string `json:"thumb_image"`
+	UserID         string `json:"user_id"`
+	UserFullName   string `json:"user_full_name"`
+	QuoteID        string `json:"quote_id"`
+	QuoteContent   string `json:"quote_content"`
 }
