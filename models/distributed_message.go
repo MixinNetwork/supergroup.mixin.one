@@ -106,7 +106,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 		}
 	}
 
-	var transcripts []*Transcript
+	var transcripts []Transcript
 	switch message.Category {
 	case MessageCategoryPlainTranscript,
 		MessageCategoryEncryptedTranscript:
@@ -169,7 +169,7 @@ func (message *Message) Distribute(ctx context.Context) error {
 				case MessageCategoryPlainTranscript,
 					MessageCategoryEncryptedTranscript:
 					for _, t := range transcripts {
-						t.TranscriptId = messageId
+						t["transcript_id"] = messageId
 					}
 					data, err := json.Marshal(transcripts)
 					if err != nil {
@@ -552,32 +552,33 @@ func (m *DistributedMessage) ReadCategory(user *SimpleUser) string {
 	}
 }
 
-type Transcript struct {
-	Category       string `json:"category"`
-	Caption        string `json:"caption"`
-	Content        string `json:"content"`
-	CreatedAt      string `json:"created_at"`
-	MediaName      string `json:"media_name"`
-	MediaKey       string `json:"media_key"`
-	MediaWaveform  string `json:"media_waveform"`
-	MediaSize      int    `json:"media_size"`
-	MediaWidth     int    `json:"media_width"`
-	MediaHeight    int    `json:"media_height"`
-	MediaDuration  int    `json:"media_duration"`
-	MediaURL       string `json:"media_url"`
-	MediaStatus    string `json:"media_status"`
-	MediaDigest    string `json:"media_digest"`
-	MediaMimeType  string `json:"media_mime_type"`
-	MediaCreatedAt string `json:"media_created_at"`
-	Mentions       string `json:"mentions"`
-	MessageId      string `json:"message_id"`
-	SharedUserID   string `json:"shared_user_id"`
-	StickerId      string `json:"sticker_id"`
-	TranscriptId   string `json:"transcript_id"`
-	ThumbURL       string `json:"thumb_url"`
-	ThumbImage     string `json:"thumb_image"`
-	UserID         string `json:"user_id"`
-	UserFullName   string `json:"user_full_name"`
-	QuoteID        string `json:"quote_id"`
-	QuoteContent   string `json:"quote_content"`
-}
+/*
+"category": "",
+"caption": "",
+"content": "",
+"created_at": "",
+"media_name": "",
+"media_key": "",
+"media_waveform": "",
+"media_size": 0,
+"media_width": 0,
+"media_height": 0,
+"media_duration": 0,
+"media_url": "",
+"media_status": "",
+"media_digest": "",
+"media_mime_type": "",
+"media_created_at": ""
+"mentions": "",
+"message_id": "",
+"shared_user_id": "",
+"sticker_id": "",
+"transcript_id": "",
+"thumb_url": "",
+"thumb_image": "",
+"user_id": "",
+"user_full_name": "",
+"quote_id": "",
+"quote_content": "",
+*/
+type Transcript map[string]interface{}
