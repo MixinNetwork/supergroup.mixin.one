@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -62,6 +63,19 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 				delivered = append(delivered, m.MessageID)
 			}
 			if m.State == "FAILED" {
+				if len(m.Sessions) == 0 {
+					query := "UPDATE users SET subscribed_at=$1 WHERE user_id=$2"
+					if _, err := session.Database(ctx).ExecContext(ctx, query, time.Time{}, m.RecipientID); err != nil {
+						log.Println("UPDATE users err", err)
+						continue
+					}
+					query = "delete from distributed_messages where recipient_id = $1 and status = 'SENT'"
+					if _, err := session.Database(ctx).ExecContext(ctx, query, m.RecipientID); err != nil {
+						log.Println("delete distributed_messages err", err)
+						continue
+					}
+					continue
+				}
 				for _, s := range m.Sessions {
 					sessions = append(sessions, &models.Session{
 						UserID:    m.RecipientID,
@@ -132,17 +146,6 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 		category := message.ReadCategory(recipient)
 		m["category"] = category
 		if recipient != nil {
-			if len(recipient.Sessions) == 0 {
-				query := "UPDATE users SET subscribed_at=$1 WHERE user_id=$2"
-				if _, err := session.Database(ctx).ExecContext(ctx, query, time.Time{}, message.RecipientId); err != nil {
-					return nil, session.TransactionError(ctx, err)
-				}
-				query = "delete from distributed_messages where recipient_id = $1 and status = 'SENT'"
-				if _, err := session.Database(ctx).ExecContext(ctx, query, message.RecipientId); err != nil {
-					return nil, session.TransactionError(ctx, err)
-				}
-				continue
-			}
 			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
 			var sessions []map[string]string
 			for _, s := range recipient.Sessions {
