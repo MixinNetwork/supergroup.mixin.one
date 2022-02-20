@@ -132,6 +132,17 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 		category := message.ReadCategory(recipient)
 		m["category"] = category
 		if recipient != nil {
+			if len(recipient.Sessions) == 0 {
+				query := "UPDATE users SET subscribed_at=$1 WHERE user_id=$2"
+				if _, err := session.Database(ctx).ExecContext(ctx, query, time.Time{}, message.RecipientId); err != nil {
+					return nil, session.TransactionError(ctx, err)
+				}
+				query = "delete from distributed_messages where recipient_id = $1 and status = 'SENT'"
+				if _, err := session.Database(ctx).ExecContext(ctx, query, message.RecipientId); err != nil {
+					return nil, session.TransactionError(ctx, err)
+				}
+				continue
+			}
 			m["checksum"] = models.GenerateUserChecksum(recipient.Sessions)
 			var sessions []map[string]string
 			for _, s := range recipient.Sessions {
