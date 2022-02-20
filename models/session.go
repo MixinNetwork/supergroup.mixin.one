@@ -55,6 +55,9 @@ func SyncSession(ctx context.Context, sessions []*Session) error {
 
 		repeatIds := make(map[string]bool)
 		for i, s := range sessions {
+			if s.SessionID == "" {
+				continue
+			}
 			if repeatIds[s.UserID+s.SessionID] {
 				continue
 			}

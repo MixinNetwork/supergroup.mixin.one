@@ -69,6 +69,9 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 						PublicKey: s.PublicKey,
 					})
 				}
+				sessions = append(sessions, &models.Session{
+					UserID: m.RecipientID,
+				})
 			}
 		}
 		err = models.UpdateDeliveredMessagesStatus(ctx, delivered)
