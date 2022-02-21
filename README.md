@@ -8,7 +8,7 @@ Before you upgrade your group, please checkout [CHANGELOG.md](https://github.com
 
 1. copy `./config/config.tpl.yaml` to `./config/config.yaml`
 2. Replace configurations in `config.yaml`, we use PostgreSQL as our database.
-3. `cd web` and exec `npm install`
+3. `cd client` and exec `yarn install`
 4. `cp env.example .env.local`, you can find more document in https://cli.vuejs.org/guide/mode-and-env.html
 5. Replace configs in `.env.local`
 
@@ -21,4 +21,4 @@ Before you upgrade your group, please checkout [CHANGELOG.md](https://github.com
 
 #### Front-end
 
-Generate static assets `cd web && npm run serve`
+Generate static assets `cd client && yarn serve`
