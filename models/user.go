@@ -323,6 +323,25 @@ func (user *User) paymentInTx(ctx context.Context, tx *sql.Tx, method string) er
 	return err
 }
 
+func PaidUsers(ctx context.Context) ([]*User, error) {
+	var users []*User
+	query := fmt.Sprintf("SELECT %s FROM users WHERE state='paid' ORDER BY subscribed_at DESC LIMIT %d", strings.Join(usersCols, ","), 3000)
+	rows, err := session.Database(ctx).QueryContext(ctx, query)
+	if err != nil {
+		return users, session.TransactionError(ctx, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		u, err := userFromRow(rows)
+		if err != nil {
+			return users, session.TransactionError(ctx, err)
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
 func Subscribers(ctx context.Context, offset time.Time, identity int64, keywords string) ([]*User, error) {
 	if identity > 20000 {
 		user, err := findUserByIdentityNumber(ctx, identity)

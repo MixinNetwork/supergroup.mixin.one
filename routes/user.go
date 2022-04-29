@@ -80,7 +80,15 @@ func (impl *usersImpl) subscribers(w http.ResponseWriter, r *http.Request, _ map
 	if err != nil {
 		keywords = r.URL.Query().Get("q")
 	}
-	if users, err := models.Subscribers(r.Context(), offset, num, keywords); err != nil {
+	state := r.URL.Query().Get("state")
+	if state == "paid" {
+		users, err := models.PaidUsers(r.Context())
+		if err != nil {
+			views.RenderErrorResponse(w, r, err)
+		} else {
+			views.RenderUsersView(w, r, users)
+		}
+	} else if users, err := models.Subscribers(r.Context(), offset, num, keywords); err != nil {
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderUsersView(w, r, users)
