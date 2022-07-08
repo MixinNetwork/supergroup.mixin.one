@@ -81,6 +81,7 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 						UserID:    m.RecipientID,
 						SessionID: s.SessionID,
 						PublicKey: s.PublicKey,
+						UpdatedAt: time.Now(),
 					})
 				}
 				sessions = append(sessions, &models.Session{

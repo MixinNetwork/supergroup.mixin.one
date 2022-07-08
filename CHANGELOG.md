@@ -1,4 +1,7 @@
 # 2022-01-14
+添加了 sessions 表, 添加了新字段 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+
+# 2022-01-14
 添加了两个新表 sessions, conversation_participants 支持大群加密
 
 # 2021-09-15

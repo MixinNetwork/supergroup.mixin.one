@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -16,17 +17,18 @@ type Session struct {
 	UserID    string
 	SessionID string
 	PublicKey string
+	UpdatedAt time.Time
 }
 
-var sessionsCols = []string{"user_id", "session_id", "public_key"}
+var sessionsCols = []string{"user_id", "session_id", "public_key", "updated_at"}
 
 func (s *Session) values() []interface{} {
-	return []interface{}{s.UserID, s.SessionID, s.PublicKey}
+	return []interface{}{s.UserID, s.SessionID, s.PublicKey, s.UpdatedAt}
 }
 
 func sessionFromRow(row durable.Row) (*Session, error) {
 	var s Session
-	err := row.Scan(&s.UserID, &s.SessionID, &s.PublicKey)
+	err := row.Scan(&s.UserID, &s.SessionID, &s.PublicKey, &s.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

@@ -9,6 +9,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/externals"
@@ -47,6 +48,7 @@ func SyncConversationParticipant(ctx context.Context, conversationID string) err
 			UserID:    ps.UserId,
 			SessionID: ps.SessionId,
 			PublicKey: ps.PublicKey,
+			UpdatedAt: time.Now(),
 		})
 	}
 

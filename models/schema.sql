@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_id            VARCHAR(36) NOT NULL,
   session_id         VARCHAR(36) NOT NULL,
   public_key         VARCHAR(128) NOT NULL,
+  updated_at         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   PRIMARY KEY(user_id, session_id)
 );
 
