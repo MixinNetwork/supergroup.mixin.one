@@ -56,11 +56,19 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		var delivered []string
+		var delivered []models.DistributedMessageResult
 		var sessions []*models.Session
 		for _, m := range results {
 			if m.State == "SUCCESS" {
-				delivered = append(delivered, m.MessageID)
+				var sessions []string
+				for _, s := range m.Sessions {
+					sessions = append(sessions, s.SessionID)
+				}
+				delivered = append(delivered, models.DistributedMessageResult{
+					MessageID: m.MessageID,
+					State:     models.MessageStatusDelivered,
+					Sessions:  strings.Join(sessions, ","),
+				})
 			}
 			if m.State == "FAILED" {
 				if len(m.Sessions) == 0 {

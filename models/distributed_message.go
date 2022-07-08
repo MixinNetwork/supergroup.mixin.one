@@ -370,9 +370,22 @@ func PendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 	return messages, nil
 }
 
-func UpdateDeliveredMessagesStatus(ctx context.Context, ids []string) error {
-	query := "UPDATE distributed_messages SET status=$1 WHERE message_id=ANY($2)"
-	_, err := session.Database(ctx).ExecContext(ctx, query, MessageStatusDelivered, pq.Array(ids))
+type DistributedMessageResult struct {
+	MessageID string
+	State     string
+	Sessions  string
+}
+
+func UpdateDeliveredMessagesStatus(ctx context.Context, result []DistributedMessageResult) error {
+	if len(result) < 1 {
+		return nil
+	}
+	var rows []string
+	for _, r := range result {
+		rows = append(rows, fmt.Sprintf("('%s', '%s', '%s')", r.MessageID, r.State, r.Sessions))
+	}
+	query := "UPDATE distributed_messages SET (status, sessions)=(m.state, m.sessions) FROM (values %s) as m(message_id, state, sessions) WHERE distributed_messages.message_id=m.message_id"
+	_, err := session.Database(ctx).ExecContext(ctx, fmt.Sprintf(query, strings.Join(rows, ",")))
 	if err != nil {
 		return session.TransactionError(ctx, err)
 	}

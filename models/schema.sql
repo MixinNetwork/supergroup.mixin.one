@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS distributed_messages (
   data                  TEXT NOT NULL,
   silent                BOOLEAN NOT NULL DEFAULT false,
   status                VARCHAR(512) NOT NULL,
+  sessions              VARCHAR(512),
   created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
