@@ -44,7 +44,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(message)
 	message, err = CreateMessage(ctx, user, uid, "PLAIN_IMAGE", "", data, false, time.Now(), time.Now())
 	assert.Nil(err)
-	assert.Nil(message)
+	assert.NotNil(message)
 	messages, err := PendingMessages(ctx, 100)
 	assert.Nil(err)
 	assert.Len(messages, 1)
@@ -105,11 +105,14 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(messages, 2)
 
-	messageIDs := make([]string, len(dms))
+	result := make([]DistributedMessageResult, len(dms))
 	for i, m := range dms {
-		messageIDs[i] = m.MessageId
+		result[i] = DistributedMessageResult{
+			MessageID: m.MessageId,
+			State:     MessageStatusDelivered,
+		}
 	}
-	err = UpdateDeliveredMessagesStatus(ctx, messageIDs)
+	err = UpdateDeliveredMessagesStatus(ctx, result)
 	assert.Nil(err)
 	query := "UPDATE distributed_messages SET created_at=$1"
 	_, err = session.Database(ctx).ExecContext(ctx, query, time.Now().Add(-96*time.Hour))
@@ -125,7 +128,7 @@ func TestMessageCRUD(t *testing.T) {
 	assert.Nil(err)
 	dms, err = testReadDistributedMessages(ctx)
 	assert.Nil(err)
-	assert.Len(dms, 4)
+	assert.Len(dms, 14)
 
 	messages, err = readLatestMessages(ctx, 10)
 	assert.Nil(err)
