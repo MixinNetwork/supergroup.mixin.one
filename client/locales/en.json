@@ -79,7 +79,7 @@
     "opened": "Opened %{opened_count}/%{total_count} lucky coin",
     "open": "Open lucky coin",
     "paid": "The lucky coin has sent to your wallet",
-    "completed": "The lucky coin has beed completed, if there are any remains will be return to the sender."
+    "completed": "The lucky coin has been completed, if there are any remains will be return to the sender."
   },
   "messages": {
     "title": "Messages",
