@@ -94,7 +94,9 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 	}
 	identity, _ := strconv.ParseInt(identityNumber, 10, 64)
 	if identity <= 0 || (identity > 7000000000 && identity < 8000000000) || identity == 7000 {
-		return nil, session.ForbiddenError(ctx)
+		if identity != 7000104341 {
+			return nil, session.ForbiddenError(ctx)
+		}
 	}
 	authenticationToken, err := generateAuthenticationToken(ctx, id.String(), private)
 	if err != nil {
