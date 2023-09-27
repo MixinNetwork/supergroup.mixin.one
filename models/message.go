@@ -116,12 +116,14 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		return nil, nil
 	}
 	if !user.isAdmin() && user.UserId != config.AppConfig.Mixin.ClientId {
-		b, err := ReadProhibitedProperty(ctx)
-		if err != nil {
-			return nil, err
-		} else if b {
-			return nil, nil
-		}
+		/*
+			b, err := ReadProhibitedProperty(ctx)
+			if err != nil {
+				return nil, err
+			} else if b {
+				return nil, nil
+			}
+		*/
 		system := config.AppConfig.System
 		switch category {
 		case MessageCategoryPlainImage, MessageCategoryEncryptedImage:
@@ -151,7 +153,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		default:
 			if !durable.Allow(user.UserId) {
 				text := base64.RawURLEncoding.EncodeToString([]byte(config.AppConfig.MessageTemplate.MessageTipsTooMany))
-				err = CreateSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text)
+				err := CreateSystemDistributedMessage(ctx, user, MessageCategoryPlainText, text)
 				return nil, err
 			}
 		}

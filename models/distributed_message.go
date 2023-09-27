@@ -63,6 +63,10 @@ func distributedMessageFromRow(row durable.Row) (*DistributedMessage, error) {
 }
 
 func (message *Message) Distribute(ctx context.Context) error {
+	prohibited, err := ReadProhibitedProperty(ctx)
+	if err != nil {
+		return err
+	}
 	system := config.AppConfig.System
 	if !system.Operators[message.UserId] {
 		switch message.Category {
@@ -144,6 +148,11 @@ func (message *Message) Distribute(ctx context.Context) error {
 				message.LastDistributeAt = user.SubscribedAt
 				if user.UserId == message.UserId {
 					continue
+				}
+				if !config.AppConfig.System.Operators[message.UserId] && message.UserId != config.AppConfig.Mixin.ClientId && prohibited {
+					if !config.AppConfig.System.Operators[user.UserId] {
+						continue
+					}
 				}
 				messageId := UniqueConversationId(user.UserId, message.MessageId)
 				if set[messageId] {
