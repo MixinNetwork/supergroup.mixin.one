@@ -143,6 +143,8 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 
 	if config.AppConfig.System.Operators[user.UserId] {
 		user.State = PaymentStatePaid
+		user.SubscribedAt = time.Now()
+		user.PayMethod = PayMethodOffer
 	}
 
 	if user.State == PaymentStatePending {
