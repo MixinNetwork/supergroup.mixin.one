@@ -138,7 +138,7 @@ export default {
       return
     }
     if (this.meInfo.data.state === 'pending') {
-      this.$router.push('/pay')
+      this.$router.push('/proof')
       return
     }
     if (this.meInfo.data.role === 'admin') {

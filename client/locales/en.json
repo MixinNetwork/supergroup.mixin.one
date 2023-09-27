@@ -57,6 +57,11 @@
     "incorrect_coupon_code_toast": "Incorrect coupon code",
     "notice": "* Please follow the rules, otherwise will be kicked out, and the fee wouldn't be retruned."
   },
+  "proof": {
+    "title": "Proof of Box",
+    "desc": "Should holding at least 10 BOX in the last three days to join",
+    "join": "Validate Again"
+  },
   "broadcaster": {
     "title": "Reward",
     "pay": "Pay"

@@ -3,6 +3,7 @@ import Home from './pages/HomePage'
 import Auth from './pages/AuthPage'
 import Blocking from './pages/BlockingPage'
 import Pay from './pages/PayPage'
+import Proof from './pages/ProofPage'
 import Broadcaster from './pages/BroadcasterPage'
 import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/PacketPage'
@@ -16,6 +17,7 @@ const routes = [
   { path: '/broadcasters', component: Broadcaster },
   { path: '/blocking', component: Blocking },
   { path: '/pay', component: Pay },
+  { path: '/proof', component: Proof },
   { path: '/packets/prepare', component: PreparePacket },
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },
