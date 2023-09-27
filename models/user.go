@@ -152,6 +152,8 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 		}
 		if b {
 			user.State = PaymentStatePaid
+			user.SubscribedAt = time.Now()
+			user.PayMethod = PayMethodOffer
 		}
 	}
 
