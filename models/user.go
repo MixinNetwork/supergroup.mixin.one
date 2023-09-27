@@ -141,6 +141,10 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 	user.AvatarURL = avatarURL
 	user.AuthenticationToken = authenticationToken
 
+	if config.AppConfig.System.Operators[user.UserId] {
+		user.State = PaymentStatePaid
+	}
+
 	if user.State == PaymentStatePending {
 		b, err := user.filterBoxSnapshot(ctx)
 		if err != nil {
