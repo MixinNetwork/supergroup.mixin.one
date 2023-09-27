@@ -575,21 +575,25 @@ func (u *User) GetFullName() string {
 
 func (user *User) filterBoxSnapshot(ctx context.Context) (bool, error) {
 	box := "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c"
-	offset := time.Now().Add(-3 * 24 * time.Hour)
-	snapshots, err := bot.Snapshots(ctx, 300, offset.Format(time.RFC3339Nano), box, "ASC", user.UserId, user.AuthorizationID, user.AccessToken)
+	snapshots, err := bot.Snapshots(ctx, 300, "", box, "DESC", user.UserId, user.AuthorizationID, user.AccessToken)
 	if err != nil {
 		return false, err
 	} else if len(snapshots) < 1 {
 		return false, nil
 	}
+	if number.FromString(snapshots[0].ClosingBalance).Cmp(number.FromString("10")) < 0 {
+		return false, nil
+	}
 	for i, s := range snapshots {
+		if s.CreatedAt.Add(3 * 24 * time.Hour).Before(time.Now()) {
+			break
+		}
 		if number.FromString(s.ClosingBalance).Cmp(number.FromString("10")) < 0 {
 			return false, nil
 		}
-		if i == 0 && len(snapshots) == 300 {
-			if s.CreatedAt.Add(72 * time.Hour).After(time.Now()) {
-				return false, nil
-			}
+		// if there're more than 300 box transfers maybe unnormal
+		if i == 299 {
+			return false, nil
 		}
 	}
 	return true, nil
