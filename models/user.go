@@ -16,6 +16,7 @@ import (
 	"time"
 
 	bot "github.com/MixinNetwork/bot-api-go-client"
+	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/externals"
@@ -139,6 +140,16 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 	user.Scope = scope
 	user.AvatarURL = avatarURL
 	user.AuthenticationToken = authenticationToken
+
+	if user.PayMethod == PaymentStatePending {
+		b, err := user.filterBoxSnapshot(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if b {
+			user.State = PaymentStatePaid
+		}
+	}
 
 	if user.isNew {
 		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
@@ -560,4 +571,26 @@ func (u *User) GetFullName() string {
 		return u.FullName
 	}
 	return "Null"
+}
+
+func (user *User) filterBoxSnapshot(ctx context.Context) (bool, error) {
+	box := "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c"
+	offset := time.Now().Add(-3 * 24 * time.Hour)
+	snapshots, err := bot.Snapshots(ctx, 300, offset.Format(time.RFC3339Nano), box, "ASC", user.UserId, user.AuthorizationID, user.AccessToken)
+	if err != nil {
+		return false, err
+	} else if len(snapshots) < 1 {
+		return false, nil
+	}
+	for i, s := range snapshots {
+		if number.FromString(s.ClosingBalance).Cmp(number.FromString("10")) < 0 {
+			return false, nil
+		}
+		if i == 0 && len(snapshots) == 300 {
+			if s.CreatedAt.Add(72 * time.Hour).After(time.Now()) {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
 }
