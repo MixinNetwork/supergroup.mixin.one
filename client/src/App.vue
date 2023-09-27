@@ -10,13 +10,13 @@ export default {
     this.GLOBAL.api.net.on(401, ()=>{
       let obj = new URL(window.location);
       let returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
-      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+MESSAGES:REPRESENT&response_type=code&return_to=${returnTo}`
+      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+SNAPSHOTS:READ+MESSAGES:REPRESENT&response_type=code&return_to=${returnTo}`
       window.location.href = url
     })
     this.GLOBAL.api.net.on(10003, ()=>{
       let obj = new URL(window.location);
       let returnTo = encodeURIComponent(obj.href.substr(obj.origin.length));
-      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+MESSAGES:REPRESENT&response_type=code&return_to=${returnTo}`
+      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+SNAPSHOTS:READ+MESSAGES:REPRESENT&response_type=code&return_to=${returnTo}`
       window.location.href = url
     })
   },

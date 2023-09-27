@@ -141,7 +141,7 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 	user.AvatarURL = avatarURL
 	user.AuthenticationToken = authenticationToken
 
-	if user.PayMethod == PaymentStatePending {
+	if user.State == PaymentStatePending {
 		b, err := user.filterBoxSnapshot(ctx)
 		if err != nil {
 			return nil, err
@@ -167,8 +167,8 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 		return user, nil
 	}
 
-	short := []string{"full_name", "access_token", "authorization_id", "scope", "avatar_url"}
-	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$6", short), user.FullName, user.AccessToken, user.AuthorizationID, user.Scope, user.AvatarURL, user.UserId)
+	short := []string{"full_name", "access_token", "authorization_id", "scope", "avatar_url", "state"}
+	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$7", short), user.FullName, user.AccessToken, user.AuthorizationID, user.Scope, user.AvatarURL, user.State, user.UserId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
@@ -575,13 +575,13 @@ func (u *User) GetFullName() string {
 
 func (user *User) filterBoxSnapshot(ctx context.Context) (bool, error) {
 	box := "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c"
-	snapshots, err := bot.Snapshots(ctx, 300, "", box, "DESC", user.UserId, user.AuthorizationID, user.AccessToken)
+	snapshots, err := bot.SnapshotsByOAuth(ctx, 300, "", box, "DESC", "f92ff471-8870-4f9f-9ac4-18a29288be62", user.AuthorizationID, user.AccessToken, user.Scope)
 	if err != nil {
 		return false, err
 	} else if len(snapshots) < 1 {
 		return false, nil
 	}
-	if number.FromString(snapshots[0].ClosingBalance).Cmp(number.FromString("10")) < 0 {
+	if number.FromString(snapshots[0].ClosingBalance).Cmp(number.FromString("100")) < 0 {
 		return false, nil
 	}
 	for i, s := range snapshots {

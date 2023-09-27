@@ -26,7 +26,7 @@ export default {
   },
   methods: {
     joinAgain () {
-      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+MESSAGES:REPRESENT&response_type=code`
+      let url = `${MIXIN_AUTH_API}/oauth/authorize?client_id=${CLIENT_ID}&scope=PROFILE:READ+ASSETS:READ+SNAPSHOTS:READ+MESSAGES:REPRESENT&response_type=code`
       window.location.href = url ;
     },
   },

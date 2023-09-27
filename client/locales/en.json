@@ -59,7 +59,7 @@
   },
   "proof": {
     "title": "Proof of Box",
-    "desc": "Should holding at least 10 BOX in the last three days to join",
+    "desc": "Should holding at least 100 BOX in the last three days to join",
     "join": "Validate Again"
   },
   "broadcaster": {
