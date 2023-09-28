@@ -2,11 +2,8 @@
   <div class="message-item" @click="handleClick(message)">
     <div class="cell message-list-info">
       <div class="message-name">{{ message.full_name }}</div>
-      <div class="message-id">{{ message.data || ' No Data ' }}</div>
-    </div>
-    <div class="cell message-list-role">
-      <div class="message-role">{{message.category}}</div>
       <div class="message-time">{{ message.time }}</div>
+      <div class="message-id">{{ message.data || ' No Data ' }}</div>
     </div>
   </div>
 </template>

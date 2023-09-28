@@ -8,7 +8,7 @@
         finished-text="~ END ~"
         @load="onLoad"
       >
-        <message-item :message="item" v-for="item in items"  v-bind:key="item.message_id" @message-click="messageClick"></message-item>
+        <featured-message-item :message="item" v-for="item in items"  v-bind:key="item.message_id" @message-click="messageClick"></featured-message-item>
       </van-list>
     </div>
   </loading>
@@ -17,7 +17,7 @@
 <script>
 import NavBar from '@/components/NavBar'
 import dayjs from 'dayjs'
-import MessageItem from '@/components/partial/MessageItem'
+import FeaturedMessageItem from '@/components/partial/FeaturedMessageItem'
 import Loading from '@/components/LoadingSpinner'
 import utils from '@/utils'
 
@@ -39,7 +39,7 @@ export default {
     }
   },
   components: {
-    NavBar, MessageItem, Loading,
+    NavBar, FeaturedMessageItem, Loading,
   },
   async mounted () {
   },
