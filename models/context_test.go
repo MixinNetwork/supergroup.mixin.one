@@ -27,6 +27,7 @@ const (
 	dropAssetsDDL                   = `DROP TABLE IF EXISTS assets;`
 	dropBlacklistsDDL               = `DROP TABLE IF EXISTS blacklists;`
 	dropDistributedMessagesDDL      = `DROP TABLE IF EXISTS distributed_messages;`
+	dropFeaturedMessagesDDL         = `DROP TABLE IF EXISTS featured_messages;`
 	dropMessagesDDL                 = `DROP TABLE IF EXISTS messages;`
 	dropConversationParticipantsDDL = `DROP TABLE IF EXISTS conversation_participants;`
 	dropSessionsDDL                 = `DROP TABLE IF EXISTS sessions;`
@@ -46,6 +47,7 @@ func teardownTestContext(ctx context.Context) {
 		dropUsersDDL,
 		dropMessagesDDL,
 		dropDistributedMessagesDDL,
+		dropFeaturedMessagesDDL,
 		dropBlacklistsDDL,
 		dropAssetsDDL,
 		dropParticipantsDDL,

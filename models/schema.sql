@@ -50,6 +50,19 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS messages_state_updatedx ON messages(state, updated_at);
 
 
+CREATE TABLE IF NOT EXISTS featured_messages (
+  message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
+  user_id               VARCHAR(36) NOT NULL CHECK (user_id ~* '^[0-9a-f-]{36,36}$'),
+  category              VARCHAR(512) NOT NULL,
+  quote_message_id      VARCHAR(36) NOT NULL DEFAULT '',
+  data                  TEXT NOT NULL,
+  created_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS featured_messages_createdx ON featured_messages(created_at);
+
+
 CREATE TABLE IF NOT EXISTS distributed_messages (
   message_id            VARCHAR(36) PRIMARY KEY CHECK (message_id ~* '^[0-9a-f-]{36,36}$'),
   conversation_id       VARCHAR(36) NOT NULL CHECK (conversation_id ~* '^[0-9a-f-]{36,36}$'),

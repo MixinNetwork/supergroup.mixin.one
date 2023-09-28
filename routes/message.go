@@ -20,6 +20,9 @@ func registerMesseages(router *httptreemux.TreeMux) {
 
 	router.GET("/messages", impl.index)
 	router.POST("/messages/:id/recall", impl.recall)
+
+	router.GET("/featured_messages", impl.featured)
+	router.POST("/featured_messages/:id", impl.create)
 }
 
 func (impl *messageImpl) index(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -65,5 +68,22 @@ func (impl *messageImpl) recall(w http.ResponseWriter, r *http.Request, params m
 		views.RenderErrorResponse(w, r, err)
 	} else {
 		views.RenderBlankResponse(w, r)
+	}
+}
+
+func (impl *messageImpl) featured(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	if fms, err := models.FindFeaturedMessages(r.Context()); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderFeaturedMessages(w, r, fms)
+	}
+}
+
+func (impl *messageImpl) create(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	user := middlewares.CurrentUser(r)
+	if fm, err := user.CreateFeaturedMessage(r.Context(), params["id"]); err != nil {
+		views.RenderErrorResponse(w, r, err)
+	} else {
+		views.RenderFeaturedMessage(w, r, fm)
 	}
 }

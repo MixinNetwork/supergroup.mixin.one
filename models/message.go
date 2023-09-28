@@ -356,6 +356,9 @@ func LoopClearUpSuccessMessages(ctx context.Context) (int64, error) {
 }
 
 func FindMessage(ctx context.Context, id string) (*Message, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, nil
+	}
 	query := fmt.Sprintf("SELECT %s FROM messages WHERE message_id=$1", strings.Join(messagesCols, ","))
 	row := session.Database(ctx).QueryRowContext(ctx, query, id)
 	message, err := messageFromRow(row)
