@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -105,6 +106,12 @@ func FindFeaturedMessages(ctx context.Context) ([]*FeaturedMessage, error) {
 			name = users[message.UserId].FullName
 		}
 		message.FullName = name
+		if message.Category == MessageCategoryPlainText {
+			data, _ := base64.RawURLEncoding.DecodeString(message.Data)
+			message.Data = string(data)
+		} else {
+			message.Data = ""
+		}
 		messages = append(messages, message)
 	}
 	return messages, nil
