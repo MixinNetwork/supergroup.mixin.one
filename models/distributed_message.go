@@ -149,9 +149,16 @@ func (message *Message) Distribute(ctx context.Context) error {
 				if user.UserId == message.UserId {
 					continue
 				}
-				if !config.AppConfig.System.Operators[message.UserId] && message.UserId != config.AppConfig.Mixin.ClientId && prohibited {
-					if !config.AppConfig.System.Operators[user.UserId] {
-						continue
+				if prohibited {
+					if !config.AppConfig.System.Operators[message.UserId] && message.UserId != config.AppConfig.Mixin.ClientId {
+						if !config.AppConfig.System.Operators[user.UserId] {
+							continue
+						}
+					}
+					if message.QuoteMessageId != "" && quote != nil {
+						if !config.AppConfig.System.Operators[user.UserId] && quote.UserId != user.UserId {
+							continue
+						}
 					}
 				}
 				messageId := UniqueConversationId(user.UserId, message.MessageId)
