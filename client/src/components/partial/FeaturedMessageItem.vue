@@ -3,7 +3,7 @@
     <div class="cell message-list-info">
       <div class="message-name">{{ message.full_name }}</div>
       <div class="message-time">{{ message.time }}</div>
-      <div class="message-id">{{ message.data || ' No Data ' }}</div>
+      <div class="message-id">{{ message.data || 'No Data' }}</div>
     </div>
   </div>
 </template>
@@ -54,6 +54,10 @@ export default {
 
   .message-id, .message-time {
     opacity: 0.6;
+  }
+
+  .message-id {
+    white-space: pre-line;
   }
 }
 </style>
