@@ -70,7 +70,16 @@ func (user *User) CreateFeaturedMessage(ctx context.Context, messageId string) (
 			return err
 		}
 		if quote != nil {
-			_, err = tx.ExecContext(ctx, query, quote.values()...)
+			fmquote := &FeaturedMessage{
+				MessageId:      quote.MessageId,
+				UserId:         quote.UserId,
+				Category:       quote.Category,
+				QuoteMessageId: quote.QuoteMessageId,
+				Data:           quote.Data,
+				CreatedAt:      quote.CreatedAt,
+				UpdatedAt:      quote.UpdatedAt,
+			}
+			_, err = tx.ExecContext(ctx, query, fmquote.values()...)
 		}
 		return err
 	})
