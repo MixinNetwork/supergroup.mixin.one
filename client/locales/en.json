@@ -36,6 +36,7 @@
     "op_mute": "Mute Others",
     "op_unmute": "Unmute Others",
     "op_members": "Members",
+    "op_featured_messages": "Selected Messages",
     "op_messages": "Messages",
     "op_reward": "Reward"
   },
@@ -88,7 +89,8 @@
   },
   "messages": {
     "title": "Messages",
-    "recall": "Recall"
+    "recall": "Recall",
+    "featured": "Selected Message"
   },
   "members": {
     "title": "Members",

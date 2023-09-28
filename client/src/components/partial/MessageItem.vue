@@ -16,7 +16,7 @@ export default {
   props: ['message'],
   methods: {
     handleClick(message) {
-      this.$emit('message-click', message)
+      this.$emit('message-click', message);
     }
   }
 }

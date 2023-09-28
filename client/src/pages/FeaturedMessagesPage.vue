@@ -10,14 +10,6 @@
       >
         <message-item :message="item" v-for="item in items"  v-bind:key="item.message_id" @message-click="messageClick"></message-item>
       </van-list>
-      <van-action-sheet
-        :title="currentMessage ? currentMessage.full_name : ''"
-        v-model:show="showActionSheet"
-        :actions="actions"
-        :cancel-text="$t('comm.cancel')"
-        @select="onSelectAction"
-        @cancel="onCancelAction"
-      />
     </div>
   </loading>
 </template>
@@ -27,11 +19,10 @@ import NavBar from '@/components/NavBar'
 import dayjs from 'dayjs'
 import MessageItem from '@/components/partial/MessageItem'
 import Loading from '@/components/LoadingSpinner'
-import { ActionSheet } from 'vant'
 import utils from '@/utils'
 
 export default {
-  name: 'MessagesPage',
+  name: 'FeaturedMessagesPage',
   props: {
   },
   data () {
@@ -44,13 +35,11 @@ export default {
       items: [],
       actions: [
         { name: this.$t('messages.recall') },
-        { name: this.$t('messages.featured') },
       ]
     }
   },
   components: {
     NavBar, MessageItem, Loading,
-    'van-action-sheet': ActionSheet,
   },
   async mounted () {
   },
@@ -61,11 +50,10 @@ export default {
     async onLoad() {
       this.loading = true
       this.maskLoading = true
-      let resp = await this.GLOBAL.api.message.index()
+      let resp = await this.GLOBAL.api.message.featured_messages()
       this.loading = false
       this.maskLoading = false
       this.finished = true
-      console.log(resp.data)
       this.items = resp.data.map((x) => {
         x.full_name = x.full_name === 'NULL' ? 'SYSTEM' : x.full_name
         x.time = dayjs(x.created_at).format('YYYY.MM.DD')
@@ -75,7 +63,7 @@ export default {
     messageClick (mem) {
       if (window.localStorage.getItem('role') === 'admin') {
         this.currentMessage = mem
-        this.showActionSheet = true
+        this.showActionSheet = false
       }
     },
     async onSelectAction (item, ix) {
@@ -89,15 +77,6 @@ export default {
             return
           }
           utils.reloadPage()
-        }
-
-        if (ix === 1) {
-          let result = await this.GLOBAL.api.message.add_featured_message(mem.message_id)
-          this.maskLoading = false
-          if (result.error) {
-            return
-          }
-          this.showActionSheet = false
         }
       }
       this.showActionSheet = false

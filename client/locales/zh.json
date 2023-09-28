@@ -36,6 +36,7 @@
     "op_mute": "禁止发言",
     "op_unmute": "允许发言",
     "op_members": "成员",
+    "op_featured_messages": "精选",
     "op_messages": "消息管理",
     "op_reward": "打赏"
   },
@@ -89,7 +90,8 @@
   },
   "messages": {
     "title": "消息管理",
-    "recall": "撤回"
+    "recall": "撤回",
+    "featured": "加精"
   },
   "members": {
     "title": "成员管理",

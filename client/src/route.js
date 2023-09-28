@@ -9,6 +9,7 @@ import PreparePacket from './pages/PreparePacket'
 import Packet from './pages/PacketPage'
 import Members from './pages/MembersPage'
 import Messages from './pages/MessagesPage'
+import FeaturedMessages from './pages/FeaturedMessagesPage'
 import PageNotFound from './pages/PageNotFound'
 
 const routes = [
@@ -22,6 +23,7 @@ const routes = [
   { path: '/packets/:id', component: Packet },
   { path: '/members/', component: Members },
   { path: '/messages/', component: Messages },
+  { path: '/featured_messages/', component: FeaturedMessages },
   { path: '/:pathMatch(.*)*', component: PageNotFound },
 ]
 
