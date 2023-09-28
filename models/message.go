@@ -369,8 +369,8 @@ func FindMessage(ctx context.Context, id string) (*Message, error) {
 }
 
 func LatestMessageWithUser(ctx context.Context, limit int64) ([]*Message, error) {
-	query := "SELECT messages.message_id,messages.category,messages.data,messages.created_at,users.full_name FROM messages LEFT JOIN users ON messages.user_id=users.user_id ORDER BY updated_at DESC LIMIT $1"
-	rows, err := session.Database(ctx).QueryContext(ctx, query, limit)
+	query := "SELECT messages.message_id,messages.category,messages.data,messages.created_at,users.full_name FROM messages LEFT JOIN users ON messages.user_id=users.user_id WHERE user_id != $1 ORDER BY updated_at DESC LIMIT $2"
+	rows, err := session.Database(ctx).QueryContext(ctx, query, config.AppConfig.Mixin.ClientId, limit)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
