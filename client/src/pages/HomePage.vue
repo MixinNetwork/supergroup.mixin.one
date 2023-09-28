@@ -47,7 +47,7 @@ export default {
           label: this.$t('home.op_members'),
           url: '/members'
         }, {
-          icon: require('../assets/images/messages-circle.png'),
+          icon: require('../assets/images/featured-message-circle.png'),
           label: this.$t('home.op_featured_messages'),
           url: '/featured_messages'
         }
