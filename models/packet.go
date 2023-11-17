@@ -28,7 +28,7 @@ const (
 	PacketStateExpired  = "EXPIRED"
 	PacketStateRefunded = "REFUNDED"
 
-	PacketSizeLimit = 500
+	PacketSizeLimit = 200
 	shareShardId    = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
@@ -81,15 +81,18 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 			return nil, session.ForbiddenError(ctx)
 		}
 	}
-	asset, err := current.ShowAsset(ctx, assetId)
-	if err != nil {
-		return nil, err
-	}
-	if config.AppConfig.System.PriceAssetsEnable {
-		if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
-			return nil, session.BadDataError(ctx)
+	/*
+		// TODO don't validate for value packet
+		asset, err := current.ShowAsset(ctx, assetId)
+		if err != nil {
+			return nil, err
 		}
-	}
+		if config.AppConfig.System.PriceAssetsEnable {
+			if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
+				return nil, session.BadDataError(ctx)
+			}
+		}
+	*/
 	u, _ := externals.UserMe(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
 	if u != nil {
 		name := strings.TrimSpace(u.FullName)
@@ -98,15 +101,15 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 				current.FullName = name
 			}
 			current.AvatarURL = u.AvatarURL
-			if _, err = session.Database(ctx).ExecContext(ctx, "UPDATE users SET (full_name, avatar_url)=($1,$2) WHERE user_id=$3", current.FullName, current.AvatarURL, current.UserId); err != nil {
+			if _, err := session.Database(ctx).ExecContext(ctx, "UPDATE users SET (full_name, avatar_url)=($1,$2) WHERE user_id=$3", current.FullName, current.AvatarURL, current.UserId); err != nil {
 				session.TransactionError(ctx, err)
 			}
 		}
 	}
-	return current.createPacket(ctx, asset, amount, totalCount, greeting)
+	return current.createPacket(ctx, assetId, amount, totalCount, greeting)
 }
 
-func (current *User) createPacket(ctx context.Context, asset *Asset, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
+func (current *User) createPacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
 	if amount.Cmp(number.FromString("0.0001")) < 0 {
 		return nil, session.BadDataError(ctx)
 	}
@@ -114,9 +117,11 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 		greeting = string([]rune(greeting)[:36])
 	}
 	amount = amount.RoundFloor(8)
-	if number.FromString(asset.Balance).Cmp(amount) < 0 {
-		return nil, session.InsufficientAccountBalanceError(ctx)
-	}
+	/*
+		if number.FromString(asset.Balance).Cmp(amount) < 0 {
+			return nil, session.InsufficientAccountBalanceError(ctx)
+		}
+	*/
 	participantsCount, err := current.Prepare(ctx)
 	if err != nil {
 		return nil, err
@@ -124,10 +129,14 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 	if totalCount <= 0 || totalCount > int64(participantsCount) {
 		return nil, session.BadDataError(ctx)
 	}
+	asset, err := current.ShowAsset(ctx, assetId)
+	if err != nil {
+		return nil, err
+	}
 	packet := &Packet{
 		PacketId:        bot.UuidNewV4().String(),
 		UserId:          current.UserId,
-		AssetId:         asset.AssetId,
+		AssetId:         assetId,
 		Amount:          amount.Persist(),
 		Greeting:        greeting,
 		TotalCount:      totalCount,
