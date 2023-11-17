@@ -97,6 +97,7 @@ type Config struct {
 		PinToken        string `yaml:"pin_token"`
 		SessionId       string `yaml:"session_id"`
 		SessionKey      string `yaml:"session_key"`
+		Pin             string `yaml:"pin"`
 	} `yaml:"mixin"`
 }
 

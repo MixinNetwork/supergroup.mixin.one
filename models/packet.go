@@ -308,15 +308,16 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 		return packet, nil
 	}
 
-	in := &bot.TransferInput{
-		AssetId:     packet.AssetId,
-		RecipientId: packet.UserId,
-		Amount:      number.FromString(packet.RemainingAmount),
-		TraceId:     traceId,
-		Memo:        "",
-	}
+	ma := bot.NewUUIDMixAddress([]string{packet.UserId}, 1)
+	tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: packet.RemainingAmount}
 	mixin := config.AppConfig.Mixin
-	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+	su := &bot.SafeUser{
+		UserId:     mixin.ClientId,
+		SessionId:  mixin.SessionId,
+		SessionKey: mixin.SessionKey,
+		SpendKey:   mixin.SessionAssetPIN[:64],
+	}
+	_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, su)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}
