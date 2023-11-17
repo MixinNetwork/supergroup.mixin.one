@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client/v2"
 	"github.com/stretchr/testify/assert"
 )
 

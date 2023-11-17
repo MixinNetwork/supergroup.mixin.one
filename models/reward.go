@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client/v2"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
