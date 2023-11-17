@@ -106,7 +106,6 @@ func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, err
 		IconURL:  a.IconURL,
 		PriceBTC: a.PriceBTC,
 		PriceUSD: a.PriceUSD,
-		Balance:  a.Balance,
 	}
 	err = upsertAssets(ctx, []*Asset{asset})
 	if err != nil {
