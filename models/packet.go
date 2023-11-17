@@ -106,6 +106,9 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 			}
 		}
 	}
+	if !u.HasSafe {
+		return nil, session.ForbiddenError(ctx)
+	}
 	return current.createPacket(ctx, assetId, amount, totalCount, greeting)
 }
 
