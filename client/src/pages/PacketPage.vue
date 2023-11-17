@@ -24,6 +24,9 @@
         <h3 class="expire statement">{{$t('packet.completed')}}</h3>
       </template>
     </div>
+    <div v-if="!version" class="">
+      Not valid version, please upgrade first, https://messenger.mixin.one/
+    </div>
     <div v-else class="packet open button">
       <button @click="openPacket">{{$t('packet.open')}}</button>
     </div>
@@ -135,6 +138,25 @@ export default {
     this.asset = pktData.asset
     this.lottery = pktData.lottery
     this.loading = false
+    this.version = false
+    if (window.MixinContext && typeof window.MixinContext.getContext === 'function') {
+      const isVersionGreaterOrEqual = (version, target) => {
+        const [v1, v2, v3] = version.split(".").map(Number)
+        const [t1, t2, t3] = target.split(".").map(Number)
+
+        if (v1 > t1) return true
+        if (v1 < t1) return false
+
+        if (v2 > t2) return true
+        if (v2 < t2) return false
+
+        if (v3 >= t3) return true
+
+        return false
+      }
+      let ctx = JSON.parse(window.MixinContext.getContext())
+      this.version = isVersionGreaterOrEqual(ctx.app_version, "1.0.0")
+    }
   },
   methods: {
     async openPacket() {
