@@ -59,11 +59,10 @@ func TestPacketCRUD(t *testing.T) {
 		IconURL:  "http://mixin.one",
 		PriceBTC: "0",
 		PriceUSD: "0",
-		Balance:  "100",
 	}
 	err = upsertAssets(ctx, []*Asset{asset})
 	assert.Nil(err)
-	packet, err := li.createPacket(ctx, asset, number.FromString("1"), 2, "Hello Packet")
+	packet, err := li.createPacket(ctx, asset.AssetId, number.FromString("1"), 2, "Hello Packet")
 	assert.Nil(err)
 	assert.NotNil(packet)
 	assert.Equal(PacketStateInitial, packet.State)
@@ -94,7 +93,7 @@ func TestPacketCRUD(t *testing.T) {
 	assert.Equal(int64(0), packet.RemainingCount)
 	assert.Equal("0", packet.RemainingAmount)
 	assert.Len(packet.Participants, 2)
-	packet, err = li.createPacket(ctx, asset, number.FromString("1"), 2, "Hello Packet Hello Packet Hello Packet Hello Packet Hello")
+	packet, err = li.createPacket(ctx, asset.AssetId, number.FromString("1"), 2, "Hello Packet Hello Packet Hello Packet Hello Packet Hello")
 	assert.Nil(err)
 	assert.NotNil(packet)
 	packet, err = PayPacket(ctx, packet.PacketId, asset.AssetId, "1")
