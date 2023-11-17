@@ -397,6 +397,19 @@ func handlePacketExpiration(ctx context.Context, tx *sql.Tx, packet *Packet) err
 	return err
 }
 
+func ReadPacket(ctx context.Context, packetId string) (*Packet, error) {
+	var packet *Packet
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		old, err := readPacketWithAssetAndUser(ctx, tx, packetId)
+		if err != nil || old == nil {
+			return err
+		}
+		packet = old
+		return nil
+	})
+	return packet, err
+}
+
 func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, error) {
 	packet, err := readPacket(ctx, tx, packetId)
 	if err != nil || packet == nil {
