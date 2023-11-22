@@ -81,7 +81,7 @@ export default {
       this.loading = true
       let traceId = this.meInfo.data.trace_id
       setTimeout(async () => { await this.waitForPayment(); }, 1000)
-      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.selectedAsset.amount}&trace=${traceId}&memo=PAY_TO_JOIN`
+      window.location.href = `https://mixin.one/pay/${CLIENT_ID}?asset=${this.selectedAsset.asset_id}&amount=${this.selectedAsset.amount}&trace=${traceId}&memo=PAY_TO_JOIN`
     },
     async onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix];
