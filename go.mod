@@ -33,7 +33,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
