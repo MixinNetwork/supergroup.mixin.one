@@ -40,7 +40,7 @@ import NavBar from '@/components/NavBar'
 import RowSelect from '@/components/RowSelect'
 import Loading from '@/components/LoadingSpinner'
 import { v4 as uuid } from 'uuid'
-import {Toast} from 'vant'
+import { Toast } from 'vant'
 import { CLIENT_ID } from '@/constants'
 
 export default {
@@ -67,9 +67,10 @@ export default {
   },
   async mounted () {
     this.loading = true
-    let prepareInfo = await this.GLOBAL.api.packet.prepare()
-    if (prepareInfo) {
-      this.assets = prepareInfo.data.assets.map((x) => {
+    let ctx = {};
+    let assets = ctx.getAssets([]);
+    if (assets) {
+      this.assets = assets.map((x) => {
         x.text = `${x.symbol} (${x.balance})`
         return x
       })
@@ -77,8 +78,7 @@ export default {
         this.selectedAsset = this.assets[0]
         this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
       }
-      this.coversationId = prepareInfo.data.conversation.coversation_id
-      this.participantsCount = prepareInfo.data.conversation.participants_count
+      this.participantsCount = 200
     }
     this.loading = false
   },

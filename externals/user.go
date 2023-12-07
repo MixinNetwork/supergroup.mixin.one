@@ -19,7 +19,7 @@ func UserMeFromCode(ctx context.Context, code, private, public string) (*bot.Use
 		return nil, "", "", session.ForbiddenError(ctx)
 	}
 	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/me", "", scope, requestID)
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/me", "", scope, requestID)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -37,7 +37,7 @@ func UserMe(ctx context.Context, authorizationID, private, scope string) (*bot.U
 	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/me", "", scope, requestID)
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/me", "", scope, requestID)
 	if err != nil {
 		return nil, err
 	}
