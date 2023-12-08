@@ -80,11 +80,15 @@ export default {
         this.participantsCount = 200
       }
     };
-    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext && window.webkit.messageHandlers.getAssets) {
-      window.webkit.messageHandlers.getAssets.postMessage([[], 'assetsCallbackFunction']);
-    } else if (window.MixinContext && (typeof window.MixinContext.getAssets === 'function')) {
-      window.MixinContext.getAssets([], 'assetsCallbackFunction')
+
+    let getAssets = () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext && window.webkit.messageHandlers.getAssets) {
+        window.webkit.messageHandlers.getAssets.postMessage([[], 'assetsCallbackFunction']);
+      } else if (window.MixinContext && (typeof window.MixinContext.getAssets === 'function')) {
+        window.MixinContext.getAssets([], 'assetsCallbackFunction')
+      }
     }
+    getAssets()
     this.loading = false
   },
   computed: {
