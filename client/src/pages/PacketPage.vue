@@ -24,11 +24,11 @@
         <h3 class="expire statement">{{$t('packet.completed')}}</h3>
       </template>
     </div>
-    <div v-else-if="!version" class="version">
-      Not valid version, please upgrade first, https://messenger.mixin.one/
-    </div>
-    <div v-else class="packet open button">
+    <div v-else-if="version" class="packet open button">
       <button @click="openPacket">{{$t('packet.open')}}</button>
+    </div>
+    <div v-else class="version">
+      Not valid version, please upgrade first, https://messenger.mixin.one/
     </div>
 
     <template v-if="pktData">
