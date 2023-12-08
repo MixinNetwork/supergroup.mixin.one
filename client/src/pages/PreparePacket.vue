@@ -67,9 +67,10 @@ export default {
   },
   async mounted () {
     this.loading = true
-    window.assetsCallbackFunction = function(assets) {
-      if (assets) {
-        this.assets = assets.map((x) => {
+    window.assetsCallbackFunction = (assets) => {
+      let as = JSON.parse(assets);
+      if (as) {
+        this.assets = as.map((x) => {
           x.text = `${x.symbol} (${x.balance})`
           return x
         })
