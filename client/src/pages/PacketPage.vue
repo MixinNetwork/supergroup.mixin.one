@@ -27,7 +27,7 @@
     <div v-else-if="version" class="packet open button">
       <button @click="openPacket">{{$t('packet.open')}}</button>
     </div>
-    <div v-else class="version">
+    <div v-else-if="!loading && !version" class="version">
       Not valid version, please upgrade first, https://messenger.mixin.one/
     </div>
 
