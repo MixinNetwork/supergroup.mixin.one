@@ -24,7 +24,7 @@
         <h3 class="expire statement">{{$t('packet.completed')}}</h3>
       </template>
     </div>
-    <div v-if="!version" class="">
+    <div v-if="!version" class="version">
       Not valid version, please upgrade first, https://messenger.mixin.one/
     </div>
     <div v-else class="packet open button">
@@ -290,6 +290,13 @@ export default {
     color: $color-main-foreground-dark;
     opacity: 0.3;
   }
+}
+
+.version {
+  color: white;
+  font-size: 16px;
+  padding: 32px 16px;
+  text-align: center;
 }
 
 .packet.history {

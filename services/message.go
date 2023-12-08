@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -403,8 +404,10 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer SnapshotVi
 	if number.FromString(transfer.Amount).Exhausted() {
 		return nil
 	}
-	if data, _ := base64.StdEncoding.DecodeString(transfer.Memo); len(data) > 0 {
-		array := strings.Split(string(data), ":")
+	memoBuf, _ := hex.DecodeString(transfer.Memo)
+	memo := string(memoBuf)
+	if len(memo) > 0 {
+		array := strings.Split(memo, ":")
 		if len(array) == 2 && array[0] == "REWARD" {
 			_, err := models.CreateReward(ctx, transfer.SnapshotId, userId, array[1], transfer.AssetId, transfer.Amount)
 			return err
@@ -414,13 +417,13 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer SnapshotVi
 	if user == nil || err != nil {
 		return err
 	}
-	if user.TraceId == transfer.Memo {
+	if user.TraceId == memo {
 		for _, asset := range config.AppConfig.System.AccpetPaymentAssetList {
 			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)
 			}
 		}
-	} else if packet, err := models.PayPacket(ctx, transfer.Memo, transfer.AssetId, transfer.Amount); err != nil || packet == nil {
+	} else if packet, err := models.PayPacket(ctx, memo, transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
 	} else if packet.State == models.PacketStatePaid {
 		return sendAppCard(ctx, mc, packet)

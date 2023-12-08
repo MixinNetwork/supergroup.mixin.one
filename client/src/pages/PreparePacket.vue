@@ -67,18 +67,19 @@ export default {
   },
   async mounted () {
     this.loading = true
-    let ctx = {};
-    let assets = ctx.getAssets([]);
-    if (assets) {
-      this.assets = assets.map((x) => {
-        x.text = `${x.symbol} (${x.balance})`
-        return x
-      })
-      if (this.assets.length) {
-        this.selectedAsset = this.assets[0]
-        this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
+    if (window.MixinContext && typeof window.MixinContext.getContext === 'function') {
+      let assets = window.MixinContext.getAssets([]);
+      if (assets) {
+        this.assets = assets.map((x) => {
+          x.text = `${x.symbol} (${x.balance})`
+          return x
+        })
+        if (this.assets.length) {
+          this.selectedAsset = this.assets[0]
+          this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
+        }
+        this.participantsCount = 200
       }
-      this.participantsCount = 200
     }
     this.loading = false
   },
