@@ -132,30 +132,6 @@ export default {
       this.loading = false
     })
 
-    window.assetsCallbackFunction = (assets) => {
-      this.as = assets;
-      if (assets) {
-        this.assets = assets.map((x) => {
-          x.text = `${x.symbol} (${x.balance})`
-          return x
-        })
-        if (this.assets.length) {
-          this.selectedAsset = this.assets[0]
-          this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
-        }
-        this.participantsCount = 200
-      }
-    };
-
-    let getAssets = () => {
-      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext && window.webkit.messageHandlers.getAssets) {
-        window.webkit.messageHandlers.getAssets.postMessage([[], 'assetsCallbackFunction']);
-      } else if (window.MixinContext && (typeof window.MixinContext.getAssets === 'function')) {
-        window.MixinContext.getAssets([], 'assetsCallbackFunction')
-      }
-    }
-    getAssets()
-
     this.websiteInfo = await this.GLOBAL.api.website.amount()
     this.meInfo = await this.GLOBAL.api.account.me()
     if (this.meInfo.data.state === 'blocked') {
