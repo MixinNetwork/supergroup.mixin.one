@@ -67,8 +67,7 @@ export default {
   },
   async mounted () {
     this.loading = true
-    if (window.MixinContext && typeof window.MixinContext.getContext === 'function') {
-      let assets = window.MixinContext.getAssets([]);
+    window.assetsCallbackFunction = function(assets) {
       if (assets) {
         this.assets = assets.map((x) => {
           x.text = `${x.symbol} (${x.balance})`
@@ -80,6 +79,11 @@ export default {
         }
         this.participantsCount = 200
       }
+    };
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext && window.webkit.messageHandlers.getAssets) {
+      window.webkit.messageHandlers.getAssets.postMessage([[], 'assetsCallbackFunction']);
+    } else if (window.MixinContext && (typeof window.MixinContext.getAssets === 'function')) {
+      window.MixinContext.getAssets([], 'assetsCallbackFunction')
     }
     this.loading = false
   },

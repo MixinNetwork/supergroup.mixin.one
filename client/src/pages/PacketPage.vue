@@ -139,6 +139,19 @@ export default {
     this.lottery = pktData.lottery
     this.loading = false
     this.version = false
+
+    let getMixinContext = () => {
+      let ctx = {};
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext) {
+        ctx = JSON.parse(prompt('MixinContext.getContext()'))
+        ctx.platform = ctx.platform || 'iOS'
+      } else if (window.MixinContext && (typeof window.MixinContext.getContext === 'function')) {
+        ctx = JSON.parse(window.MixinContext.getContext())
+        ctx.platform = ctx.platform || 'Android'
+      }
+      return ctx
+    }
+
     if (window.MixinContext && typeof window.MixinContext.getContext === 'function') {
       const isVersionGreaterOrEqual = (version, target) => {
         const [v1, v2, v3] = version.split(".").map(Number)
@@ -154,8 +167,7 @@ export default {
 
         return false
       }
-      let ctx = JSON.parse(window.MixinContext.getContext())
-      this.version = isVersionGreaterOrEqual(ctx.app_version, "1.0.0")
+      this.version = isVersionGreaterOrEqual(getMixinContext().app_version, "1.0.0")
     }
   },
   methods: {
