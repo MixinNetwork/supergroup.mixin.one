@@ -9,9 +9,7 @@ import (
 	"strings"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
 	number "github.com/MixinNetwork/go-number"
-	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 	"github.com/gofrs/uuid"
@@ -117,34 +115,38 @@ func PendingRewards(ctx context.Context, limit int) ([]*Reward, error) {
 }
 
 func SendRewardTransfer(ctx context.Context, reward *Reward) error {
-	traceId, err := generateRewardId(reward.RewardId)
-	if err != nil {
-		return session.ServerError(ctx, err)
-	}
-	if !reward.PaidAt.IsZero() {
-		return nil
-	}
-	user, err := FindUser(ctx, reward.UserId)
-	if err != nil {
-		return err
-	}
-	memo := fmt.Sprintf(config.AppConfig.MessageTemplate.MessageRewardMemo, user.FullName)
-	if len(memo) > 140 {
-		memo = memo[:120]
-	}
-	in := &bot.TransferInput{
-		AssetId:     reward.AssetId,
-		RecipientId: reward.RecipientId,
-		Amount:      number.FromString(reward.Amount),
-		TraceId:     traceId,
-		Memo:        memo,
-	}
-	mixin := config.AppConfig.Mixin
-	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
-	if err != nil {
-		return session.ServerError(ctx, err)
-	}
-	return UpdateReward(ctx, reward.RewardId)
+	return nil
+	/*
+		TODO:
+		traceId, err := generateRewardId(reward.RewardId)
+		if err != nil {
+			return session.ServerError(ctx, err)
+		}
+		if !reward.PaidAt.IsZero() {
+			return nil
+		}
+		user, err := FindUser(ctx, reward.UserId)
+		if err != nil {
+			return err
+		}
+		memo := fmt.Sprintf(config.AppConfig.MessageTemplate.MessageRewardMemo, user.FullName)
+		if len(memo) > 140 {
+			memo = memo[:120]
+		}
+			in := &bot.TransferInput{
+				AssetId:     reward.AssetId,
+				RecipientId: reward.RecipientId,
+				Amount:      number.FromString(reward.Amount),
+				TraceId:     traceId,
+				Memo:        memo,
+			}
+			mixin := config.AppConfig.Mixin
+			_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+			if err != nil {
+				return session.ServerError(ctx, err)
+			}
+			return UpdateReward(ctx, reward.RewardId)
+	*/
 }
 
 func UpdateReward(ctx context.Context, rewardId string) error {

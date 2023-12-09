@@ -26,8 +26,6 @@ type Asset struct {
 	IconURL  string
 	PriceBTC string
 	PriceUSD string
-
-	Balance string
 }
 
 var assetsColumns = []string{"asset_id", "symbol", "name", "icon_url", "price_btc", "price_usd"}
@@ -52,9 +50,6 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 	}
 	var assets []*Asset
 	for _, a := range list {
-		if number.FromString(a.Balance).Cmp(number.FromString(PacketMinAmount)) < 0 {
-			continue
-		}
 		if config.AppConfig.System.PriceAssetsEnable {
 			if number.FromString(a.PriceUSD).Cmp(number.Zero()) <= 0 {
 				continue
@@ -67,21 +62,12 @@ func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
 			IconURL:  a.IconURL,
 			PriceBTC: a.PriceBTC,
 			PriceUSD: a.PriceUSD,
-			Balance:  a.Balance,
 		})
 	}
 	if err := upsertAssets(ctx, assets); err != nil {
 		return assets, session.TransactionError(ctx, err)
 	}
 	sort.Slice(assets, func(i, j int) bool {
-		valuei := number.FromString(assets[i].PriceUSD).Mul(number.FromString(assets[i].Balance))
-		valuej := number.FromString(assets[j].PriceUSD).Mul(number.FromString(assets[j].Balance))
-		if valuei.Cmp(valuej) > 0 {
-			return true
-		}
-		if valuei.Cmp(valuej) < 0 {
-			return false
-		}
 		price := number.FromString(assets[i].PriceUSD).Cmp(number.FromString(assets[j].PriceUSD))
 		if price > 0 {
 			return true
@@ -106,7 +92,6 @@ func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, err
 		IconURL:  a.IconURL,
 		PriceBTC: a.PriceBTC,
 		PriceUSD: a.PriceUSD,
-		Balance:  a.Balance,
 	}
 	err = upsertAssets(ctx, []*Asset{asset})
 	if err != nil {

@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
+	"github.com/gofrs/uuid/v5"
 	"github.com/lib/pq"
 )
 
@@ -17,7 +17,7 @@ type Blacklist struct {
 }
 
 func (user *User) CreateBlacklist(ctx context.Context, userId string) (*Blacklist, error) {
-	if id, _ := bot.UuidFromString(userId); id.String() != userId {
+	if id := uuid.FromStringOrNil(userId); id.String() != userId {
 		return nil, session.BadDataError(ctx)
 	}
 	operators := config.AppConfig.System.Operators

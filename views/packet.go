@@ -21,7 +21,6 @@ type AssetView struct {
 	Symbol   string `json:"symbol"`
 	Name     string `json:"name"`
 	IconURL  string `json:"icon_url"`
-	Balance  string `json:"balance"`
 	PriceBTC string `json:"price_btc"`
 	PriceUSD string `json:"price_usd"`
 }
@@ -58,7 +57,6 @@ func buildAssetView(asset *models.Asset) AssetView {
 		Symbol:   asset.Symbol,
 		Name:     asset.Name,
 		IconURL:  asset.IconURL,
-		Balance:  asset.Balance,
 		PriceBTC: asset.PriceBTC,
 		PriceUSD: asset.PriceUSD,
 	}

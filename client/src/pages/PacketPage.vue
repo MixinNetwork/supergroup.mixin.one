@@ -24,8 +24,11 @@
         <h3 class="expire statement">{{$t('packet.completed')}}</h3>
       </template>
     </div>
-    <div v-else class="packet open button">
+    <div v-else-if="version" class="packet open button">
       <button @click="openPacket">{{$t('packet.open')}}</button>
+    </div>
+    <div v-else-if="!loading && !version" class="version">
+      Not valid version, please upgrade first, https://messenger.mixin.one/
     </div>
 
     <template v-if="pktData">
@@ -135,6 +138,36 @@ export default {
     this.asset = pktData.asset
     this.lottery = pktData.lottery
     this.loading = false
+    this.version = false
+
+    let getMixinContext = () => {
+      let ctx = {};
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext) {
+        ctx = JSON.parse(prompt('MixinContext.getContext()'))
+        ctx.platform = ctx.platform || 'iOS'
+      } else if (window.MixinContext && (typeof window.MixinContext.getContext === 'function')) {
+        ctx = JSON.parse(window.MixinContext.getContext())
+        ctx.platform = ctx.platform || 'Android'
+      }
+      return ctx
+    }
+
+    this.ver = getMixinContext();
+    const isVersionGreaterOrEqual = (version, target) => {
+      const [v1, v2, v3] = version.split(".").map(Number)
+      const [t1, t2, t3] = target.split(".").map(Number)
+
+      if (v1 > t1) return true
+      if (v1 < t1) return false
+
+      if (v2 > t2) return true
+      if (v2 < t2) return false
+
+      if (v3 >= t3) return true
+
+      return false
+    }
+    this.version = isVersionGreaterOrEqual(getMixinContext().app_version, "1.0.0")
   },
   methods: {
     async openPacket() {
@@ -268,6 +301,13 @@ export default {
     color: $color-main-foreground-dark;
     opacity: 0.3;
   }
+}
+
+.version {
+  color: white;
+  font-size: 16px;
+  padding: 32px 16px;
+  text-align: center;
 }
 
 .packet.history {

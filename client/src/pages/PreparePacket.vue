@@ -40,7 +40,7 @@ import NavBar from '@/components/NavBar'
 import RowSelect from '@/components/RowSelect'
 import Loading from '@/components/LoadingSpinner'
 import { v4 as uuid } from 'uuid'
-import {Toast} from 'vant'
+import { Toast } from 'vant'
 import { CLIENT_ID } from '@/constants'
 
 export default {
@@ -67,19 +67,29 @@ export default {
   },
   async mounted () {
     this.loading = true
-    let prepareInfo = await this.GLOBAL.api.packet.prepare()
-    if (prepareInfo) {
-      this.assets = prepareInfo.data.assets.map((x) => {
-        x.text = `${x.symbol} (${x.balance})`
-        return x
-      })
-      if (this.assets.length) {
-        this.selectedAsset = this.assets[0]
-        this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
+    window.assetsCallbackFunction = (assets) => {
+      let as = JSON.parse(assets);
+      if (as) {
+        this.assets = as.map((x) => {
+          x.text = `${x.symbol} (${x.balance})`
+          return x
+        })
+        if (this.assets.length) {
+          this.selectedAsset = this.assets[0]
+          this.form.memo = this.$t('prepare_packet.default_memo', {symbol: this.selectedAsset.symbol})
+        }
+        this.participantsCount = 200
       }
-      this.coversationId = prepareInfo.data.conversation.coversation_id
-      this.participantsCount = prepareInfo.data.conversation.participants_count
+    };
+
+    let getAssets = () => {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.MixinContext && window.webkit.messageHandlers.getAssets) {
+        window.webkit.messageHandlers.getAssets.postMessage([[], 'assetsCallbackFunction']);
+      } else if (window.MixinContext && (typeof window.MixinContext.getAssets === 'function')) {
+        window.MixinContext.getAssets([], 'assetsCallbackFunction')
+      }
     }
+    getAssets()
     this.loading = false
   },
   computed: {
@@ -112,8 +122,10 @@ export default {
       setTimeout(() => {
         this.waitForPayment(pkt.packet_id)
       }, 2000)
-      console.log(`mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`);
-      window.location.href = `mixin://pay?recipient=${CLIENT_ID}&asset=${this.selectedAsset.asset_id}&amount=${this.form.amount}&trace=${pkt.packet_id}&memo=${encodeURIComponent(pkt.greeting)}`
+      
+      let link = `https://mixin.one/pay/${CLIENT_ID}?amount=${this.form.amount}&asset=${this.selectedAsset.asset_id}&memo=${pkt.packet_id}&trace=${pkt.packet_id}`;
+      console.log(link);
+      window.location.href = link;
     },
     onChangeAsset (ix) {
       this.selectedAsset = this.assets[ix]

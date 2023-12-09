@@ -3,7 +3,7 @@ package externals
 import (
 	"context"
 
-	"github.com/MixinNetwork/bot-api-go-client"
+	"github.com/MixinNetwork/bot-api-go-client/v2"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
@@ -15,7 +15,7 @@ func AssetList(ctx context.Context, authorizationID, private, scope string) ([]*
 	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/assets", "", scope, requestID)
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/assets", "", scope, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func AssetShow(ctx context.Context, assetId, authorizationID, private, scope str
 	}
 	mixin := config.AppConfig.Mixin
 	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/assets/"+assetId, "", scope, requestID)
+	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/assets/"+assetId, "", scope, requestID)
 	if err != nil {
 		return nil, err
 	}

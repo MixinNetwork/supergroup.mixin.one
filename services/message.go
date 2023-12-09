@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client/v2"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
@@ -49,15 +50,16 @@ type MessageView struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-type TransferView struct {
-	Type       string    `json:"type"`
-	SnapshotId string    `json:"snapshot_id"`
-	OpponentId string    `json:"opponent_id"`
-	AssetId    string    `json:"asset_id"`
-	Amount     string    `json:"amount"`
-	TraceId    string    `json:"trace_id"`
-	Memo       string    `json:"memo"`
-	CreatedAt  time.Time `json:"created_at"`
+type SnapshotView struct {
+	Type            string    `json:"type"`
+	SnapshotId      string    `json:"snapshot_id"`
+	UserId          string    `json:"user_id"`
+	OpponentId      string    `json:"opponent_id"`
+	TransactionHash string    `json:"transaction_hash"`
+	AssetId         string    `json:"asset_id"`
+	Amount          string    `json:"amount"`
+	Memo            string    `json:"memo"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type MessageService struct{}
@@ -136,12 +138,12 @@ func (service *MessageService) loop(ctx context.Context) error {
 		case msg := <-mc.ReadBuffer:
 			if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
 				switch msg.Category {
-				case "SYSTEM_ACCOUNT_SNAPSHOT":
+				case "SYSTEM_SAFE_SNAPSHOT":
 					data, err := base64.RawURLEncoding.DecodeString(msg.DataBase64)
 					if err != nil {
 						return session.BlazeServerError(ctx, err)
 					}
-					var transfer TransferView
+					var transfer SnapshotView
 					err = json.Unmarshal(data, &transfer)
 					if err != nil {
 						return session.BlazeServerError(ctx, err)
@@ -398,18 +400,16 @@ func parseMessage(ctx context.Context, mc *MessageContext, wsReader io.Reader, t
 	return nil
 }
 
-func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferView, userId string) error {
-	id, err := bot.UuidFromString(transfer.TraceId)
-	if err != nil {
-		return nil
-	}
+func handleTransfer(ctx context.Context, mc *MessageContext, transfer SnapshotView, userId string) error {
 	if number.FromString(transfer.Amount).Exhausted() {
 		return nil
 	}
-	if data, _ := base64.StdEncoding.DecodeString(transfer.Memo); len(data) > 0 {
-		array := strings.Split(string(data), ":")
+	memoBuf, _ := hex.DecodeString(transfer.Memo)
+	memo := string(memoBuf)
+	if len(memo) > 0 {
+		array := strings.Split(memo, ":")
 		if len(array) == 2 && array[0] == "REWARD" {
-			_, err := models.CreateReward(ctx, transfer.TraceId, userId, array[1], transfer.AssetId, transfer.Amount)
+			_, err := models.CreateReward(ctx, transfer.SnapshotId, userId, array[1], transfer.AssetId, transfer.Amount)
 			return err
 		}
 	}
@@ -417,13 +417,13 @@ func handleTransfer(ctx context.Context, mc *MessageContext, transfer TransferVi
 	if user == nil || err != nil {
 		return err
 	}
-	if user.TraceId == transfer.TraceId {
+	if user.TraceId == memo {
 		for _, asset := range config.AppConfig.System.AccpetPaymentAssetList {
 			if number.FromString(transfer.Amount).Equal(number.FromString(asset.Amount).RoundFloor(8)) && transfer.AssetId == asset.AssetId {
 				return user.Payment(ctx)
 			}
 		}
-	} else if packet, err := models.PayPacket(ctx, id.String(), transfer.AssetId, transfer.Amount); err != nil || packet == nil {
+	} else if packet, err := models.PayPacket(ctx, memo, transfer.AssetId, transfer.Amount); err != nil || packet == nil {
 		return err
 	} else if packet.State == models.PacketStatePaid {
 		return sendAppCard(ctx, mc, packet)

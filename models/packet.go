@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client/v2"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -28,7 +28,7 @@ const (
 	PacketStateExpired  = "EXPIRED"
 	PacketStateRefunded = "REFUNDED"
 
-	PacketSizeLimit = 500
+	PacketSizeLimit = 200
 	shareShardId    = "c94ac88f-4671-3976-b60a-09064f1811e8"
 )
 
@@ -81,15 +81,18 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 			return nil, session.ForbiddenError(ctx)
 		}
 	}
-	asset, err := current.ShowAsset(ctx, assetId)
-	if err != nil {
-		return nil, err
-	}
-	if config.AppConfig.System.PriceAssetsEnable {
-		if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
-			return nil, session.BadDataError(ctx)
+	/*
+		// TODO don't validate for value packet
+		asset, err := current.ShowAsset(ctx, assetId)
+		if err != nil {
+			return nil, err
 		}
-	}
+		if config.AppConfig.System.PriceAssetsEnable {
+			if number.FromString(asset.PriceUSD).Cmp(number.Zero()) <= 0 {
+				return nil, session.BadDataError(ctx)
+			}
+		}
+	*/
 	u, _ := externals.UserMe(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
 	if u != nil {
 		name := strings.TrimSpace(u.FullName)
@@ -98,15 +101,18 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 				current.FullName = name
 			}
 			current.AvatarURL = u.AvatarURL
-			if _, err = session.Database(ctx).ExecContext(ctx, "UPDATE users SET (full_name, avatar_url)=($1,$2) WHERE user_id=$3", current.FullName, current.AvatarURL, current.UserId); err != nil {
+			if _, err := session.Database(ctx).ExecContext(ctx, "UPDATE users SET (full_name, avatar_url)=($1,$2) WHERE user_id=$3", current.FullName, current.AvatarURL, current.UserId); err != nil {
 				session.TransactionError(ctx, err)
 			}
 		}
 	}
-	return current.createPacket(ctx, asset, amount, totalCount, greeting)
+	if !u.HasSafe {
+		return nil, session.ForbiddenError(ctx)
+	}
+	return current.createPacket(ctx, assetId, amount, totalCount, greeting)
 }
 
-func (current *User) createPacket(ctx context.Context, asset *Asset, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
+func (current *User) createPacket(ctx context.Context, assetId string, amount number.Decimal, totalCount int64, greeting string) (*Packet, error) {
 	if amount.Cmp(number.FromString("0.0001")) < 0 {
 		return nil, session.BadDataError(ctx)
 	}
@@ -114,9 +120,11 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 		greeting = string([]rune(greeting)[:36])
 	}
 	amount = amount.RoundFloor(8)
-	if number.FromString(asset.Balance).Cmp(amount) < 0 {
-		return nil, session.InsufficientAccountBalanceError(ctx)
-	}
+	/*
+		if number.FromString(asset.Balance).Cmp(amount) < 0 {
+			return nil, session.InsufficientAccountBalanceError(ctx)
+		}
+	*/
 	participantsCount, err := current.Prepare(ctx)
 	if err != nil {
 		return nil, err
@@ -124,10 +132,14 @@ func (current *User) createPacket(ctx context.Context, asset *Asset, amount numb
 	if totalCount <= 0 || totalCount > int64(participantsCount) {
 		return nil, session.BadDataError(ctx)
 	}
+	asset, err := current.ShowAsset(ctx, assetId)
+	if err != nil {
+		return nil, err
+	}
 	packet := &Packet{
 		PacketId:        bot.UuidNewV4().String(),
 		UserId:          current.UserId,
-		AssetId:         asset.AssetId,
+		AssetId:         assetId,
 		Amount:          amount.Persist(),
 		Greeting:        greeting,
 		TotalCount:      totalCount,
@@ -299,15 +311,16 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 		return packet, nil
 	}
 
-	in := &bot.TransferInput{
-		AssetId:     packet.AssetId,
-		RecipientId: packet.UserId,
-		Amount:      number.FromString(packet.RemainingAmount),
-		TraceId:     traceId,
-		Memo:        "",
-	}
+	ma := bot.NewUUIDMixAddress([]string{packet.UserId}, 1)
+	tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: packet.RemainingAmount}
 	mixin := config.AppConfig.Mixin
-	_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
+	su := &bot.SafeUser{
+		UserId:     mixin.ClientId,
+		SessionId:  mixin.SessionId,
+		SessionKey: mixin.SessionKey,
+		SpendKey:   mixin.SessionAssetPIN[:64],
+	}
+	_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, su)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}
@@ -382,6 +395,19 @@ func handlePacketExpiration(ctx context.Context, tx *sql.Tx, packet *Packet) err
 	}
 	_, err := tx.ExecContext(ctx, "UPDATE packets SET state=$1 WHERE packet_id=$2", packet.State, packet.PacketId)
 	return err
+}
+
+func ReadPacket(ctx context.Context, packetId string) (*Packet, error) {
+	var packet *Packet
+	err := session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+		old, err := readPacketWithAssetAndUser(ctx, tx, packetId)
+		if err != nil || old == nil {
+			return err
+		}
+		packet = old
+		return nil
+	})
+	return packet, err
 }
 
 func readPacketWithAssetAndUser(ctx context.Context, tx *sql.Tx, packetId string) (*Packet, error) {

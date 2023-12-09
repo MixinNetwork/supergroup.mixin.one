@@ -8,9 +8,8 @@ import (
 	"io"
 	"strings"
 	"time"
-	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client"
+	bot "github.com/MixinNetwork/bot-api-go-client/v2"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -82,36 +81,29 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	if err != nil {
 		return session.ServerError(ctx, err)
 	}
-	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
-		packet, err := readPacketWithAssetAndUser(ctx, tx, packetId)
+	packet, err := ReadPacket(ctx, packetId)
+	if err != nil {
+		return err
+	}
+	if !number.FromString(amount).Exhausted() && packet != nil {
+		ma := bot.NewUUIDMixAddress([]string{userId}, 1)
+		tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: amount}
+		mixin := config.AppConfig.Mixin
+		su := &bot.SafeUser{
+			UserId:     mixin.ClientId,
+			SessionId:  mixin.SessionId,
+			SessionKey: mixin.SessionKey,
+			SpendKey:   mixin.SessionAssetPIN[:64],
+		}
+		_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, su)
 		if err != nil {
 			return err
 		}
+	}
+	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		if packet == nil {
 			_, err = tx.ExecContext(ctx, "DELETE FROM packets WHERE packet_id=$1", packetId)
 			return err
-		}
-		memo := fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, packet.User.FullName)
-		if strings.TrimSpace(packet.User.FullName) == "" {
-			memo = config.AppConfig.MessageTemplate.GroupRedPacketShortDesc
-		}
-		if count := utf8.RuneCountInString(memo); count > 100 {
-			name := string([]rune(packet.User.FullName)[:16])
-			memo = fmt.Sprintf(config.AppConfig.MessageTemplate.GroupRedPacketDesc, name)
-		}
-		in := &bot.TransferInput{
-			AssetId:     packet.AssetId,
-			RecipientId: userId,
-			Amount:      number.FromString(amount),
-			TraceId:     traceId,
-			Memo:        memo,
-		}
-		if !number.FromString(amount).Exhausted() {
-			mixin := config.AppConfig.Mixin
-			_, err = bot.CreateTransfer(ctx, in, mixin.ClientId, mixin.SessionId, mixin.SessionKey, mixin.SessionAssetPIN, mixin.PinToken)
-			if err != nil {
-				return err
-			}
 		}
 		_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", time.Now(), packetId, userId)
 		return err

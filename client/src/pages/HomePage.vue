@@ -131,6 +131,7 @@ export default {
       this.welcomeMessage = this.websiteConf.data.home_welcome_message
       this.loading = false
     })
+
     this.websiteInfo = await this.GLOBAL.api.website.amount()
     this.meInfo = await this.GLOBAL.api.account.me()
     if (this.meInfo.data.state === 'blocked') {
