@@ -5,11 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sort"
 	"strings"
 
-	number "github.com/MixinNetwork/go-number"
-	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/externals"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -44,40 +41,7 @@ func assetFromRow(row durable.Row) (*Asset, error) {
 }
 
 func (current *User) ListAssets(ctx context.Context) ([]*Asset, error) {
-	list, err := externals.AssetList(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
-	if err != nil {
-		return nil, err
-	}
-	var assets []*Asset
-	for _, a := range list {
-		if config.AppConfig.System.PriceAssetsEnable {
-			if number.FromString(a.PriceUSD).Cmp(number.Zero()) <= 0 {
-				continue
-			}
-		}
-		assets = append(assets, &Asset{
-			AssetId:  a.AssetId,
-			Symbol:   a.Symbol,
-			Name:     a.Name,
-			IconURL:  a.IconURL,
-			PriceBTC: a.PriceBTC,
-			PriceUSD: a.PriceUSD,
-		})
-	}
-	if err := upsertAssets(ctx, assets); err != nil {
-		return assets, session.TransactionError(ctx, err)
-	}
-	sort.Slice(assets, func(i, j int) bool {
-		price := number.FromString(assets[i].PriceUSD).Cmp(number.FromString(assets[j].PriceUSD))
-		if price > 0 {
-			return true
-		}
-		if price < 0 {
-			return false
-		}
-		return assets[i].Symbol < assets[j].Symbol
-	})
-	return assets, nil
+	return nil, nil
 }
 
 func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, error) {
@@ -86,7 +50,7 @@ func (current *User) ShowAsset(ctx context.Context, assetId string) (*Asset, err
 		return nil, err
 	}
 	asset := &Asset{
-		AssetId:  a.AssetId,
+		AssetId:  a.AssetID,
 		Symbol:   a.Symbol,
 		Name:     a.Name,
 		IconURL:  a.IconURL,

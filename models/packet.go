@@ -315,12 +315,12 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 	tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: packet.RemainingAmount}
 	mixin := config.AppConfig.Mixin
 	su := &bot.SafeUser{
-		UserId:     mixin.ClientId,
-		SessionId:  mixin.SessionId,
-		SessionKey: mixin.SessionKey,
-		SpendKey:   mixin.SessionAssetPIN[:64],
+		UserId:            mixin.ClientId,
+		SessionId:         mixin.SessionId,
+		SessionPrivateKey: mixin.SessionKey,
+		SpendPrivateKey:   mixin.SessionAssetPIN[:64],
 	}
-	_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, su)
+	_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, nil, nil, su)
 	if err != nil {
 		return nil, session.ServerError(ctx, err)
 	}

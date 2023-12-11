@@ -33,5 +33,5 @@ func ReadConversation(ctx context.Context, conversationID string) (*bot.Conversa
 	if err != nil {
 		return nil, err
 	}
-	return bot.ConversationShow(ctx, conversationID, token)
+	return bot.ConversationShowByToken(ctx, conversationID, token)
 }

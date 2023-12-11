@@ -4,44 +4,12 @@ import (
 	"context"
 
 	"github.com/MixinNetwork/bot-api-go-client/v2"
-	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
 )
 
-func AssetList(ctx context.Context, authorizationID, private, scope string) ([]*bot.Asset, error) {
-	// FixMe
-	if authorizationID == "" {
-		return bot.AssetList(ctx, private)
-	}
-	mixin := config.AppConfig.Mixin
-	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/assets", "", scope, requestID)
-	if err != nil {
-		return nil, err
-	}
-	list, err := bot.AssetListWithRequestID(ctx, token, requestID)
-	if err != nil {
-		return nil, parseError(ctx, err.(bot.Error))
-	}
-	return list, nil
-}
-
 func AssetShow(ctx context.Context, assetId, authorizationID, private, scope string) (*bot.Asset, error) {
 	// FixMe
-	if authorizationID == "" {
-		return bot.AssetShow(ctx, assetId, private)
-	}
-	mixin := config.AppConfig.Mixin
-	requestID := bot.UuidNewV4().String()
-	token, err := bot.SignOauthAccessToken(mixin.ClientId, authorizationID, private, "GET", "/safe/assets/"+assetId, "", scope, requestID)
-	if err != nil {
-		return nil, err
-	}
-	asset, err := bot.AssetShowWithRequestID(ctx, assetId, token, requestID)
-	if err != nil {
-		return nil, parseError(ctx, err.(bot.Error))
-	}
-	return asset, nil
+	return bot.ReadAsset(ctx, assetId)
 }
 
 func parseError(ctx context.Context, err bot.Error) error {
