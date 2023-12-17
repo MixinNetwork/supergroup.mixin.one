@@ -85,6 +85,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	if err != nil {
 		return err
 	}
+	t := time.Now()
 	if !number.FromString(amount).Exhausted() && packet != nil {
 		ma := bot.NewUUIDMixAddress([]string{userId}, 1)
 		tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: amount}
@@ -97,7 +98,10 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		}
 		_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, nil, nil, su)
 		if err != nil {
-			return err
+			if !strings.Contains(err.Error(), "User is not registered") {
+				return err
+			}
+			t, _ = time.Parse("2023-01-01T00:00:00Z", time.RFC3339)
 		}
 	}
 	err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
@@ -105,7 +109,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 			_, err = tx.ExecContext(ctx, "DELETE FROM packets WHERE packet_id=$1", packetId)
 			return err
 		}
-		_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", time.Now(), packetId, userId)
+		_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", t, packetId, userId)
 		return err
 	})
 	if err != nil {
