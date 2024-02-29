@@ -112,15 +112,15 @@ func (service *MessageService) loop(ctx context.Context) error {
 		RecipientId:    make(map[string]time.Time, 0),
 	}
 
+	go writePump(ctx, conn, mc)
+	go readPump(ctx, conn, mc)
+
 	writeDrained := false
 	writeTimer := time.NewTimer(keepAlivePeriod)
 	err = writeMessageAndWait(ctx, mc, "LIST_PENDING_MESSAGES", nil, writeTimer, &writeDrained)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
-
-	go writePump(ctx, conn, mc)
-	go readPump(ctx, conn, mc)
 
 	drained := false
 	timer := time.NewTimer(time.Second)
