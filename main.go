@@ -48,6 +48,7 @@ func main() {
 
 	switch *service {
 	case "http":
+		services.NewServiceAll().Run(database)
 		log.Println("Http Server Listened Port:", config.AppConfig.Service.HTTPListenPort)
 		err := StartServer(database)
 		if err != nil {

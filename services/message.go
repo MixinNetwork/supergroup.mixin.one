@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -65,24 +66,15 @@ type SnapshotView struct {
 type MessageService struct{}
 
 type MessageContext struct {
-	Transactions   *tmap
-	ReadDone       chan bool
-	WriteDone      chan bool
-	DistributeDone chan bool
-	ReadBuffer     chan MessageView
-	WriteBuffer    chan []byte
-	RecipientId    map[string]time.Time
+	Transactions *tmap
+	ReadDone     chan bool
+	WriteDone    chan bool
+	ReadBuffer   chan MessageView
+	WriteBuffer  chan []byte
+	RecipientId  map[string]time.Time
 }
 
 func (service *MessageService) Run(ctx context.Context) error {
-	go distribute(ctx)
-	go loopInactiveUsers(ctx)
-	go loopPendingMessages(ctx)
-	go handlePendingParticipants(ctx)
-	go handleExpiredPackets(ctx)
-	go handlePendingRewards(ctx)
-	go loopPendingSuccessMessages(ctx)
-
 	for {
 		err := service.loop(ctx)
 		if err != nil {
@@ -103,13 +95,12 @@ func (service *MessageService) loop(ctx context.Context) error {
 	defer conn.Close()
 
 	mc := &MessageContext{
-		Transactions:   newTmap(),
-		ReadDone:       make(chan bool, 1),
-		WriteDone:      make(chan bool, 1),
-		DistributeDone: make(chan bool, 1),
-		ReadBuffer:     make(chan MessageView, 102400),
-		WriteBuffer:    make(chan []byte, 102400),
-		RecipientId:    make(map[string]time.Time, 0),
+		Transactions: newTmap(),
+		ReadDone:     make(chan bool, 1),
+		WriteDone:    make(chan bool, 1),
+		ReadBuffer:   make(chan MessageView, 102400),
+		WriteBuffer:  make(chan []byte, 102400),
+		RecipientId:  make(map[string]time.Time, 0),
 	}
 
 	go writePump(ctx, conn, mc)
@@ -118,6 +109,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 	writeDrained := false
 	writeTimer := time.NewTimer(keepAlivePeriod)
 	err = writeMessageAndWait(ctx, mc, "LIST_PENDING_MESSAGES", nil, writeTimer, &writeDrained)
+	log.Println("LIST_PENDING_MESSAGES", err)
 	if err != nil {
 		return session.BlazeServerError(ctx, err)
 	}
@@ -136,6 +128,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 		case <-mc.ReadDone:
 			return nil
 		case msg := <-mc.ReadBuffer:
+			log.Println("<-mc.ReadBuffer", time.Now())
 			if msg.ConversationId == models.UniqueConversationId(config.AppConfig.Mixin.ClientId, msg.UserId) {
 				switch msg.Category {
 				case "SYSTEM_SAFE_SNAPSHOT":
@@ -161,6 +154,7 @@ func (service *MessageService) loop(ctx context.Context) error {
 
 			messages = append(messages, map[string]interface{}{"message_id": msg.MessageId, "status": "READ"})
 		case <-timer.C:
+			log.Println("<-timer.C", time.Now(), len(messages))
 			drained = true
 			for len(messages) > 0 {
 				split := len(messages)
@@ -182,7 +176,6 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 		conn.Close()
 		mc.WriteDone <- true
 		mc.ReadDone <- true
-		mc.DistributeDone <- true
 	}()
 	conn.SetReadLimit(1024000 * 128)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -223,14 +216,16 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 	}()
 	for {
 		select {
+		case <-mc.WriteDone:
+			return nil
 		case data := <-mc.WriteBuffer:
+			log.Println("<-mc.WriteBuffer", time.Now())
 			err := writeGzipToConn(ctx, conn, data)
 			if err != nil {
 				return session.BlazeServerError(ctx, err)
 			}
-		case <-mc.WriteDone:
-			return nil
 		case <-pingTicker.C:
+			log.Println("<-pingTicker.C", time.Now())
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
 			err := conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
