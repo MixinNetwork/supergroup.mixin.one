@@ -154,7 +154,6 @@ func (service *MessageService) loop(ctx context.Context) error {
 
 			messages = append(messages, map[string]interface{}{"message_id": msg.MessageId, "status": "READ"})
 		case <-timer.C:
-			log.Println("<-timer.C", time.Now(), len(messages))
 			drained = true
 			for len(messages) > 0 {
 				split := len(messages)
@@ -225,7 +224,6 @@ func writePump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) er
 				return session.BlazeServerError(ctx, err)
 			}
 		case <-pingTicker.C:
-			log.Println("<-pingTicker.C", time.Now())
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
 			err := conn.WriteMessage(websocket.PingMessage, nil)
 			if err != nil {
