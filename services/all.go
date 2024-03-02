@@ -14,7 +14,7 @@ func NewServiceAll() *ServiceAll {
 	return &ServiceAll{}
 }
 
-func (service *ServiceAll) Run(db *durable.Database) error {
+func (service *ServiceAll) Run(db *durable.Database) {
 	log.Println("running all service")
 	ctx := session.WithDatabase(context.Background(), db)
 	ctx = session.WithLogger(ctx, durable.BuildLogger())
@@ -24,6 +24,5 @@ func (service *ServiceAll) Run(db *durable.Database) error {
 	go handlePendingParticipants(ctx)
 	go handleExpiredPackets(ctx)
 	go handlePendingRewards(ctx)
-	loopPendingSuccessMessages(ctx)
-	return nil
+	go loopPendingSuccessMessages(ctx)
 }
