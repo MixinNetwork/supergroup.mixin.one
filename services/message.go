@@ -198,7 +198,8 @@ func readPump(ctx context.Context, conn *websocket.Conn, mc *MessageContext) err
 			panic(err)
 		}
 		if messageType != websocket.BinaryMessage {
-			return session.BlazeServerError(ctx, fmt.Errorf("invalid message type %d", messageType))
+			session.BlazeServerError(ctx, fmt.Errorf("invalid message type %d", messageType))
+			continue
 		}
 		err = parseMessage(ctx, mc, wsReader, timer, &drained)
 		if err != nil {
