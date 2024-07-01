@@ -69,12 +69,12 @@ default: &default
     message_commands_info   : "/INFO"
     message_commands_info_resp: "当前订阅人数: %d"
   mixin:
-    client_id: "5fcd897e-e7b2-40d5-93cd-487e2d955556"
+    client_id: "5fcd897e-e7b2-40d5-93cd-487e2d955556" // app_id
     client_secret: "cbb236e11e12331a6c8912cab6f7161661e41b8e1b8358ba08c0e6521a68302b"
-    session_asset_pin: "31088c8a1dd240dc0eaffcd122b....aff45cc"
+    session_asset_pin: "31088c8a1dd240dc0eaffcd122b....aff45cc" // spend private key
     session_id: "8f42db23-d8df-4063-aeda-c322279da2c2"
-    pin_token: "fKfoz+NdurQ="
-    session_key: "9v61brhzYXGlaNbrHem-BszqnWkmiu5c3P5xM7crbjI2nzFaV7xzqHIsvTFBNB5qxIvxmVXj40F_-xxX0lqBvw"
+    pin_token: "fKfoz+NdurQ=" // server_public_key
+    session_key: "9v61brhzYXGlaNbrHem-BszqnWkmiu5c3P5xM7crbjI2nzFaV7xzqHIsvTFBNB5qxIvxmVXj40F_-xxX0lqBvw" // session_private_key
 development:
   <<: *default
   database:
