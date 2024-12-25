@@ -157,6 +157,7 @@ func TestUserSubscription(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(user)
 	assert.Equal("name", user.FullName)
+	assert.True(user.SubscribedAt.After(time.Now().Add(-1 * time.Hour)))
 	user, err = FindUser(ctx, user.UserId)
 	assert.Nil(err)
 	assert.True(user.SubscribedAt.After(time.Now().Add(-1 * time.Hour)))
