@@ -129,6 +129,39 @@ func TestUserCRUD(t *testing.T) {
 	assert.Nil(user)
 }
 
+func TestUserSubscription(t *testing.T) {
+	assert := assert.New(t)
+	ctx := setupTestContext()
+	defer teardownTestContext(ctx)
+
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	assert.Nil(err)
+	public := base64.RawURLEncoding.EncodeToString(pub)
+	private := base64.RawURLEncoding.EncodeToString(priv)
+	authorizationID := bot.UuidNewV4().String()
+
+	id := bot.UuidNewV4().String()
+	user, err := createUser(ctx, public, private, authorizationID, "", id, "1000", "name", "http://localhost")
+	assert.Nil(err)
+	assert.NotNil(user)
+	assert.Equal("name", user.FullName)
+	err = user.Payment(ctx)
+	assert.Nil(err)
+	err = user.Subscribe(ctx)
+	assert.Nil(err)
+	user, err = FindUser(ctx, user.UserId)
+	assert.Nil(err)
+	assert.True(user.SubscribedAt.After(time.Now().Add(-1 * time.Hour)))
+
+	user, err = createUser(ctx, public, private, authorizationID, "", id, "1000", "name", "http://localhost")
+	assert.Nil(err)
+	assert.NotNil(user)
+	assert.Equal("name", user.FullName)
+	user, err = FindUser(ctx, user.UserId)
+	assert.Nil(err)
+	assert.True(user.SubscribedAt.After(time.Now().Add(-1 * time.Hour)))
+}
+
 func TestBlacklistCRUD(t *testing.T) {
 	assert := assert.New(t)
 	ctx := setupTestContext()

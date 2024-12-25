@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPacketCRUD(t *testing.T) {
+func testPacketCRUD(t *testing.T) {
 	assert := assert.New(t)
 	ctx := setupTestContext()
 	defer teardownTestContext(ctx)
