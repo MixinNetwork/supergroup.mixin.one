@@ -139,6 +139,11 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 	user.Scope = scope
 	user.AvatarURL = avatarURL
 	user.AuthenticationToken = authenticationToken
+	if user.State == PaymentStatePaid {
+		if user.SubscribedAt.IsZero() {
+			user.SubscribedAt = time.Now()
+		}
+	}
 
 	if user.isNew {
 		err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
@@ -156,8 +161,8 @@ func createUser(ctx context.Context, public, private, authorizationID, scope, us
 		return user, nil
 	}
 
-	short := []string{"full_name", "access_token", "authorization_id", "scope", "avatar_url"}
-	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$6", short), user.FullName, user.AccessToken, user.AuthorizationID, user.Scope, user.AvatarURL, user.UserId)
+	short := []string{"full_name", "access_token", "authorization_id", "scope", "avatar_url", "subscribed_at"}
+	_, err = session.Database(ctx).Exec(durable.PrepareQuery("UPDATE users SET (%s)=(%s) WHERE user_id=$7", short), user.FullName, user.AccessToken, user.AuthorizationID, user.Scope, user.AvatarURL, user.SubscribedAt, user.UserId)
 	if err != nil {
 		return nil, session.TransactionError(ctx, err)
 	}
