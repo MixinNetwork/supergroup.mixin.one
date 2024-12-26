@@ -49,6 +49,10 @@ func SyncSession(ctx context.Context, sessions []*Session) error {
 		if err != nil {
 			return err
 		}
+		_, err = tx.Exec("UPDATE users SET subscribed_at=$1 WHERE user_id=ANY($2)", time.Now(), pq.Array(userIDs))
+		if err != nil {
+			return err
+		}
 		stmt, err := tx.PrepareContext(ctx, pq.CopyIn("sessions", sessionsCols...))
 		if err != nil {
 			return err
