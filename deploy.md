@@ -4,7 +4,7 @@
 
 ## 准备工作
 1. 一台服务器，需要根据用户量，初期 2C4G 的足够用，golang 本身占内存很少。
-2. 需要安装 postgrsql
+2. 需要安装 postgresql
 
 ## 后端部署
 1. git pull https://github.com/MixinNetwork/supergroup.mixin.one.git 相关的代码

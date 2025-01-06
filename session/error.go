@@ -31,7 +31,7 @@ func ParseError(err string) (Error, bool) {
 }
 
 func BadRequestError(ctx context.Context) Error {
-	description := "The request body can’t be pasred as valid data."
+	description := "The request body can’t be parsed as valid data."
 	return createError(ctx, http.StatusAccepted, http.StatusBadRequest, description, nil)
 }
 
