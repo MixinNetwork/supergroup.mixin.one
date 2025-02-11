@@ -88,9 +88,7 @@ func (service *MessageService) Run(ctx context.Context) error {
 
 func (service *MessageService) loop(ctx context.Context) error {
 	mixin := config.AppConfig.Mixin
-	log.Println("ConnectMixinBlaze before")
 	conn, err := ConnectMixinBlaze(mixin.ClientId, mixin.SessionId, mixin.SessionKey)
-	log.Println("ConnectMixinBlaze after")
 	if err != nil {
 		return err
 	}
