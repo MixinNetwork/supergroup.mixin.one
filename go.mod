@@ -1,8 +1,6 @@
 module github.com/MixinNetwork/supergroup.mixin.one
 
-go 1.21
-
-toolchain go1.21.0
+go 1.24.4
 
 require (
 	github.com/MixinNetwork/bot-api-go-client/v2 v2.1.0

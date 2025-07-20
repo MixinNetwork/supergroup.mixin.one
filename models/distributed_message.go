@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	DistributeSubscriberLimit = 100
+	DistributeSubscriberLimit = 1000
 
 	MessageStatusSent      = "SENT"
 	MessageStatusDelivered = "DELIVERED"

@@ -427,12 +427,12 @@ func (user *User) isAdmin() bool {
 
 func subscribedUsers(ctx context.Context, subscribedAt time.Time, limit int, senderID string) ([]*User, error) {
 	var users []*User
-	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
-	params := []interface{}{subscribedAt, time.Now().Add(-24 * 6 * time.Hour)}
-	if config.AppConfig.System.Operators[senderID] || config.AppConfig.Mixin.ClientId == senderID {
-		query = fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
-		params = []interface{}{subscribedAt}
-	}
+	//query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 AND active_at>$2 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	//params := []interface{}{subscribedAt, time.Now().Add(-24 * 6 * time.Hour)}
+	//if config.AppConfig.System.Operators[senderID] || config.AppConfig.Mixin.ClientId == senderID {
+	query := fmt.Sprintf("SELECT %s FROM users WHERE subscribed_at>$1 ORDER BY subscribed_at LIMIT %d", strings.Join(usersCols, ","), limit)
+	params := []interface{}{subscribedAt}
+	// }
 	rows, err := session.Database(ctx).QueryContext(ctx, query, params...)
 	if err != nil {
 		return users, session.TransactionError(ctx, err)
