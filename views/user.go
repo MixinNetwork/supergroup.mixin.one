@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
@@ -31,7 +32,7 @@ func buildUserView(user *models.User) UserView {
 		UserId:         user.UserId,
 		IdentityNumber: fmt.Sprint(user.IdentityNumber),
 		FullName:       user.GetFullName(),
-		AvatarURL:      user.AvatarURL,
+		AvatarURL:      strings.ReplaceAll(user.AvatarURL, "mixin-images.zeromesh.net", "images.mixin.one"),
 		SubscribedAt:   user.SubscribedAt.Format(time.RFC3339Nano),
 		Role:           user.GetRole(),
 	}

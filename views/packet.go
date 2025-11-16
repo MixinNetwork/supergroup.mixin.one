@@ -2,6 +2,7 @@ package views
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	number "github.com/MixinNetwork/go-number"
@@ -56,7 +57,7 @@ func buildAssetView(asset *models.Asset) AssetView {
 		AssetId:  asset.AssetId,
 		Symbol:   asset.Symbol,
 		Name:     asset.Name,
-		IconURL:  asset.IconURL,
+		IconURL:  strings.ReplaceAll(asset.IconURL, "mixin-images.zeromesh.net", "images.mixin.one"),
 		PriceBTC: asset.PriceBTC,
 		PriceUSD: asset.PriceUSD,
 	}
@@ -69,7 +70,7 @@ func buildParticipantsView(participants []*models.Participant) []ParticipantView
 			Type:      "participant",
 			UserId:    p.UserId,
 			FullName:  p.FullName,
-			AvatarURL: p.AvatarURL,
+			AvatarURL: strings.ReplaceAll(p.AvatarURL, "mixin-images.zeromesh.net", "images.mixin.one"),
 			Amount:    p.Amount,
 			CreatedAt: p.CreatedAt,
 		}
