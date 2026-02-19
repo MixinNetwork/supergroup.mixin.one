@@ -87,6 +87,14 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	}
 	t := time.Now()
 	if !number.FromString(amount).Exhausted() && packet != nil {
+		trace, _ := bot.GetTransactionById(ctx, traceId)
+		if trace != nil && trace.State == "spent" {
+			err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
+				_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", t, packetId, userId)
+				return err
+			})
+			return err
+		}
 		ma := bot.NewUUIDMixAddress([]string{userId}, 1)
 		tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: amount}
 		mixin := config.AppConfig.Mixin
