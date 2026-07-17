@@ -18,7 +18,7 @@ func registerHanders(router *httptreemux.TreeMux) {
 		views.RenderErrorResponse(w, r, session.NotFoundError(r.Context()))
 	}
 	router.PanicHandler = func(w http.ResponseWriter, r *http.Request, rcv interface{}) {
-		err := fmt.Errorf(string(errors.New(rcv, 2).Stack()))
+		err := fmt.Errorf("%s", errors.New(rcv, 2).Stack())
 		views.RenderErrorResponse(w, r, session.ServerError(r.Context(), err))
 	}
 }
