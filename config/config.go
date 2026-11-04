@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"log"
 
 	yaml "gopkg.in/yaml.v2"
@@ -19,12 +20,26 @@ func UserAgent() string {
 	return "mixin-suppergroup/" + BuildVersion
 }
 
-// SDKPrivateKey converts the legacy base64 private key to the seed format used by SDK v3.
+// SDKPrivateKey converts supported Ed25519 key encodings to the hex seed used by SDK v3.
 func SDKPrivateKey(key string) string {
-	if decoded, err := base64.RawURLEncoding.DecodeString(key); err == nil && len(decoded) == ed25519.PrivateKeySize {
-		return hex.EncodeToString(decoded[:ed25519.SeedSize])
+	if normalized, err := normalizePrivateKey(key); err == nil {
+		return normalized
 	}
 	return key
+}
+
+func normalizePrivateKey(key string) (string, error) {
+	// Check hex first: a hex seed is also valid unpadded base64 text.
+	if decoded, err := hex.DecodeString(key); err == nil && (len(decoded) == ed25519.SeedSize || len(decoded) == ed25519.PrivateKeySize) {
+		return hex.EncodeToString(decoded[:ed25519.SeedSize]), nil
+	}
+	for _, encoding := range []*base64.Encoding{base64.RawURLEncoding, base64.URLEncoding, base64.RawStdEncoding, base64.StdEncoding} {
+		decoded, err := encoding.Strict().DecodeString(key)
+		if err == nil && (len(decoded) == ed25519.SeedSize || len(decoded) == ed25519.PrivateKeySize) {
+			return hex.EncodeToString(decoded[:ed25519.SeedSize]), nil
+		}
+	}
+	return "", fmt.Errorf("expected an Ed25519 seed or private key encoded as hex or base64")
 }
 
 type PaymentAsset struct {
@@ -133,6 +148,12 @@ func Init(env string) {
 		log.Fatalf("error: %v", err)
 	}
 	AppConfig = options[env]
+	if AppConfig == nil {
+		log.Fatalf("configuration environment %q not found", env)
+	}
+	if _, err := normalizePrivateKey(AppConfig.Mixin.SessionKey); err != nil {
+		log.Fatalf("invalid mixin.session_key for environment %q: %v", env, err)
+	}
 	AppConfig.System.Operators = make(map[string]bool)
 	for _, op := range AppConfig.System.OperatorList {
 		AppConfig.System.Operators[op] = true
