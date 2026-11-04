@@ -1,7 +1,10 @@
 package config
 
 import (
+	"crypto/ed25519"
 	_ "embed"
+	"encoding/base64"
+	"encoding/hex"
 	"log"
 
 	yaml "gopkg.in/yaml.v2"
@@ -10,7 +13,19 @@ import (
 //go:embed config.yaml
 var data []byte
 
-const BuildVersion = "BUILD_VERSION"
+var BuildVersion = "dev"
+
+func UserAgent() string {
+	return "mixin-suppergroup/" + BuildVersion
+}
+
+// SDKPrivateKey converts the legacy base64 private key to the seed format used by SDK v3.
+func SDKPrivateKey(key string) string {
+	if decoded, err := base64.RawURLEncoding.DecodeString(key); err == nil && len(decoded) == ed25519.PrivateKeySize {
+		return hex.EncodeToString(decoded[:ed25519.SeedSize])
+	}
+	return key
+}
 
 type PaymentAsset struct {
 	Symbol  string `yaml:"symbol" json:"symbol"`

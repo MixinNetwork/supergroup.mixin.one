@@ -16,6 +16,10 @@ Before you upgrade your group, please checkout [CHANGELOG.md](https://github.com
 
 #### Server Side
 
+Build with `./build.sh` to embed the Git tag in the version and User-Agent.
+Builds after a tag include the commit distance and hash; builds with uncommitted
+changes include a `-dirty` suffix. A plain `go build` uses `dev` as the version.
+
 1. `./supergroup.mixin.one` handle http request
 2. `./supergroup.mixin.one -service message` handle messages
 

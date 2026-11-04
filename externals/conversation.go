@@ -3,7 +3,7 @@ package externals
 import (
 	"context"
 
-	"github.com/MixinNetwork/bot-api-go-client/v2"
+	"github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 )
 
@@ -11,25 +11,17 @@ func CreateConversation(ctx context.Context, category, participantId string) err
 	if config.AppConfig.Service.Environment == "test" {
 		return nil
 	}
-	conversationId := bot.UniqueConversationId(config.AppConfig.Mixin.ClientId, participantId)
-	participant := bot.Participant{
-		UserId: participantId,
-		Role:   "",
-	}
-	participants := []bot.Participant{
-		participant,
-	}
 	mixin := config.AppConfig.Mixin
-	_, err := bot.CreateConversation(ctx, category, conversationId, "", "", participants, mixin.ClientId, mixin.SessionId, mixin.SessionKey)
+	_, err := bot.CreateContactConversation(ctx, participantId, bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey)))
 	if err != nil {
-		return parseError(ctx, err.(bot.Error))
+		return parseError(ctx, err)
 	}
 	return nil
 }
 
 func ReadConversation(ctx context.Context, conversationID string) (*bot.Conversation, error) {
 	mixin := config.AppConfig.Mixin
-	token, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "GET", "/conversations/"+conversationID, "")
+	token, err := bot.SignAuthenticationToken("GET", "/conversations/"+conversationID, "", bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey)))
 	if err != nil {
 		return nil, err
 	}

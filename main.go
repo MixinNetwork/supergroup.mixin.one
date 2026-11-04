@@ -10,12 +10,14 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/services"
 )
 
 func main() {
+	configureUserAgent()
 	service := flag.String("service", "http", "run a service")
 	env := flag.String("e", "production", "")
 	flag.Parse()
@@ -65,4 +67,8 @@ func main() {
 		}()
 		http.ListenAndServe(fmt.Sprintf(":%d", config.AppConfig.Service.HTTPListenPort+2000), http.DefaultServeMux)
 	}
+}
+
+func configureUserAgent() {
+	bot.SetUserAgent(config.UserAgent())
 }

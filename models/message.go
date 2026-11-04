@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -171,7 +171,7 @@ func CreateMessage(ctx context.Context, user *User, messageId, category, quoteMe
 		MessageCategoryEncryptedLocation:
 		mixin := config.AppConfig.Mixin
 		var err error
-		data, err = bot.DecryptMessageData(data, mixin.SessionId, mixin.SessionKey)
+		data, err = bot.DecryptMessageData(data, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey))
 		if err != nil || data == "" {
 			return nil, err
 		}
@@ -507,5 +507,5 @@ func EncryptMessageData(data string, sessions []*Session) (string, error) {
 		}
 	}
 	mixin := config.AppConfig.Mixin
-	return bot.EncryptMessageData(data, ss, mixin.SessionKey)
+	return bot.EncryptMessageData(data, ss, config.SDKPrivateKey(mixin.SessionKey))
 }

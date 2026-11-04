@@ -14,7 +14,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
@@ -79,6 +79,9 @@ func (service *MessageService) Run(ctx context.Context) error {
 		err := service.loop(ctx)
 		if err != nil {
 			session.Logger(ctx).Error(err)
+			if session.IsUnauthorized(err) {
+				return err
+			}
 		}
 		session.Logger(ctx).Info("connection loop end")
 		time.Sleep(10 * time.Second)
@@ -276,6 +279,10 @@ func writeMessageAndWait(ctx context.Context, mc *MessageContext, action string,
 		return fmt.Errorf("timeout to wait %s %v", action, params)
 	case t := <-resp:
 		if t.Error != nil {
+			if session.IsUnauthorized(t.Error) {
+				mc.Transactions.retrive(id)
+				return t.Error
+			}
 			if t.Error.Code == 403 {
 				return nil
 			}
@@ -467,6 +474,9 @@ func handleExpiredPackets(ctx context.Context) {
 			packet, err := models.SendPacketRefundTransfer(ctx, id)
 			if err != nil {
 				session.Logger(ctx).Error(id, err)
+				if session.IsUnauthorized(err) {
+					return
+				}
 				break
 			}
 			if packet != nil {
@@ -495,6 +505,9 @@ func handlePendingRewards(ctx context.Context) {
 			err = models.SendRewardTransfer(ctx, reward)
 			if err != nil {
 				session.Logger(ctx).Error(reward.RewardId, err)
+				if session.IsUnauthorized(err) {
+					return
+				}
 				continue
 			}
 		}
@@ -520,6 +533,9 @@ func handlePendingParticipants(ctx context.Context) {
 			err = models.SendParticipantTransfer(ctx, p.PacketId, p.UserId, p.Amount)
 			if err != nil {
 				session.Logger(ctx).Error(err)
+				if session.IsUnauthorized(err) {
+					return
+				}
 				break
 			}
 		}

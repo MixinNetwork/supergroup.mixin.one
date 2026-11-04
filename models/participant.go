@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -87,7 +87,10 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	}
 	t := time.Now()
 	if !number.FromString(amount).Exhausted() && packet != nil {
-		trace, _ := bot.GetTransactionById(ctx, traceId)
+		trace, traceErr := bot.GetTransactionById(ctx, traceId)
+		if session.IsUnauthorized(traceErr) {
+			return traceErr
+		}
 		if trace != nil && trace.State == "spent" {
 			err = session.Database(ctx).RunInTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 				_, err = tx.ExecContext(ctx, "UPDATE participants SET paid_at=$1 WHERE packet_id=$2 AND user_id=$3", t, packetId, userId)
@@ -96,12 +99,12 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 			return err
 		}
 		ma := bot.NewUUIDMixAddress([]string{userId}, 1)
-		tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: amount}
+		tr := &bot.TransactionRecipient{MixAddress: ma, Amount: amount}
 		mixin := config.AppConfig.Mixin
 		su := &bot.SafeUser{
 			UserId:            mixin.ClientId,
 			SessionId:         mixin.SessionId,
-			SessionPrivateKey: mixin.SessionKey,
+			SessionPrivateKey: config.SDKPrivateKey(mixin.SessionKey),
 			SpendPrivateKey:   mixin.SessionAssetPIN[:64],
 		}
 		_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, nil, nil, su)

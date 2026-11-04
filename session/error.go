@@ -3,10 +3,13 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"runtime"
+
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 )
 
 type Error struct {
@@ -14,6 +17,35 @@ type Error struct {
 	Code        int    `json:"code"`
 	Description string `json:"description"`
 	trace       string
+	cause       error
+}
+
+func (sessionError Error) Unwrap() error { return sessionError.cause }
+
+// IsUnauthorized recognizes authorization failures even when wrapped by a service error.
+func IsUnauthorized(err error) bool {
+	for err != nil {
+		switch e := err.(type) {
+		case Error:
+			if e.Code == http.StatusUnauthorized || e.Status == http.StatusUnauthorized {
+				return true
+			}
+		case *Error:
+			if e != nil && (e.Code == http.StatusUnauthorized || e.Status == http.StatusUnauthorized) {
+				return true
+			}
+		case bot.Error:
+			if e.Code == http.StatusUnauthorized || e.Status == http.StatusUnauthorized {
+				return true
+			}
+		case *bot.Error:
+			if e != nil && (e.Code == http.StatusUnauthorized || e.Status == http.StatusUnauthorized) {
+				return true
+			}
+		}
+		err = errors.Unwrap(err)
+	}
+	return false
 }
 
 func (sessionError Error) Error() string {
@@ -112,5 +144,6 @@ func createError(ctx context.Context, status, code int, description string, err 
 		Code:        code,
 		Description: description,
 		trace:       trace,
+		cause:       err,
 	}
 }

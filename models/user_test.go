@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/stretchr/testify/assert"
 )
 

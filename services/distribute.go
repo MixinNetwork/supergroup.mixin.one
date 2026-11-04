@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/models"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -53,6 +53,9 @@ func pendingActiveDistributedMessages(ctx context.Context, shard string, limit i
 		results, err := sendDistributedMessges(ctx, shard, messages)
 		if err != nil {
 			session.Logger(ctx).Errorf("PendingActiveDistributedMessages sendDistributedMessges ERROR: %+v", err)
+			if session.IsUnauthorized(err) {
+				return
+			}
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -178,7 +181,7 @@ func sendDistributedMessges(ctx context.Context, key string, messages []*models.
 		return nil, err
 	}
 	mixin := config.AppConfig.Mixin
-	accessToken, err := bot.SignAuthenticationToken(mixin.ClientId, mixin.SessionId, mixin.SessionKey, "POST", "/encrypted_messages", string(msgs))
+	accessToken, err := bot.SignAuthenticationToken("POST", "/encrypted_messages", string(msgs), bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey)))
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +216,7 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", config.UserAgent())
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	resp, err := httpPool[key].Do(req)
 	if err != nil {
@@ -220,6 +224,9 @@ func request(ctx context.Context, key, method, path string, body []byte, accessT
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, bot.AuthorizationError(ctx)
+	}
 
 	if resp.StatusCode >= 500 {
 		cfg.Service.Retry++

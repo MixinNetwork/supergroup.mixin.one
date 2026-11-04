@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/session"
@@ -482,7 +482,7 @@ func messageQRFilter(ctx context.Context, message *Message) (bool, string) {
 		return false, "message.Data Unmarshal error"
 	}
 	mixin := config.AppConfig.Mixin
-	attachment, err := bot.AttachmentShow(ctx, mixin.ClientId, mixin.SessionId, mixin.SessionKey, a.AttachmentId)
+	attachment, err := bot.AttachmentShow(ctx, a.AttachmentId, bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey)))
 	if err != nil {
 		return false, fmt.Sprintf("bot.AttachemntShow error: %+v, id: %s", err, a.AttachmentId)
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/MixinNetwork/bot-api-go-client/v2"
+	"github.com/MixinNetwork/bot-api-go-client/v3"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
 	"github.com/MixinNetwork/supergroup.mixin.one/middlewares"
@@ -17,7 +17,7 @@ import (
 
 func StartServer(database *durable.Database) error {
 	mixin := config.AppConfig.Mixin
-	_, err := bot.UpdatePreference(context.Background(), mixin.ClientId, mixin.SessionId, mixin.SessionKey, "", "CONTACTS", "", 0)
+	_, err := bot.UpdatePreference(context.Background(), "", "CONTACTS", "", 0, bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey)))
 	if err != nil {
 		return err
 	}

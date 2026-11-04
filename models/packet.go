@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	bot "github.com/MixinNetwork/bot-api-go-client/v2"
+	bot "github.com/MixinNetwork/bot-api-go-client/v3"
 	number "github.com/MixinNetwork/go-number"
 	"github.com/MixinNetwork/supergroup.mixin.one/config"
 	"github.com/MixinNetwork/supergroup.mixin.one/durable"
@@ -93,7 +93,13 @@ func (current *User) CreatePacket(ctx context.Context, assetId string, amount nu
 			}
 		}
 	*/
-	u, _ := externals.UserMe(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
+	u, err := externals.UserMe(ctx, current.AuthorizationID, current.AccessToken, current.Scope)
+	if err != nil {
+		return nil, err
+	}
+	if u == nil {
+		return nil, session.ServerError(ctx, nil)
+	}
 	if u != nil {
 		name := strings.TrimSpace(u.FullName)
 		if name != current.FullName || u.AvatarURL != current.AvatarURL {
@@ -312,12 +318,12 @@ func SendPacketRefundTransfer(ctx context.Context, packetId string) (*Packet, er
 	}
 
 	ma := bot.NewUUIDMixAddress([]string{packet.UserId}, 1)
-	tr := &bot.TransactionRecipient{MixAddress: ma.String(), Amount: packet.RemainingAmount}
+	tr := &bot.TransactionRecipient{MixAddress: ma, Amount: packet.RemainingAmount}
 	mixin := config.AppConfig.Mixin
 	su := &bot.SafeUser{
 		UserId:            mixin.ClientId,
 		SessionId:         mixin.SessionId,
-		SessionPrivateKey: mixin.SessionKey,
+		SessionPrivateKey: config.SDKPrivateKey(mixin.SessionKey),
 		SpendPrivateKey:   mixin.SessionAssetPIN[:64],
 	}
 	_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, nil, nil, su)
