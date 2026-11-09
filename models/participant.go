@@ -87,7 +87,9 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 	}
 	t := time.Now()
 	if !number.FromString(amount).Exhausted() && packet != nil {
-		trace, traceErr := bot.GetTransactionById(ctx, traceId)
+		mixin := config.AppConfig.Mixin
+		su := bot.NewSafeUser(mixin.ClientId, mixin.SessionId, config.SDKPrivateKey(mixin.SessionKey))
+		trace, traceErr := bot.GetTransactionById(ctx, traceId, su)
 		if session.IsUnauthorized(traceErr) {
 			return traceErr
 		}
@@ -100,13 +102,7 @@ func SendParticipantTransfer(ctx context.Context, packetId, userId string, amoun
 		}
 		ma := bot.NewUUIDMixAddress([]string{userId}, 1)
 		tr := &bot.TransactionRecipient{MixAddress: ma, Amount: amount}
-		mixin := config.AppConfig.Mixin
-		su := &bot.SafeUser{
-			UserId:            mixin.ClientId,
-			SessionId:         mixin.SessionId,
-			SessionPrivateKey: config.SDKPrivateKey(mixin.SessionKey),
-			SpendPrivateKey:   mixin.SessionAssetPIN[:64],
-		}
+		su.SpendPrivateKey = mixin.SessionAssetPIN[:64]
 		_, err = bot.SendTransaction(ctx, packet.AssetId, []*bot.TransactionRecipient{tr}, traceId, nil, nil, su)
 		if err != nil {
 			if !strings.Contains(err.Error(), "User is not registered") {
