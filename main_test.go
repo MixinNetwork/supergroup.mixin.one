@@ -15,9 +15,14 @@ func TestSDKUserAgent(t *testing.T) {
 	if want := os.Getenv("TEST_BUILD_VERSION"); want != "" && config.BuildVersion != want {
 		t.Fatalf("build version = %q, want %q", config.BuildVersion, want)
 	}
+	buildCommit := os.Getenv("TEST_BUILD_COMMIT")
+	if buildCommit == "" {
+		buildCommit = "dev"
+	}
+	wantUserAgent := "mixin-zh-group/" + buildCommit
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got, want := r.Header.Get("User-Agent"), config.UserAgent(); got != want {
-			t.Errorf("User-Agent = %q, want %q", got, want)
+		if got := r.Header.Get("User-Agent"); got != wantUserAgent {
+			t.Errorf("User-Agent = %q, want %q", got, wantUserAgent)
 		}
 	}))
 	defer server.Close()

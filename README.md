@@ -16,9 +16,10 @@ Before you upgrade your group, please checkout [CHANGELOG.md](https://github.com
 
 #### Server Side
 
-Build with `./build.sh` to embed the Git tag in the version and User-Agent.
-Builds after a tag include the commit distance and hash; builds with uncommitted
-changes include a `-dirty` suffix. A plain `go build` uses `dev` as the version.
+Build with `./build.sh` to set the Mixin API User-Agent to `mixin-zh-group/<commit>`,
+where `<commit>` is the short hash from `git log -1 --format=%h`. The service
+version uses `git describe --tags --always --dirty`. A plain `go build` uses
+`mixin-zh-group/dev` as the User-Agent and `dev` as the service version.
 
 1. `./supergroup.mixin.one` handle http request
 2. `./supergroup.mixin.one -service message` handle messages

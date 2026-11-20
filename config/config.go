@@ -15,9 +15,10 @@ import (
 var data []byte
 
 var BuildVersion = "dev"
+var buildCommit = "dev"
 
 func UserAgent() string {
-	return "mixin-suppergroup/" + BuildVersion
+	return "mixin-zh-group/" + buildCommit
 }
 
 // SDKPrivateKey converts supported Ed25519 key encodings to the hex seed used by SDK v3.
