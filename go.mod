@@ -1,22 +1,23 @@
 module github.com/MixinNetwork/supergroup.mixin.one
 
-go 1.27.3
+go 1.27.4
 
 require (
-	github.com/MixinNetwork/bot-api-go-client/v3 v3.26.1
+	github.com/MixinNetwork/bot-api-go-client/v3 v3.27.0
 	github.com/MixinNetwork/go-number v0.2.0
 	github.com/bugsnag/bugsnag-go v2.6.4+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dimfeld/httptreemux v5.0.1+incompatible
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gofrs/uuid/v5 v5.5.1
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.12.1
 	github.com/tuotoo/qrcode v0.0.0-20220425170535-52ccc2bebf5d
 	github.com/unrolled/render v1.8.1
-	golang.org/x/crypto v0.58.0
+	golang.org/x/crypto v0.59.0
 	golang.org/x/time v0.16.0
 	gopkg.in/yaml.v2 v2.4.0
 	mvdan.cc/xurls v1.1.0
@@ -27,9 +28,8 @@ require (
 	github.com/MixinNetwork/mixin v0.19.11 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/klauspost/cpuid/v2 v2.4.1 // indirect
+	github.com/klauspost/cpuid/v2 v2.4.2 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/maruel/rs v1.1.0 // indirect
 	github.com/mvdan/xurls v1.1.0 // indirect
@@ -39,7 +39,7 @@ require (
 	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	rsc.io/qr v0.2.0 // indirect
 )
